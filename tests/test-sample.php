@@ -8,7 +8,7 @@
 /**
  * Sample test case.
  */
-class SampleTest extends WP_UnitTestCase {
+class SampleTest extends PHPUnit\Framework\TestCase {
 
 	/**
 	 * A single example test.

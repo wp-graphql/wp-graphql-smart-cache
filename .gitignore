@@ -9,3 +9,4 @@ node_modules/
 *.zip
 .env
 .log
+vendor
