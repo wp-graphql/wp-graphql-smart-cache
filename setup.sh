@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Run app setup script.
-. app-setup.sh
+# Run base image setup script then our setup.
+. /usr/local/bin/original-app-setup.sh
 
 PLUGINS_DIR=${PLUGINS_DIR-.}
 echo "Plugins dir ($PLUGINS_DIR)"
@@ -17,7 +17,3 @@ if [ ! -f "${PLUGINS_DIR}/wp-graphql/wp-graphql.php" ]; then
         wp plugin install https://github.com/wp-graphql/wp-graphql/releases/download/${WPGRAPHQL_VERSION-v1.4.3}/wp-graphql.zip --allow-root
     fi
 fi
-
-. app-post-setup.sh
-
-exec "$@"
