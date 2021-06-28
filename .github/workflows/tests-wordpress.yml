@@ -21,7 +21,10 @@ jobs:
       - name: Build container image
         run: |
           cp .env.dist .env
-          docker-compose build --build-arg WP_VERSION=5.6 --build-arg PHP_VERSION=7.4
+          docker-compose build \
+            --build-arg WP_VERSION=5.6 \
+            --build-arg PHP_VERSION=7.4 \
+            --build-arg DOCKER_REGISTRY=ghcr.io/markkelnar/
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
