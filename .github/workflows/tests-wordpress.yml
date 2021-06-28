@@ -44,7 +44,7 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Install dependencies
-        run: composer install --no-dev
+        run: composer install
 
       - name: Run phpunit script
         run: docker-compose run app bash -c "cd wp-content/plugins/wp-graphql-persisted-queries ; vendor/bin/phpunit"
