@@ -47,4 +47,4 @@ jobs:
         run: composer install --no-dev
 
       - name: Run phpunit script
-        run: docker compose run app vendor/bin/phpunit
+        run: docker-compose run app bash -c "cd wp-content/plugins/wp-graphql-persisted-queries ; vendor/bin/phpunit"
