@@ -5,6 +5,8 @@
  * @package Wp_Graphql_Persisted_Queries
  */
 
+namespace WPGraphQLPersistedQueries;
+
 /**
  * Sample test case.
  */

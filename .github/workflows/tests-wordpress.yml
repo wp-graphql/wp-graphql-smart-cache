@@ -48,3 +48,6 @@ jobs:
 
       - name: Run phpunit script
         run: docker-compose run app bash -c "cd wp-content/plugins/wp-graphql-persisted-queries ; vendor/bin/phpunit"
+
+      - name: Run php code sniffer
+        run: ./vendor/bin/phpcs
