@@ -10,7 +10,7 @@ namespace WPGraphQLPersistedQueries;
 /**
  * Sample test case.
  */
-class SampleTest extends PHPUnit\Framework\TestCase {
+class SampleTest extends \PHPUnit\Framework\TestCase {
 
 	/**
 	 * A single example test.
