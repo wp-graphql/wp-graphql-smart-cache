@@ -1,0 +1,34 @@
+version: '3.3'
+
+services:
+  app:
+    depends_on:
+      - app_db
+    build: .
+    volumes:
+      - '.:/var/www/html/wp-content/plugins/wp-graphql-persisted-queries'
+      - './.log/app:/var/log/apache2'
+    env_file:
+      - .env
+    environment:
+      WP_URL: http://localhost:8091
+      USING_XDEBUG: ${USING_XDEBUG:-}
+    ports:
+      - '8091:80'
+    networks:
+      local:
+
+  app_db:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE:      wordpress
+      MYSQL_USER:          wordpress
+      MYSQL_PASSWORD:      wordpress
+    ports:
+      - '3306'
+    networks:
+      local:
+
+networks:
+  local:
