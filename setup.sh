@@ -1,6 +1,7 @@
 #!/bin/bash
+# This script is run by the wp-graphql entrypoint.sh script as app-setup.sh.
 
-# Run base image setup script then our setup.
+# Run the base wp-graphql image setup script then our setup.
 . /usr/local/bin/original-app-setup.sh
 
 PLUGINS_DIR=${PLUGINS_DIR-.}
@@ -17,3 +18,6 @@ if [ ! -f "${PLUGINS_DIR}/wp-graphql/wp-graphql.php" ]; then
         wp plugin install https://github.com/wp-graphql/wp-graphql/releases/download/${WPGRAPHQL_VERSION-v1.4.3}/wp-graphql.zip --allow-root
     fi
 fi
+
+# Activate the plugin
+wp plugin activate wp-graphql-persisted-queries --allow-root

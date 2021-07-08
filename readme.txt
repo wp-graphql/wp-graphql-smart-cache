@@ -10,7 +10,7 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 == Description ==
 
-WPGraphQL is a free, open-source WordPress plugin that provides an extendable GraphQL schema and API for any WordPress site.
+WPGraphQL Persisted Queries for WPGraphQL, a plugin that provides an extendable GraphQL schema and API for any WordPress site.
 
 == Changelog ==
 
