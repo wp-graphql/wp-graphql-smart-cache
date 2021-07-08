@@ -29,7 +29,7 @@ add_action(
 	'graphql_server_config',
 	function ( \GraphQL\Server\ServerConfig $config ) {
 		$config->setPersistentQueryLoader(
-			[ __NAMESPACE__ . '\Lookup', 'byQueryId' ]
+			[ __NAMESPACE__ . '\Lookup', 'by_query_id' ]
 		);
 	},
 	10,

@@ -16,7 +16,7 @@ class Lookup {
 	 * @param array $operation_params An array containing the method, body and query params
 	 * @return string | GraphQL\Language\AST\DocumentNode
 	 */
-	public static function byQueryId( $query_id, $operation_params ) {
+	public static function by_query_id( $query_id, $operation_params ) {
 		// We look for the query id in our system and return that.
 		// This is where we look for the query id in our storage and return that string as the query
 		wp_send_json( [ 'this is a query with an id:' => [ $query_id, $operation_params ] ] );
