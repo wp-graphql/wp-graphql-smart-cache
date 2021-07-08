@@ -12,4 +12,26 @@
  * @package         Wp_Graphql_Persisted_Queries
  */
 
-// Your code starts here.
+namespace WPGraphQL\PersistedQueries;
+
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+require __DIR__ . '/vendor/autoload.php';
+
+/**
+ * Set the graphql-php server persistent query loader during server config setup.
+ * When a queryId is found on the request, the call back is invoked to look up the query string.
+ */
+add_action(
+	'graphql_server_config',
+	function ( \GraphQL\Server\ServerConfig $config ) {
+		$config->setPersistentQueryLoader(
+			[ __NAMESPACE__ . '\Lookup', 'byQueryId' ]
+		);
+	},
+	10,
+	1
+);
