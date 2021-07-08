@@ -20,11 +20,8 @@ services:
 
   app_db:
     image: mysql:5.7
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE:      wordpress
-      MYSQL_USER:          wordpress
-      MYSQL_PASSWORD:      wordpress
+    env_file:
+      - .env
     ports:
       - '3306'
     networks:
