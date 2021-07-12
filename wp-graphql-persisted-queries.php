@@ -7,7 +7,6 @@
  * Author URI:      http://www.wpgraphql.com
  * Domain Path:     /languages
  * Version:         0.1.0
- *
  */
 
 namespace WPGraphQL\PersistedQueries;
