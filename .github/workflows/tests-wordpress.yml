@@ -24,7 +24,7 @@ jobs:
           docker-compose build \
             --build-arg WP_VERSION=5.6 \
             --build-arg PHP_VERSION=7.4 \
-            --build-arg DOCKER_REGISTRY=ghcr.io/markkelnar/
+            --build-arg DOCKER_REGISTRY=ghcr.io/wp-graphql/
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
