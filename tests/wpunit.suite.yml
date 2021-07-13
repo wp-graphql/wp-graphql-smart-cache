@@ -20,5 +20,3 @@ modules:
             title: "Test"
             plugins: ['wp-graphql/wp-graphql.php', 'wp-graphql-persisted-queries/wp-graphql-persisted-queries.php']
             activatePlugins: ['wp-graphql/wp-graphql.php', 'wp-graphql-persisted-queries/wp-graphql-persisted-queries.php']
-            #loadOnly: true
-            #isolatedInstall: false
