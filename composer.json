@@ -21,6 +21,7 @@
         "codeception/module-filesystem": "^1.0",
         "codeception/module-cli": "^1.1",
         "codeception/util-universalframework": "^1.0",
-        "php-webdriver/webdriver": "^1.11"
+        "php-webdriver/webdriver": "^1.11",
+        "codeception/module-rest": "^1.3"
     }
 }

@@ -47,7 +47,11 @@ jobs:
         run: composer install
 
       - name: Run phpunit script
-        run: docker-compose run app bash -c "cd wp-content/plugins/wp-graphql-persisted-queries ; vendor/bin/phpunit"
+        run: docker-compose run testing
+        env:
+          WP_VERSION: 5.7.2
+          PHP_VERSION: 7.4
+          SUITES: acceptance
 
       - name: Run php code sniffer
         run: ./vendor/bin/phpcs
