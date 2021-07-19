@@ -8,8 +8,7 @@ class LookupCest
 
     public function queryIdThatDoesNotExistTest(AcceptanceTester $I)
     {
-       $url = 'http://localhost/graphql';
-       $I->sendGet($url, [ 'queryId' => '1234' ] );
+       $I->sendGet('graphql', [ 'queryId' => '1234' ] );
        $I->seeResponseContainsJson([
            'errors' => [
                'message' => 'Query Not Found 1234'

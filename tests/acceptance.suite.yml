@@ -10,6 +10,7 @@ modules:
     enabled:
         - REST:
             depends: PhpBrowser
+            part: Json
         - \Helper\Acceptance
     config:
         PhpBrowser:

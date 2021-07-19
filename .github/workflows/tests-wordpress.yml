@@ -46,7 +46,7 @@ jobs:
       - name: Install dependencies
         run: composer install
 
-      - name: Run phpunit script
+      - name: Run acceptance tests
         run: docker-compose run testing
         env:
           WP_VERSION: 5.7.2
