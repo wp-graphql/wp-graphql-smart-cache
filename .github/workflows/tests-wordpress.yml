@@ -53,5 +53,12 @@ jobs:
           PHP_VERSION: 7.4
           SUITES: acceptance
 
+      - name: Run acceptance tests
+        run: docker-compose run testing
+        env:
+          WP_VERSION: 5.7.2
+          PHP_VERSION: 7.4
+          SUITES: functional
+
       - name: Run php code sniffer
         run: ./vendor/bin/phpcs
