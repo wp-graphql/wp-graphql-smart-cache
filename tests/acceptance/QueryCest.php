@@ -1,6 +1,6 @@
 <?php
 
-class LookupCest
+class QueryCest
 {
     public function _before(AcceptanceTester $I)
     {
