@@ -11,7 +11,6 @@ services:
     volumes:
       - '.:/var/www/html/wp-content/plugins/wp-graphql-persisted-queries'
       - './.log/app:/var/log/apache2'
-      - './local-wp-graphql:/var/www/html/wp-content/plugins/wp-graphql'
     env_file:
       - .env
     environment:
