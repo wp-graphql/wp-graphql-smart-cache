@@ -31,7 +31,7 @@ jobs:
           docker-compose build \
             --build-arg WP_VERSION=${{ matrix.wordpress }} \
             --build-arg PHP_VERSION=${{ matrix.php }} \
-            --build-arg DOCKER_REGISTRY=ghcr.io/wp-graphql/
+            --build-arg DOCKER_REGISTRY=ghcr.io/markkelnar/
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
