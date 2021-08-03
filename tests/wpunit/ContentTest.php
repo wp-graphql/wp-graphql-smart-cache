@@ -37,4 +37,27 @@ class ContentUnitTest extends \Codeception\TestCase\WPTestCase {
 		$this->assertTrue( $content->verifyHash( $query_hash, $query_pretty ) );
 	}
 
+	/**
+	 * Test graphql query with invalid string throws error
+	 */
+	public function test_query_hash_with_invalid_string() {
+		$this->expectException( \GraphQL\Error\SyntaxError::class );
+		$invalid_query = "{\n  contentNodes {\n    nodes {\n      uri";
+
+		$content = new Content();
+		// @throws SyntaxError
+		$content->generateHash( $invalid_query );
+	}
+
+	/**
+	 * Test graphql query with invalid string throws error
+	 */
+	public function test_query_verify_with_invalid_string() {
+		$this->expectException( \GraphQL\Error\SyntaxError::class );
+		$invalid_query = "{\n  contentNodes {\n    nodes {\n      uri";
+
+		$content = new Content();
+		// @throws SyntaxError
+		$content->verifyHash( '1234', $invalid_query );
+	}
 }

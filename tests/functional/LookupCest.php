@@ -77,6 +77,33 @@ class LookupCest {
 	}
 
 	// insert hash and query string, expect empty result
+	public function invalidQueryStringFailureTest( FunctionalTester $I ) {
+		$I->wantTo( 'Query with invalid query results in error' );
+
+		$query = "{\n  posts {\n    nodes {\n      title";
+		$query_hash = hash( 'sha256', $query );
+
+		$I->havePostInDatabase( [
+			'post_type'    => 'graphql_query',
+			'post_status'  => 'publish',
+			'post_name'    => $query_hash,
+			'post_content' => $query,
+		] );
+
+		$I->haveHttpHeader( 'Content-Type', 'application/json' );
+		$I->sendGet('graphql', [ 'queryId' => $query_hash ] );
+
+		$I->seeResponseContainsJson([
+			'errors' => [
+				'message' => 'Syntax Error: Expected Name, found <EOF>'
+			]
+		]);
+
+		// clean up
+		$I->dontHavePostInDatabase(['post_name' => $query_hash]);
+	}
+
+	// insert hash and query string, expect empty result
 	public function queryIdWithGraphqlEmptyResultsTest( FunctionalTester $I ) {
 		$I->wantTo( 'Query with hash that results in no return content/posts' );
 

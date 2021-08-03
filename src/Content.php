@@ -80,10 +80,12 @@ class Content {
 			return;
 		}
 
+		$query_operation_name = \GraphQL\Utils\AST::getOperationAST( $query );
+
 		$data = [
 			'post_content' => $query,
 			'post_name'    => $query_id,
-			'post_title'   => $query_id,
+			'post_title'   => $query_operation_name,
 			'post_status'  => 'publish',
 			'post_type'    => $this->type_name,
 		];
@@ -97,6 +99,8 @@ class Content {
 	 *
 	 * @param  string Query
 	 * @return string $query_id Query string str256 hash
+	 *
+	 * @throws \GraphQL\Error\SyntaxError
 	 */
 	public function generateHash( $query ) {
 		$ast     = \GraphQL\Language\Parser::parse( $query );
@@ -110,6 +114,8 @@ class Content {
 	 * @param  string $query_id Query string str256 hash
 	 * @param  string Query
 	 * @return boolean
+	 *
+	 * @throws \GraphQL\Error\SyntaxError
 	 */
 	public function verifyHash( $query_id, $query ) {
 		return $this->generateHash( $query ) === $query_id;
