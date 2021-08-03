@@ -53,6 +53,7 @@ class LookupCest {
 		$query = '{
 			foo: bizbang
 		}';
+
 		// Make sure query hash we use doesn't match
 		$query_hash = 'X-' . hash( 'sha256', $query );
 		$I->havePostInDatabase( [
@@ -79,14 +80,9 @@ class LookupCest {
 	public function queryIdWithGraphqlEmptyResultsTest( FunctionalTester $I ) {
 		$I->wantTo( 'Query with hash that results in no return content/posts' );
 
-		$query = '{
-			posts {
-				nodes {
-					title
-				}
-			}
-		}';
+		$query = "{\n  posts {\n    nodes {\n      title\n    }\n  }\n}\n";
 		$query_hash = hash( 'sha256', $query );
+
 		$I->havePostInDatabase( [
 			'post_type'    => 'graphql_query',
 			'post_status'  => 'publish',
@@ -110,14 +106,9 @@ class LookupCest {
 	public function queryIdWithGraphqlWithPostsTest( FunctionalTester $I ) {
 		$I->wantTo( 'Query with a hash that results in posts from the database' );
 
-		$query = '{
-			posts {
-				nodes {
-					title
-				}
-			}
-		}';
+		$query = "{\n  posts {\n    nodes {\n      title\n    }\n  }\n}\n";
 		$query_hash = hash( 'sha256', $query );
+
 		$I->havePostInDatabase( [
 			'post_type'    => 'graphql_query',
 			'post_status'  => 'publish',

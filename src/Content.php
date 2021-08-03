@@ -7,8 +7,6 @@
 
 namespace WPGraphQL\PersistedQueries;
 
-use GraphQL\Server\RequestError;
-
 class Content {
 
 	public $type_name = 'graphql_query';
@@ -95,6 +93,18 @@ class Content {
 	}
 
 	/**
+	 * Generate query hash for graphql query string
+	 *
+	 * @param  string Query
+	 * @return string $query_id Query string str256 hash
+	 */
+	public function generateHash( $query ) {
+		$ast = \GraphQL\Language\Parser::parse($query);
+		$printed = \GraphQL\Language\Printer::doPrint($ast);
+		return hash( 'sha256', $printed);
+	}
+
+	/**
 	 * Verify the query_id matches the query hash
 	 *
 	 * @param  string $query_id Query string str256 hash
@@ -102,6 +112,6 @@ class Content {
 	 * @return boolean
 	 */
 	public function verifyHash( $query_id, $query ) {
-		return hash( 'sha256', $query ) === $query_id;
+		return $this->generateHash( $query ) === $query_id;
 	}
 }
