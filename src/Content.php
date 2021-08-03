@@ -49,7 +49,7 @@ class Content {
 	 */
 	public function get( $query_id ) {
 		// Queries are persisted via the custom post type of our type
-		$post = get_page_by_title( $query_id, 'OBJECT', $this->type_name );
+		$post = get_page_by_path( $query_id, 'OBJECT', $this->type_name );
 
 		if ( empty( $post->post_content ) ) {
 			return;

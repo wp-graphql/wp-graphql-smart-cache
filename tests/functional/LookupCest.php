@@ -29,7 +29,7 @@ class LookupCest {
 		$I->havePostInDatabase( [
 			'post_type'    => 'graphql_query',
 			'post_status'  => 'publish',
-			'post_title'   => $query_hash,
+			'post_name'    => $query_hash,
 			'post_content' => '',
 		] );
 
@@ -43,7 +43,7 @@ class LookupCest {
 		]);
 
 		// clean up
-		$I->dontHavePostInDatabase(['post_title' => $query_hash]);
+		$I->dontHavePostInDatabase(['post_name' => $query_hash]);
 	}
 
 	// insert hash and query string that doesn't match. expect error
@@ -59,7 +59,7 @@ class LookupCest {
 		$I->havePostInDatabase( [
 			'post_type'    => 'graphql_query',
 			'post_status'  => 'publish',
-			'post_title'   => $query_hash,
+			'post_name'    => $query_hash,
 			'post_content' => $query,
 		] );
 		
@@ -73,7 +73,7 @@ class LookupCest {
 		]);
 
 		// clean up
-		$I->dontHavePostInDatabase(['post_title' => $query_hash]);
+		$I->dontHavePostInDatabase(['post_name' => $query_hash]);
 	}
 
 	// insert hash and query string, expect empty result
@@ -86,7 +86,7 @@ class LookupCest {
 		$I->havePostInDatabase( [
 			'post_type'    => 'graphql_query',
 			'post_status'  => 'publish',
-			'post_title'   => $query_hash,
+			'post_name'    => $query_hash,
 			'post_content' => $query,
 		] );
 		
@@ -99,7 +99,7 @@ class LookupCest {
 		);
 
 		// clean up
-		$I->dontHavePostInDatabase(['post_title' => $query_hash]);
+		$I->dontHavePostInDatabase(['post_name' => $query_hash]);
 	}
 
 	// insert hash, query string, posts. expect results
@@ -112,7 +112,7 @@ class LookupCest {
 		$I->havePostInDatabase( [
 			'post_type'    => 'graphql_query',
 			'post_status'  => 'publish',
-			'post_title'   => $query_hash,
+			'post_name'    => $query_hash,
 			'post_content' => $query,
 		] );
 
@@ -121,7 +121,7 @@ class LookupCest {
 			'post_status'  => 'publish',
 			'post_title'   => 'foo',
 			'post_content' => 'foo bar. biz bang.',
-			'post_name'   => 'foo-slug',
+			'post_name'    => 'foo-slug',
 		] );
 
 		$I->haveHttpHeader( 'Content-Type', 'application/json' );
@@ -138,7 +138,7 @@ class LookupCest {
 		]);
 
 		// clean up
-		$I->dontHavePostInDatabase( [ 'post_title' => $query_hash ] );
+		$I->dontHavePostInDatabase( [ 'post_name' => $query_hash ] );
 		$I->dontHavePostInDatabase( [ 'post_title' => 'foo' ] );
 	}
 }
