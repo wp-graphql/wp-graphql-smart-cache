@@ -99,9 +99,9 @@ class Content {
 	 * @return string $query_id Query string str256 hash
 	 */
 	public function generateHash( $query ) {
-		$ast = \GraphQL\Language\Parser::parse($query);
-		$printed = \GraphQL\Language\Printer::doPrint($ast);
-		return hash( 'sha256', $printed);
+		$ast     = \GraphQL\Language\Parser::parse( $query );
+		$printed = \GraphQL\Language\Printer::doPrint( $ast );
+		return hash( 'sha256', $printed );
 	}
 
 	/**
