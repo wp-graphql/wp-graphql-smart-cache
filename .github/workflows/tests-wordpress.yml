@@ -31,7 +31,7 @@ jobs:
           docker-compose build \
             --build-arg WP_VERSION=${{ matrix.wordpress }} \
             --build-arg PHP_VERSION=${{ matrix.php }} \
-            --build-arg DOCKER_REGISTRY=ghcr.io/markkelnar/
+            --build-arg DOCKER_REGISTRY=ghcr.io/wp-graphql/
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -58,7 +58,7 @@ jobs:
         env:
           WP_VERSION: ${{ matrix.wordpress }}
           PHP_VERSION: ${{ matrix.php }}
-          SUITES: acceptance,functional
+          SUITES: use value from .env
 
       - name: Run php code sniffer
         run: ./vendor/bin/phpcs
