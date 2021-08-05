@@ -42,6 +42,27 @@ class Content {
 	}
 
 	/**
+	 * Process request looking for when queryid and query are present.
+	 * Save the query and remove it from the request
+	 *
+	 * @param  array $parsed_body_params Request parameters.
+	 * @param  array $request_context An array containing the both body and query params
+	 * @return string Updated $parsed_body_params Request parameters.
+	 */
+	public static function filter_request_data( $parsed_body_params, $request_context ) {
+
+		if ( isset($parsed_body_params['query']) && isset($parsed_body_params['queryId']) ) {
+			// save the query
+			$content = new Content();
+			$content->save( $parsed_body_params['queryId'], $parsed_body_params['query'] );
+
+			// remove it from process body params so graphql-php operation proceeds without conflict.
+			unset( $parsed_body_params['query'] );
+		}
+		return $parsed_body_params;
+	}
+
+	/**
 	 * Load a persisted query corresponding to a query ID (hash).
 	 *
 	 * @param  string $query_id Query ID
@@ -67,7 +88,6 @@ class Content {
 	 * Save a query by query ID (hash).
 	 *
 	 * @param  string $query_id Query string str256 hash
-	 * @return string Query
 	 */
 	public function save( $query_id, $query ) {
 		// If have this query id saved already
@@ -80,7 +100,9 @@ class Content {
 			return;
 		}
 
-		$query_operation_name = \GraphQL\Utils\AST::getOperationAST( $query );
+		$query_operation_name = \GraphQL\Utils\AST::getOperationAST(
+			\GraphQL\Language\Parser::parse( $query )
+		);
 
 		$data = [
 			'post_content' => $query,

@@ -34,3 +34,4 @@ add_action(
 );
 
 add_action( 'init', [ __NAMESPACE__ . '\Content', 'register' ] );
+add_filter( 'graphql_request_data', [ __NAMESPACE__ . '\Content', 'filter_request_data' ], 10, 2 );

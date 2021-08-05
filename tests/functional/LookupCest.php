@@ -130,7 +130,7 @@ class LookupCest {
 	}
 
 	// insert hash, query string, posts. expect results
-	public function queryIdWithGraphqlWithPostsTest( FunctionalTester $I ) {
+	public function queryIdWithGraphqlReturnsPostsTest( FunctionalTester $I ) {
 		$I->wantTo( 'Query with a hash that results in posts from the database' );
 
 		$query = "{\n  posts {\n    nodes {\n      title\n    }\n  }\n}\n";
@@ -164,8 +164,28 @@ class LookupCest {
 			]
 		]);
 
+		// Query using other accepted format
+		$I->sendGet('graphql', [
+			'extensions' => [
+				"persistedQuery" => [
+					"version" => 1,
+					"sha256Hash" => $query_hash
+				]
+			]
+		] );
+		$I->seeResponseContainsJson( [
+			'data' => [
+				'posts' => [
+					'nodes' => [
+							'title' => 'foo'
+					]
+				]
+			]
+		]);
+
 		// clean up
 		$I->dontHavePostInDatabase( [ 'post_name' => $query_hash ] );
 		$I->dontHavePostInDatabase( [ 'post_title' => 'foo' ] );
 	}
+
 }
