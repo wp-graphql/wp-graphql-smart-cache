@@ -50,8 +50,7 @@ class Content {
 	 * @return string Updated $parsed_body_params Request parameters.
 	 */
 	public static function filter_request_data( $parsed_body_params, $request_context ) {
-
-		if ( isset($parsed_body_params['query']) && isset($parsed_body_params['queryId']) ) {
+		if ( isset( $parsed_body_params['query'] ) && isset( $parsed_body_params['queryId'] ) ) {
 			// save the query
 			$content = new Content();
 			$content->save( $parsed_body_params['queryId'], $parsed_body_params['query'] );
@@ -100,14 +99,13 @@ class Content {
 			return;
 		}
 
-		$query_operation_name = \GraphQL\Utils\AST::getOperationAST(
-			\GraphQL\Language\Parser::parse( $query )
-		);
+		$ast             = \GraphQL\Language\Parser::parse( $query );
+		$query_operation = \GraphQL\Utils\AST::getOperationAST( $ast );
 
 		$data = [
 			'post_content' => $query,
 			'post_name'    => $query_id,
-			'post_title'   => $query_operation_name,
+			'post_title'   => $query_operation->name->value ?: 'query',
 			'post_status'  => 'publish',
 			'post_type'    => $this->type_name,
 		];

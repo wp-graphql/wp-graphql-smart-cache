@@ -30,7 +30,12 @@ class QueryCest
 
         $I->sendPost('graphql', [
             'query' => '{ __typename }',
-            'extensions' => '{"persistedQuery":{"version":1,"sha256Hash":"8d8f7365e9e86fa8e3313fcaf2131b801eafe9549de22373089cf27511858b39"}}'
+            'extensions' => [
+                "persistedQuery" => [
+                    "version" => 1,
+                    "sha256Hash" => "8d8f7365e9e86fa8e3313fcaf2131b801eafe9549de22373089cf27511858b39"
+                ]
+            ]
         ] );
         $I->seeResponseContainsJson([
             'data' => [
