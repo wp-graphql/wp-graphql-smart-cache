@@ -12,7 +12,7 @@ services:
       - '.:/var/www/html/wp-content/plugins/wp-graphql-persisted-queries'
       - './.log/app:/var/log/apache2'
     env_file:
-      - .env
+      - .env.dist
     environment:
       USING_XDEBUG: ${USING_XDEBUG:-}
     ports:
@@ -23,7 +23,7 @@ services:
   app_db:
     image: mariadb:10.2
     env_file:
-      - .env
+      - .env.dist
     ports:
       - '3306'
     networks:
@@ -31,7 +31,7 @@ services:
 
   testing:
     depends_on:
-      - app_db
+      - testing_db
     build:
       context: .
       dockerfile: docker/Dockerfile.testing
@@ -39,12 +39,22 @@ services:
     volumes:
       - '.:/var/www/html/wp-content/plugins/wp-graphql-persisted-queries'
     env_file:
-      - .env
+      - .env.testing
     environment:
       WP_URL: http://localhost
       USING_XDEBUG: ${USING_XDEBUG:-}
     networks:
       local:
+
+  testing_db:
+    image: mariadb:10.2
+    env_file:
+      - .env.testing
+    ports:
+      - '3306'
+    networks:
+      local:
+
 
 networks:
   local:
