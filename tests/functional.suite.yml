@@ -1,0 +1,28 @@
+# Codeception Test Suite Configuration
+#
+# Suite for functional tests
+# Emulate web requests and make WordPress process them
+
+actor: FunctionalTester
+modules:
+    enabled:
+        - Asserts
+        - REST:
+            depends: PhpBrowser
+            part: Json
+        - WPDb
+        - \Helper\Functional
+    disabled:
+        - WPBrowser
+    config:
+        PhpBrowser:
+            url: '%TEST_SITE_WP_URL%'
+            headers:
+                Content-Type: application/json
+        WPDb:
+            dsn: 'mysql:host=%TEST_SITE_DB_HOST%;dbname=%TEST_SITE_DB_NAME%'
+            user: '%TEST_SITE_DB_USER%'
+            password: '%TEST_SITE_DB_PASSWORD%'
+            url: '%WP_URL%'
+            tablePrefix: '%TEST_SITE_TABLE_PREFIX%'
+            urlReplacement: false

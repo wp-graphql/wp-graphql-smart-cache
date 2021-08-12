@@ -5,11 +5,8 @@
  * Description:     Persisted Queries and Caching for WP Graphql for WordPress
  * Author:          WPGraphQL
  * Author URI:      http://www.wpgraphql.com
- * Text Domain:     wp-graphql-persisted-queries
  * Domain Path:     /languages
  * Version:         0.1.0
- *
- * @package         Wp_Graphql_Persisted_Queries
  */
 
 namespace WPGraphQL\PersistedQueries;
@@ -35,3 +32,6 @@ add_action(
 	10,
 	1
 );
+
+add_action( 'init', [ __NAMESPACE__ . '\Content', 'register' ] );
+add_filter( 'graphql_request_data', [ __NAMESPACE__ . '\Content', 'filter_request_data' ], 10, 2 );

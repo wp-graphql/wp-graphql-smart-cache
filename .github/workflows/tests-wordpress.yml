@@ -13,23 +13,29 @@ on:
 jobs:
   run:
     runs-on: ubuntu-latest
-    name: WordPress Integration Tests
+    name: WordPress ${{ matrix.wordpress }} Integration Tests on PHP ${{ matrix.php }}
+    strategy:
+      matrix:
+        php: [ '7.4' ]
+        wordpress: [ '5.7.2' ]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
 
       - name: Build container image
+        env:
+          PHP_VERSION: ${{ matrix.php }}
+          WP_VERSION: ${{ matrix.wordpress }}
         run: |
-          cp .env.dist .env
           docker-compose build \
-            --build-arg WP_VERSION=5.6 \
-            --build-arg PHP_VERSION=7.4 \
-            --build-arg DOCKER_REGISTRY=ghcr.io/markkelnar/
+            --build-arg WP_VERSION=${{ matrix.wordpress }} \
+            --build-arg PHP_VERSION=${{ matrix.php }} \
+            --build-arg DOCKER_REGISTRY=ghcr.io/wp-graphql/
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: 7.4
+          php-version: ${{ matrix.php }}
           tools: composer
 
       - name: Get Composer Cache Directory
@@ -46,8 +52,12 @@ jobs:
       - name: Install dependencies
         run: composer install
 
-      - name: Run phpunit script
-        run: docker-compose run app bash -c "cd wp-content/plugins/wp-graphql-persisted-queries ; vendor/bin/phpunit"
+      - name: Run acceptance, functional tests
+        run: docker-compose run testing
+        env:
+          WP_VERSION: ${{ matrix.wordpress }}
+          PHP_VERSION: ${{ matrix.php }}
+          SUITES: use value from .env
 
       - name: Run php code sniffer
         run: ./vendor/bin/phpcs

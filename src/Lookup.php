@@ -7,6 +7,9 @@
 
 namespace WPGraphQL\PersistedQueries;
 
+use WPGraphQL\PersistedQueries\Content;
+use GraphQL\Server\RequestError;
+
 class Lookup {
 	/**
 	 * When a queryId is found on the request, this call back is invoked to look up the query string
@@ -17,15 +20,14 @@ class Lookup {
 	 * @return string | GraphQL\Language\AST\DocumentNode
 	 */
 	public static function by_query_id( $query_id, $operation_params ) {
-		// We look for the query id in our system and return that.
-		// This is where we look for the query id in our storage and return that string as the query
-		wp_send_json( [ 'this is a query with an id:' => [ $query_id, $operation_params ] ] );
-		return '{
-			contentNodes {
-				nodes {
-					uri
-				}
-			}
-		}';
+		$content = new Content();
+		$query   = $content->get( $query_id );
+
+		if ( ! isset( $query ) ) {
+			// Translators: The placeholder is the persisted query id hash
+			throw new RequestError( sprintf( __( 'Query Not Found %s', 'wp-graphql-persisted-queries' ), $query_id ) );
+		}
+
+		return $query;
 	}
 }
