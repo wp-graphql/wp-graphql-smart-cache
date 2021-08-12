@@ -31,14 +31,14 @@ class Content {
 		);
 
 		register_taxonomy(
-			'graphql_persisted',
+			'graphql_persisted_queries',
 			$content->type_name,
 			[
-				'description' => 'Taxonomy for saved GraphQL queries',
+				'description' => __( 'Taxonomy for saved GraphQL queries', 'wp-graphql-persisted-queries' ),
 			]
 		);
 
-		register_taxonomy_for_object_type( 'graphql_persisted', $content->type_name );
+		register_taxonomy_for_object_type( 'graphql_persisted_queries', $content->type_name );
 	}
 
 	/**
