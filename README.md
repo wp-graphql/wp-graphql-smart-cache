@@ -18,11 +18,11 @@ This section describes how to setup and run this plugin, WP and the wp-graphql p
 
 ## Build
 
-### docker-compose build
+Use one of the following commands to build the local images for the app and testing.
 
-Use one of the following commands to build the local images for the app and teting.
+### docker-compose
 
-Build all images in the docker compose configuration.
+Build all images in the docker compose configuration. Requires having built your own wp-graphql local images.
 
     WP_VERSION=5.7.2  PHP_VERSION=7.4 docker-compose build --build-arg WP_VERSION=5.7.2 --build-arg PHP_VERSION=7.4
 
@@ -34,7 +34,7 @@ Build using wp-graphql image from docker hub registry, instead of building your 
 
     WP_VERSION=5.7.2  PHP_VERSION=7.4 docker-compose build --build-arg WP_VERSION=5.7.2 --build-arg PHP_VERSION=7.4 --build-arg DOCKER_REGISTRY=ghcr.io/wp-graphql/
 
-### docker build
+### docker
 
 Use this command if you want to build a specific image. If you ran the docker-compose command above, this is not necessary.
 
@@ -76,21 +76,25 @@ Use this section to run the plugin codeception test suites.
 
 ## Build
 
-Use one of the following commands to build the test docker image. If you ran the docker-compose build command, above, this step is not necessary and you should already have the build docker image, skip to run.
+Use one of the following commands to build the test docker image. 
 
-### docker-compose build
+### docker-compose
 
-    WP_VERSION=5.7.2 PHP_VERSION=7.4 docker build -f Dockerfile.testing -t wp-graphql-persisted-queries-testing:latest-wp${WP_VERSION}-php${PHP_VERSION} --build-arg WP_VERSION=${WP_VERSION} --build-arg PHP_VERSION=${PHP_VERSION}
+If you ran the docker-compose build command, above, this step is not necessary and you should already have the build docker image, skip to run.
 
-### docker build
+### docker
 
-    docker build -f docker/Dockerfile.testing -t wp-graphql-persisted-queries-testing:latest-wp5.7.2-php7.4 --build-arg WP_VERSION=5.7.2 --build-arg PHP_VERSION=7.4
+    WP_VERSION=5.7.2 PHP_VERSION=7.4 docker build -f docker/Dockerfile.testing -t wp-graphql-persisted-queries-testing:latest-wp5.7.2-php7.4 --build-arg WP_VERSION=5.7.2 --build-arg PHP_VERSION=7.4 --build-arg DOCKER_REGISTRY=ghcr.io/wp-graphql/ .
+
+    docker build -f docker/Dockerfile.testing -t wp-graphql-persisted-queries-testing:latest-wp5.7.2-php7.4 --build-arg WP_VERSION=5.7.2 --build-arg PHP_VERSION=7.4 --build-arg DOCKER_REGISTRY=ghcr.io/wp-graphql/ .
 
 ## Run
 
-Use this command to run the test suites.
+Use one of these commands to run the test suites.
 
-    WP_VERSION=5.7.2 PHP_VERSION=7.4 SUITES=acceptance,functional docker-compose run testing
+    WP_VERSION=5.7.2 PHP_VERSION=7.4 docker-compose run testing
+
+    docker-compose run testing
 
 ## Shell
 
