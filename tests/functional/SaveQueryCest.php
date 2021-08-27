@@ -43,26 +43,30 @@ class SaveQueryCest {
 		$I->dontHavePostInDatabase( [ 'post_name' => $query_hash ] );
 	}
 
-	public function saveQueryWithWrongIdFailsTest( FunctionalTester $I ) {
-		$I->wantTo( 'Save a graphql query with a query id/hash that does not match' );
+	public function saveQueryWithAliasNameSavesTest( FunctionalTester $I ) {
+		$I->wantTo( 'Save a graphql query with a query id/hash that does not match, saves as alias' );
 
 		$query = "{\n  __typename\n}\n";
 
 		// Make sure query hash we use doesn't match
-		$query_hash = 'X-' . hash( 'sha256', $query );
+		$query_hash = hash( 'sha256', $query );
+		$query_alias = 'test-save-query-creates-alias';
 
+		$I->dontSeeTermInDatabase( [ 'name' => 'graphql_query_label' ] );
 		$I->sendPost('graphql', [
 			'query' => $query,
-			'queryId' => $query_hash
+			'queryId' => $query_alias
 		] );
 		$I->seeResponseContainsJson([
-			'errors' => [
-				'message' => sprintf( 'Query Not Found %s', $query_hash )
+			'data' => [
+				'__typename' => 'RootQuery'
 			]
 		]);
-		$I->dontSeePostInDatabase( [
-			'post_content' => $query,
+		$I->seePostInDatabase( [
+			'post_name' => $query_hash,
 		] );
+		$I->seeTermInDatabase( [ 'name' => $query_hash ] );
+		$I->seeTermInDatabase( [ 'name' => $query_alias ] );
 	}
 
 	public function saveQueryWithInvalidIdFailsTest( FunctionalTester $I ) {

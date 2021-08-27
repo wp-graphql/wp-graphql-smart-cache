@@ -9,7 +9,8 @@ namespace WPGraphQL\PersistedQueries;
 
 class Content {
 
-	public $type_name = 'graphql_query';
+	public $type_name     = 'graphql_query';
+	public $taxonomy_name = 'graphql_query_label';
 
 	public static function register() {
 		$content = new Content();
@@ -21,24 +22,39 @@ class Content {
 					'name'          => __( 'GraphQLQueries', 'wp-graphql-persisted-queries' ),
 					'singular_name' => __( 'GraphQLQuery', 'wp-graphql-persisted-queries' ),
 				],
-				'description' => 'Saved GraphQL queries',
+				'description' => __( 'Saved GraphQL queries', 'wp-graphql-persisted-queries' ),
 				'public'      => true,
 				'show_ui'     => true,
 				'taxonomies'  => [
-					'graphql_persisted_queries',
+					$content->taxonomy_name,
 				],
 			]
 		);
 
 		register_taxonomy(
-			'graphql_persisted_queries',
+			$content->taxonomy_name,
 			$content->type_name,
 			[
-				'description' => __( 'Taxonomy for saved GraphQL queries', 'wp-graphql-persisted-queries' ),
+				'description'  => __( 'Taxonomy for saved GraphQL queries', 'wp-graphql-persisted-queries' ),
+				'hierarchical' => false,
+				'labels'       => [
+					'name'              => __( 'GraphQL Query Names', 'wp-graphql-persisted-queries' ),
+					'singular_name'     => __( 'GraphQL Query Name', 'wp-graphql-persisted-queries' ),
+					'search_items'      => __( 'Search Query Names', 'wp-graphql-persisted-queries' ),
+					'all_items'         => __( 'All Query Name', 'wp-graphql-persisted-queries' ),
+					'parent_item'       => __( 'Parent Query Name', 'wp-graphql-persisted-queries' ),
+					'parent_item_colon' => __( 'Parent Query Name:', 'wp-graphql-persisted-queries' ),
+					'edit_item'         => __( 'Edit Query Name', 'wp-graphql-persisted-queries' ),
+					'update_item'       => __( 'Update Query Name', 'wp-graphql-persisted-queries' ),
+					'add_new_item'      => __( 'Add New Query Name', 'wp-graphql-persisted-queries' ),
+					'new_item_name'     => __( 'New Query Name', 'wp-graphql-persisted-queries' ),
+					'menu_name'         => __( 'GraphQL Query Names', 'wp-graphql-persisted-queries' ),
+				],
+				'show_ui'      => true,
 			]
 		);
 
-		register_taxonomy_for_object_type( 'graphql_persisted_queries', $content->type_name );
+		register_taxonomy_for_object_type( $content->taxonomy_name, $content->type_name );
 	}
 
 	/**
@@ -62,21 +78,33 @@ class Content {
 	}
 
 	/**
-	 * Load a persisted query corresponding to a query ID (hash).
+	 * Load a persisted query corresponding to a query ID (hash) or alias/alternate name
 	 *
 	 * @param  string $query_id Query ID
 	 * @return string Query
 	 */
 	public function get( $query_id ) {
-		// Queries are persisted via the custom post type of our type
-		$post = get_page_by_path( $query_id, 'OBJECT', $this->type_name );
-
-		if ( empty( $post->post_content ) ) {
+		$wp_query = new \WP_Query(
+			[
+				'post_type'      => $this->type_name,
+				'post_status'    => 'publish',
+				'posts_per_page' => 1,
+				'tax_query'      => [
+					[
+						'taxonomy' => $this->taxonomy_name,
+						'field'    => 'name',
+						'terms'    => $query_id,
+					],
+				],
+			]
+		);
+		$posts    = $wp_query->get_posts();
+		if ( empty( $posts ) ) {
 			return;
 		}
 
-		// Verify the query hash matches the provided query_id
-		if ( ! $this->verifyHash( $query_id, $post->post_content ) ) {
+		$post = array_pop( $posts );
+		if ( ! $post || empty( $post->post_content ) ) {
 			return;
 		}
 
@@ -84,34 +112,68 @@ class Content {
 	}
 
 	/**
-	 * Save a query by query ID (hash).
+	 * Save a query by query ID (hash) or alias/alternate name
 	 *
 	 * @param  string $query_id Query string str256 hash
 	 */
 	public function save( $query_id, $query ) {
-		// If have this query id saved already
-		if ( ! empty( $this->get( $query_id ) ) ) {
-			return;
+		// Get post using the normalized hash of the query string
+		$normalized_hash = $this->generateHash( $query );
+
+		// The normalized query should have one saved object/post by hash as the slug name
+		$post = get_page_by_path( $normalized_hash, 'OBJECT', $this->type_name );
+		if ( empty( $post ) ) {
+			$ast             = \GraphQL\Language\Parser::parse( $query );
+			$query_operation = \GraphQL\Utils\AST::getOperationAST( $ast );
+
+			$data = [
+				'post_content' => $query,
+				'post_name'    => $normalized_hash,
+				'post_title'   => $query_operation->name->value ?: 'query',
+				'post_status'  => 'publish',
+				'post_type'    => $this->type_name,
+			];
+
+			// The post ID on success. The value 0 or WP_Error on failure.
+			$post_id = wp_insert_post( $data );
+			if ( is_wp_error( $post ) ) {
+				// throw some error?
+				return;
+			}
+		} else {
+			$post_id = $post->ID;
 		}
 
-		// Verify the query hash matches the provided query_id
-		if ( ! $this->verifyHash( $query_id, $query ) ) {
-			return;
+		// Save the term entries for normalized hash and if provided query id is different
+		$term_names = [ $normalized_hash ];
+
+		// If provided query_id hash is different than normalized hash, save the term associated with the hierarchy
+		if ( $query_id !== $normalized_hash ) {
+			$term_names[] = $query_id;
 		}
 
-		$ast             = \GraphQL\Language\Parser::parse( $query );
-		$query_operation = \GraphQL\Utils\AST::getOperationAST( $ast );
+		// Gather the term ids to save with the post
+		$term_ids = [];
+		foreach ( $term_names as $term_name ) {
+			if ( $this->termExists( $term_name ) ) {
+				continue;
+			}
 
-		$data = [
-			'post_content' => $query,
-			'post_name'    => $query_id,
-			'post_title'   => $query_operation->name->value ?: 'query',
-			'post_status'  => 'publish',
-			'post_type'    => $this->type_name,
-		];
+			$term       = wp_insert_term(
+				$term_name,
+				$this->taxonomy_name,
+				[
+					'description' => __( 'A graphql query relationship', 'wp-graphql-persisted-queries' ),
+				]
+			);
+			$term_ids[] = $term['term_id'];
+		}
 
-		// The post ID on success. The value 0 or WP_Error on failure.
-		wp_insert_post( $data );
+		wp_add_object_terms(
+			$post_id,
+			$term_ids,
+			$this->taxonomy_name
+		);
 	}
 
 	/**
@@ -139,5 +201,23 @@ class Content {
 	 */
 	public function verifyHash( $query_id, $query ) {
 		return $this->generateHash( $query ) === $query_id;
+	}
+
+	/**
+	 * Query taxonomy terms for existance of provided name/alias.
+	 *
+	 * @param  string   Query name/alias
+	 * @return boolean  If term for the taxonomy already exists
+	 */
+	public function termExists( $name ) {
+		$query = new \WP_Term_Query(
+			[
+				'taxonomy' => $this->taxonomy_name,
+				'fields'   => 'names',
+				'get'      => 'all',
+			]
+		);
+		$terms = $query->get_terms();
+		return in_array( $name, $terms, true );
 	}
 }
