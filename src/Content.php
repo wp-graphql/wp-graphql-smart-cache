@@ -140,6 +140,12 @@ class Content {
 				// throw some error?
 				return;
 			}
+
+			// Upon saving the new persisted query, remove any terms that already exist as aliases
+			$term_object = get_term_by( 'name', $normalized_hash, $this->taxonomy_name );
+			if ( $term_object ) {
+				$r = wp_delete_term( $term_object->term_id, $this->taxonomy_name );
+			}
 		} else {
 			$post_id = $post->ID;
 		}

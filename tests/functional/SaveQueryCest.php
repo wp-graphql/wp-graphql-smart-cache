@@ -4,6 +4,10 @@ class SaveQueryCest {
 	public function _before( FunctionalTester $I ) {
 		// Make sure that is gone.
 		$I->dontHavePostInDatabase(['post_title' => 'Hello world!']);
+
+		// clean up and persisted queries terms in the taxonomy
+		$I->dontHavePostInDatabase( [ 'post_type' => 'graphql_query' ] );
+		$I->dontHaveTermInDatabase( ['taxonomy' => 'graphql_query_label'] );
 	}
 
 	public function saveQueryWithSpecificNameTest( FunctionalTester $I ) {
@@ -38,9 +42,6 @@ class SaveQueryCest {
 				'__typename' => 'RootQuery'
 			]
 		]);
-
-		// clean up
-		$I->dontHavePostInDatabase( [ 'post_name' => $query_hash ] );
 	}
 
 	public function saveQueryWithAliasNameSavesTest( FunctionalTester $I ) {
@@ -89,6 +90,56 @@ class SaveQueryCest {
 			'post_name'    => $query_hash,
 			'post_content' => $query,
 		] );
+	}
+
+	public function saveQueryWithExistingTermForHashTest( FunctionalTester $I ) {
+		$I->wantTo( 'Save a graphql query where the hash for the query exists as a term already' );
+
+		$query = "{\n  __typename\n}\n";
+		$query_hash = hash( 'sha256', $query );
+
+		// Save this query with an hash for another valid query as alias
+		$query_for_posts = "
+		{
+			posts {
+			  nodes {
+				id
+			  }
+			}
+		  }
+		";
+		$I->sendPost('graphql', [
+			'query' => $query_for_posts,
+			'queryId' => $query_hash
+		] );
+		$I->seeResponseContainsJson([
+			'data' => [
+				'posts' => [
+					'nodes' => []
+				]
+			]
+		]);
+		$I->seeTermInDatabase( [ 'name' => $query_hash ] );
+
+		// Query with this persisted hash works, but not with the query we want, yet.
+		$I->sendGet( 'graphql', [ 'queryId' => $query_hash ] );
+		$I->seeResponseContainsJson( [
+			'data' => [
+				'posts' => [
+					'nodes' => []
+				]
+			]
+		]);
+
+		$I->sendPost('graphql', [
+			'query' => $query,
+			'queryId' => $query_hash
+		] );
+		$I->seeResponseContainsJson([
+			'data' => [
+				'__typename' => 'RootQuery'
+			]
+		]);
 	}
 
 	public function saveQueryUsingExistingAliasTest( FunctionalTester $I ) {
@@ -142,9 +193,7 @@ class SaveQueryCest {
 		]);
 
 		// clean up
-		$I->dontHavePostInDatabase( [ 'post_type' => 'graphql_query' ] );
 		$I->dontHavePostInDatabase( [ 'post_title' => 'foo' ] );
-		$I->dontHaveTermInDatabase( ['taxonomy' => 'graphql_query_label'] );
 	}
 
 }
