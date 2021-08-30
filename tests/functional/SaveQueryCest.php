@@ -90,4 +90,61 @@ class SaveQueryCest {
 			'post_content' => $query,
 		] );
 	}
+
+	public function saveQueryUsingExistingAliasTest( FunctionalTester $I ) {
+		$I->wantTo( 'Save a graphql query using existing query alias' );
+
+		// Set up some content
+		$I->havePostInDatabase( [
+			'post_type'    => 'post',
+			'post_status'  => 'publish',
+			'post_title'   => 'foo',
+			'post_content' => 'foo bar. biz bang.',
+			'post_name'    => 'foo-slug',
+		] );
+
+		// Save a query with an alias
+		$query = "{ posts { nodes { __typename content } } }";
+		$query_alias = 'query_posts_with_content';
+
+		$I->sendPost('graphql', [
+			'query' => $query,
+			'queryId' => $query_alias
+		] );
+		$I->seeResponseContainsJson( [
+			'data' => [
+				'posts' => [
+					'nodes' => [
+							'__typename' => 'Post',
+							'content' => "<p>foo bar. biz bang.</p>\n",
+					]
+				]
+			]
+		]);
+		$I->seeTermInDatabase( [ 'name' => $query_alias ] );
+
+		// Save a different query using an alias for the first query with content
+		$query = "{ posts { nodes { slug uri } } }";
+
+		$I->sendPost('graphql', [
+			'query' => $query,
+			'queryId' => $query_alias
+		] );
+		$I->seeResponseContainsJson( [
+			'data' => [
+				'posts' => [
+					'nodes' => [
+							'__typename' => 'Post',
+							'content' => "<p>foo bar. biz bang.</p>\n",
+					]
+				]
+			]
+		]);
+
+		// clean up
+		$I->dontHavePostInDatabase( [ 'post_type' => 'graphql_query' ] );
+		$I->dontHavePostInDatabase( [ 'post_title' => 'foo' ] );
+		$I->dontHaveTermInDatabase( ['taxonomy' => 'graphql_query_label'] );
+	}
+
 }

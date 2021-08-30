@@ -127,7 +127,7 @@ class Content {
 			$query_operation = \GraphQL\Utils\AST::getOperationAST( $ast );
 
 			$data = [
-				'post_content' => $query,
+				'post_content' => \GraphQL\Language\Printer::doPrint( $ast ),
 				'post_name'    => $normalized_hash,
 				'post_title'   => $query_operation->name->value ?: 'query',
 				'post_status'  => 'publish',
@@ -169,11 +169,13 @@ class Content {
 			$term_ids[] = $term['term_id'];
 		}
 
-		wp_add_object_terms(
-			$post_id,
-			$term_ids,
-			$this->taxonomy_name
-		);
+		if ( ! empty($term_ids) ) {
+			wp_add_object_terms(
+				$post_id,
+				$term_ids,
+				$this->taxonomy_name
+			);
+		}
 	}
 
 	/**
