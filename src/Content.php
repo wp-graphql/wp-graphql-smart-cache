@@ -175,7 +175,7 @@ class Content {
 			$term_ids[] = $term['term_id'];
 		}
 
-		if ( ! empty($term_ids) ) {
+		if ( ! empty( $term_ids ) ) {
 			wp_add_object_terms(
 				$post_id,
 				$term_ids,
