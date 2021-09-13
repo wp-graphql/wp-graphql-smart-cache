@@ -120,6 +120,62 @@
             "time": "2021-02-04T12:44:21+00:00"
         },
         {
+            "name": "bordoni/phpass",
+            "version": "0.3.5",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/bordoni/phpass.git",
+                "reference": "fd57c109213e95150b7de1dc8908c55605cd8e55"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/bordoni/phpass/zipball/fd57c109213e95150b7de1dc8908c55605cd8e55",
+                "reference": "fd57c109213e95150b7de1dc8908c55605cd8e55",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.3"
+            },
+            "replace": {
+                "hautelook/phpass": "0.3.*"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Hautelook": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Public Domain"
+            ],
+            "authors": [
+                {
+                    "name": "Solar Designer",
+                    "email": "solar@openwall.com",
+                    "homepage": "http://openwall.com/phpass/"
+                },
+                {
+                    "name": "Gustavo Bordoni",
+                    "email": "gustavo@bordoni.me",
+                    "homepage": "https://bordoni.me"
+                }
+            ],
+            "description": "Portable PHP password hashing framework",
+            "homepage": "http://github.com/hautelook/phpass/",
+            "keywords": [
+                "blowfish",
+                "crypt",
+                "password",
+                "security"
+            ],
+            "support": {
+                "issues": "https://github.com/bordoni/phpass/issues",
+                "source": "https://github.com/bordoni/phpass/tree/0.3.5"
+            },
+            "time": "2012-08-31T00:00:00+00:00"
+        },
+        {
             "name": "codeception/codeception",
             "version": "4.1.22",
             "source": {
@@ -652,16 +708,16 @@
         },
         {
             "name": "codeception/module-webdriver",
-            "version": "1.3.0",
+            "version": "1.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Codeception/module-webdriver.git",
-                "reference": "0b043cedebdb62d6706d9823f1c17bd0f26d831d"
+                "reference": "baa18b7bf70aa024012f967b5ce5021e1faa9151"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Codeception/module-webdriver/zipball/0b043cedebdb62d6706d9823f1c17bd0f26d831d",
-                "reference": "0b043cedebdb62d6706d9823f1c17bd0f26d831d",
+                "url": "https://api.github.com/repos/Codeception/module-webdriver/zipball/baa18b7bf70aa024012f967b5ce5021e1faa9151",
+                "reference": "baa18b7bf70aa024012f967b5ce5021e1faa9151",
                 "shasum": ""
             },
             "require": {
@@ -702,9 +758,9 @@
             ],
             "support": {
                 "issues": "https://github.com/Codeception/module-webdriver/issues",
-                "source": "https://github.com/Codeception/module-webdriver/tree/1.3.0"
+                "source": "https://github.com/Codeception/module-webdriver/tree/1.4.0"
             },
-            "time": "2021-08-22T07:21:13+00:00"
+            "time": "2021-09-02T12:01:02+00:00"
         },
         {
             "name": "codeception/phpunit-wrapper",
@@ -1342,65 +1398,17 @@
             "time": "2021-06-30T20:03:07+00:00"
         },
         {
-            "name": "hautelook/phpass",
-            "version": "0.3.5",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/hautelook/phpass.git",
-                "reference": "b4cbd9b67ed3ef5672ec79d8e0c46d24bd844abd"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/hautelook/phpass/zipball/b4cbd9b67ed3ef5672ec79d8e0c46d24bd844abd",
-                "reference": "b4cbd9b67ed3ef5672ec79d8e0c46d24bd844abd",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=5.3.3"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-0": {
-                    "Hautelook": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "Public Domain"
-            ],
-            "authors": [
-                {
-                    "name": "Solar Designer",
-                    "email": "solar@openwall.com",
-                    "homepage": "http://openwall.com/phpass/"
-                }
-            ],
-            "description": "Portable PHP password hashing framework",
-            "homepage": "http://github.com/hautelook/phpass/",
-            "keywords": [
-                "blowfish",
-                "crypt",
-                "password",
-                "security"
-            ],
-            "support": {
-                "issues": "https://github.com/hautelook/phpass/issues",
-                "source": "https://github.com/hautelook/phpass/tree/0.3.x"
-            },
-            "time": "2012-08-31T00:00:00+00:00"
-        },
-        {
             "name": "illuminate/collections",
-            "version": "v8.57.0",
+            "version": "v8.60.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/collections.git",
-                "reference": "673d71d9db2827b04c096c4fe9739edddea14ac4"
+                "reference": "18fa841df912ec56849351dd6ca8928e8a98b69d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/illuminate/collections/zipball/673d71d9db2827b04c096c4fe9739edddea14ac4",
-                "reference": "673d71d9db2827b04c096c4fe9739edddea14ac4",
+                "url": "https://api.github.com/repos/illuminate/collections/zipball/18fa841df912ec56849351dd6ca8928e8a98b69d",
+                "reference": "18fa841df912ec56849351dd6ca8928e8a98b69d",
                 "shasum": ""
             },
             "require": {
@@ -1441,20 +1449,20 @@
                 "issues": "https://github.com/laravel/framework/issues",
                 "source": "https://github.com/laravel/framework"
             },
-            "time": "2021-08-25T13:02:21+00:00"
+            "time": "2021-09-08T12:48:16+00:00"
         },
         {
             "name": "illuminate/contracts",
-            "version": "v8.57.0",
+            "version": "v8.60.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/contracts.git",
-                "reference": "7354badf7b57eae805a56d1163fb023e0f58a639"
+                "reference": "ab4bb4ec3b36905ccf972c84f9aaa2bdd1153913"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/illuminate/contracts/zipball/7354badf7b57eae805a56d1163fb023e0f58a639",
-                "reference": "7354badf7b57eae805a56d1163fb023e0f58a639",
+                "url": "https://api.github.com/repos/illuminate/contracts/zipball/ab4bb4ec3b36905ccf972c84f9aaa2bdd1153913",
+                "reference": "ab4bb4ec3b36905ccf972c84f9aaa2bdd1153913",
                 "shasum": ""
             },
             "require": {
@@ -1489,11 +1497,11 @@
                 "issues": "https://github.com/laravel/framework/issues",
                 "source": "https://github.com/laravel/framework"
             },
-            "time": "2021-08-24T21:29:28+00:00"
+            "time": "2021-09-08T12:09:40+00:00"
         },
         {
             "name": "illuminate/macroable",
-            "version": "v8.57.0",
+            "version": "v8.60.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/macroable.git",
@@ -1539,16 +1547,16 @@
         },
         {
             "name": "illuminate/support",
-            "version": "v8.57.0",
+            "version": "v8.60.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/support.git",
-                "reference": "5e8f059a5d1f298324e847822b997778a3472128"
+                "reference": "c0fbc05c4362de423a7a4da137098e9d1affaf54"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/illuminate/support/zipball/5e8f059a5d1f298324e847822b997778a3472128",
-                "reference": "5e8f059a5d1f298324e847822b997778a3472128",
+                "url": "https://api.github.com/repos/illuminate/support/zipball/c0fbc05c4362de423a7a4da137098e9d1affaf54",
+                "reference": "c0fbc05c4362de423a7a4da137098e9d1affaf54",
                 "shasum": ""
             },
             "require": {
@@ -1603,7 +1611,7 @@
                 "issues": "https://github.com/laravel/framework/issues",
                 "source": "https://github.com/laravel/framework"
             },
-            "time": "2021-08-25T13:04:37+00:00"
+            "time": "2021-09-08T12:48:16+00:00"
         },
         {
             "name": "justinrainbow/json-schema",
@@ -1677,20 +1685,21 @@
         },
         {
             "name": "lucatume/wp-browser",
-            "version": "3.0.8",
+            "version": "3.0.10",
             "source": {
                 "type": "git",
                 "url": "https://github.com/lucatume/wp-browser.git",
-                "reference": "22e7ff337c8e5966eedec5551d93b9ed3148799a"
+                "reference": "0754da8955c97762976379a9b2ab7175594ff815"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/lucatume/wp-browser/zipball/22e7ff337c8e5966eedec5551d93b9ed3148799a",
-                "reference": "22e7ff337c8e5966eedec5551d93b9ed3148799a",
+                "url": "https://api.github.com/repos/lucatume/wp-browser/zipball/0754da8955c97762976379a9b2ab7175594ff815",
+                "reference": "0754da8955c97762976379a9b2ab7175594ff815",
                 "shasum": ""
             },
             "require": {
                 "antecedent/patchwork": "^2.0",
+                "bordoni/phpass": "^0.3",
                 "codeception/codeception": "^2.5 || ^3.0 || ^4.0",
                 "dg/mysql-dump": "^1.3",
                 "ext-fileinfo": "*",
@@ -1758,7 +1767,7 @@
             ],
             "support": {
                 "issues": "https://github.com/lucatume/wp-browser/issues",
-                "source": "https://github.com/lucatume/wp-browser/tree/3.0.8"
+                "source": "https://github.com/lucatume/wp-browser/tree/3.0.10"
             },
             "funding": [
                 {
@@ -1766,7 +1775,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2021-07-05T08:24:12+00:00"
+            "time": "2021-09-13T18:16:58+00:00"
         },
         {
             "name": "mikehaertl/php-shellcommand",
@@ -1992,16 +2001,16 @@
         },
         {
             "name": "nesbot/carbon",
-            "version": "2.52.0",
+            "version": "2.53.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/briannesbitt/Carbon.git",
-                "reference": "369c0e2737c56a0f39c946dd261855255a6fccbe"
+                "reference": "f4655858a784988f880c1b8c7feabbf02dfdf045"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/briannesbitt/Carbon/zipball/369c0e2737c56a0f39c946dd261855255a6fccbe",
-                "reference": "369c0e2737c56a0f39c946dd261855255a6fccbe",
+                "url": "https://api.github.com/repos/briannesbitt/Carbon/zipball/f4655858a784988f880c1b8c7feabbf02dfdf045",
+                "reference": "f4655858a784988f880c1b8c7feabbf02dfdf045",
                 "shasum": ""
             },
             "require": {
@@ -2013,7 +2022,7 @@
             },
             "require-dev": {
                 "doctrine/orm": "^2.7",
-                "friendsofphp/php-cs-fixer": "^2.14 || ^3.0",
+                "friendsofphp/php-cs-fixer": "^3.0",
                 "kylekatarnls/multi-tester": "^2.0",
                 "phpmd/phpmd": "^2.9",
                 "phpstan/extension-installer": "^1.0",
@@ -2082,7 +2091,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2021-08-14T19:10:52+00:00"
+            "time": "2021-09-06T09:29:23+00:00"
         },
         {
             "name": "nikic/php-parser",
@@ -2649,33 +2658,33 @@
         },
         {
             "name": "phpspec/prophecy",
-            "version": "1.13.0",
+            "version": "1.14.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpspec/prophecy.git",
-                "reference": "be1996ed8adc35c3fd795488a653f4b518be70ea"
+                "reference": "d86dfc2e2a3cd366cee475e52c6bb3bbc371aa0e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpspec/prophecy/zipball/be1996ed8adc35c3fd795488a653f4b518be70ea",
-                "reference": "be1996ed8adc35c3fd795488a653f4b518be70ea",
+                "url": "https://api.github.com/repos/phpspec/prophecy/zipball/d86dfc2e2a3cd366cee475e52c6bb3bbc371aa0e",
+                "reference": "d86dfc2e2a3cd366cee475e52c6bb3bbc371aa0e",
                 "shasum": ""
             },
             "require": {
                 "doctrine/instantiator": "^1.2",
-                "php": "^7.2 || ~8.0, <8.1",
+                "php": "^7.2 || ~8.0, <8.2",
                 "phpdocumentor/reflection-docblock": "^5.2",
                 "sebastian/comparator": "^3.0 || ^4.0",
                 "sebastian/recursion-context": "^3.0 || ^4.0"
             },
             "require-dev": {
-                "phpspec/phpspec": "^6.0",
+                "phpspec/phpspec": "^6.0 || ^7.0",
                 "phpunit/phpunit": "^8.0 || ^9.0"
             },
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "1.11.x-dev"
+                    "dev-master": "1.x-dev"
                 }
             },
             "autoload": {
@@ -2710,9 +2719,9 @@
             ],
             "support": {
                 "issues": "https://github.com/phpspec/prophecy/issues",
-                "source": "https://github.com/phpspec/prophecy/tree/1.13.0"
+                "source": "https://github.com/phpspec/prophecy/tree/1.14.0"
             },
-            "time": "2021-03-17T13:42:18+00:00"
+            "time": "2021-09-10T09:02:12+00:00"
         },
         {
             "name": "phpunit/php-code-coverage",
@@ -3034,16 +3043,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "9.5.8",
+            "version": "9.5.9",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "191768ccd5c85513b4068bdbe99bb6390c7d54fb"
+                "reference": "ea8c2dfb1065eb35a79b3681eee6e6fb0a6f273b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/191768ccd5c85513b4068bdbe99bb6390c7d54fb",
-                "reference": "191768ccd5c85513b4068bdbe99bb6390c7d54fb",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/ea8c2dfb1065eb35a79b3681eee6e6fb0a6f273b",
+                "reference": "ea8c2dfb1065eb35a79b3681eee6e6fb0a6f273b",
                 "shasum": ""
             },
             "require": {
@@ -3121,7 +3130,7 @@
             ],
             "support": {
                 "issues": "https://github.com/sebastianbergmann/phpunit/issues",
-                "source": "https://github.com/sebastianbergmann/phpunit/tree/9.5.8"
+                "source": "https://github.com/sebastianbergmann/phpunit/tree/9.5.9"
             },
             "funding": [
                 {
@@ -3133,7 +3142,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2021-07-31T15:17:34+00:00"
+            "time": "2021-08-31T06:47:40+00:00"
         },
         {
             "name": "psr/container",
@@ -4401,6 +4410,7 @@
                     "type": "github"
                 }
             ],
+            "abandoned": true,
             "time": "2020-09-28T06:45:17+00:00"
         },
         {
@@ -6722,5 +6732,5 @@
     "prefer-lowest": false,
     "platform": [],
     "platform-dev": [],
-    "plugin-api-version": "2.1.0"
+    "plugin-api-version": "2.0.0"
 }
