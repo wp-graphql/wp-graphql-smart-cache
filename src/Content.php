@@ -89,6 +89,7 @@ class Content {
 				'post_type'      => $this->type_name,
 				'post_status'    => 'publish',
 				'posts_per_page' => 1,
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
 				'tax_query'      => [
 					[
 						'taxonomy' => $this->taxonomy_name,
