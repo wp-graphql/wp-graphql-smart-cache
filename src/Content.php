@@ -9,14 +9,14 @@ namespace WPGraphQL\PersistedQueries;
 
 class Content {
 
-	public $type_name     = 'graphql_query';
-	public $taxonomy_name = 'graphql_query_label';
+	const TYPE_NAME     = 'graphql_query';
+	const TAXONOMY_NAME = 'graphql_query_label';
 
 	public static function register() {
 		$content = new Content();
 
 		register_post_type(
-			$content->type_name,
+			self::TYPE_NAME,
 			[
 				'labels'      => [
 					'name'          => __( 'GraphQLQueries', 'wp-graphql-persisted-queries' ),
@@ -26,14 +26,14 @@ class Content {
 				'public'      => true,
 				'show_ui'     => true,
 				'taxonomies'  => [
-					$content->taxonomy_name,
+					self::TAXONOMY_NAME,
 				],
 			]
 		);
 
 		register_taxonomy(
-			$content->taxonomy_name,
-			$content->type_name,
+			self::TAXONOMY_NAME,
+			self::TYPE_NAME,
 			[
 				'description'  => __( 'Taxonomy for saved GraphQL queries', 'wp-graphql-persisted-queries' ),
 				'hierarchical' => false,
@@ -54,7 +54,7 @@ class Content {
 			]
 		);
 
-		register_taxonomy_for_object_type( $content->taxonomy_name, $content->type_name );
+		register_taxonomy_for_object_type( self::TAXONOMY_NAME, self::TYPE_NAME );
 	}
 
 	/**
@@ -86,13 +86,13 @@ class Content {
 	public function get( $query_id ) {
 		$wp_query = new \WP_Query(
 			[
-				'post_type'      => $this->type_name,
+				'post_type'      => self::TYPE_NAME,
 				'post_status'    => 'publish',
 				'posts_per_page' => 1,
 				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
 				'tax_query'      => [
 					[
-						'taxonomy' => $this->taxonomy_name,
+						'taxonomy' => self::TAXONOMY_NAME,
 						'field'    => 'name',
 						'terms'    => $query_id,
 					],
@@ -122,7 +122,7 @@ class Content {
 		$normalized_hash = $this->generateHash( $query );
 
 		// The normalized query should have one saved object/post by hash as the slug name
-		$post = get_page_by_path( $normalized_hash, 'OBJECT', $this->type_name );
+		$post = get_page_by_path( $normalized_hash, 'OBJECT', self::TYPE_NAME );
 		if ( empty( $post ) ) {
 			$ast             = \GraphQL\Language\Parser::parse( $query );
 			$query_operation = \GraphQL\Utils\AST::getOperationAST( $ast );
@@ -132,7 +132,7 @@ class Content {
 				'post_name'    => $normalized_hash,
 				'post_title'   => $query_operation->name->value ?: 'query',
 				'post_status'  => 'publish',
-				'post_type'    => $this->type_name,
+				'post_type'    => self::TYPE_NAME,
 			];
 
 			// The post ID on success. The value 0 or WP_Error on failure.
@@ -143,9 +143,9 @@ class Content {
 			}
 
 			// Upon saving the new persisted query, remove any terms that already exist as aliases
-			$term_object = get_term_by( 'name', $normalized_hash, $this->taxonomy_name );
+			$term_object = get_term_by( 'name', $normalized_hash, self::TAXONOMY_NAME );
 			if ( $term_object ) {
-				$r = wp_delete_term( $term_object->term_id, $this->taxonomy_name );
+				$r = wp_delete_term( $term_object->term_id, self::TAXONOMY_NAME );
 			}
 		} else {
 			$post_id = $post->ID;
@@ -168,7 +168,7 @@ class Content {
 
 			$term       = wp_insert_term(
 				$term_name,
-				$this->taxonomy_name,
+				self::TAXONOMY_NAME,
 				[
 					'description' => __( 'A graphql query relationship', 'wp-graphql-persisted-queries' ),
 				]
@@ -180,7 +180,7 @@ class Content {
 			wp_add_object_terms(
 				$post_id,
 				$term_ids,
-				$this->taxonomy_name
+				self::TAXONOMY_NAME
 			);
 		}
 	}
@@ -221,7 +221,7 @@ class Content {
 	public function termExists( $name ) {
 		$query = new \WP_Term_Query(
 			[
-				'taxonomy' => $this->taxonomy_name,
+				'taxonomy' => self::TAXONOMY_NAME,
 				'fields'   => 'names',
 				'get'      => 'all',
 			]
