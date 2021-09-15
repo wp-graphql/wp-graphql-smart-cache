@@ -60,4 +60,16 @@ class ContentUnitTest extends \Codeception\TestCase\WPTestCase {
 		// @throws SyntaxError
 		$content->verifyHash( '1234', $invalid_query );
 	}
+
+	public function test_boolean_term_exists_false() {
+		$content = new Content();
+		$this->assertFalse( $content->termExists( 'foo123' ) );
+	}
+
+	public function test_boolean_term_exists_true() {
+		wp_insert_term( 'foo123', 'graphql_query_label' );
+		$content = new Content();
+		$this->assertTrue( $content->termExists( 'foo123' ) );
+		wp_delete_term( 'foo123', 'graphql_query_label' );
+	}
 }

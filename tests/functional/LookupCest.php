@@ -3,7 +3,7 @@
 class LookupCest {
 	public function _before( FunctionalTester $I ) {
 		// Make sure that is gone.
-		$I->dontHavePostInDatabase(['post_title' => 'Hello world!']);
+		$I->dontHavePostInDatabase( ['post_title' => 'Hello world!'] );
 	}
 
 	// no id/hash. expect an error that it doesn't exist
@@ -12,7 +12,7 @@ class LookupCest {
 		$query_hash = '1234';
 
 		$I->haveHttpHeader( 'Content-Type', 'application/json' );
-		$I->sendGet('graphql', [ 'queryId' => $query_hash ] );
+		$I->sendGet( 'graphql', [ 'queryId' => $query_hash ] );
 
 		$I->seeResponseContainsJson([
 			'errors' => [
@@ -26,15 +26,19 @@ class LookupCest {
 		$I->wantTo( 'Query with a hash that exists but has empty query in the database' );
 
 		$query_hash = '1234';
+		$I->haveTermInDatabase( $query_hash, 'graphql_query_label' );
 		$I->havePostInDatabase( [
 			'post_type'    => 'graphql_query',
 			'post_status'  => 'publish',
 			'post_name'    => $query_hash,
 			'post_content' => '',
+			'tax_input' => [
+				'graphql_query_label' => [ $query_hash ]
+			]
 		] );
 
 		$I->haveHttpHeader( 'Content-Type', 'application/json' );
-		$I->sendGet('graphql', [ 'queryId' => $query_hash ] );
+		$I->sendGet( 'graphql', [ 'queryId' => $query_hash ] );
 
 		$I->seeResponseContainsJson([
 			'errors' => [
@@ -43,37 +47,43 @@ class LookupCest {
 		]);
 
 		// clean up
-		$I->dontHavePostInDatabase(['post_name' => $query_hash]);
+		$I->dontHavePostInDatabase( ['post_name' => $query_hash] );
+		$I->dontHaveTermInDatabase( ['name' => $query_hash] );
 	}
 
 	// insert hash and query string that doesn't match. expect error
-	public function queryIdWithWrongGraphqlStringTest( FunctionalTester $I ) {
-		$I->wantTo( 'Query with a hash that does not match the graphql string in the database' );
+	public function queryIdWithQueryAliasStringTest( FunctionalTester $I ) {
+		$I->wantTo( 'Query with a query alias saved as term taxonomy for the query, works' );
 
 		$query = '{
-			foo: bizbang
+			__typename
 		}';
 
 		// Make sure query hash we use doesn't match
-		$query_hash = 'X-' . hash( 'sha256', $query );
+		$query_hash = 'my-foo-query';
+		$I->haveTermInDatabase( $query_hash, 'graphql_query_label' );
 		$I->havePostInDatabase( [
 			'post_type'    => 'graphql_query',
 			'post_status'  => 'publish',
 			'post_name'    => $query_hash,
 			'post_content' => $query,
-		] );
-		
-		$I->haveHttpHeader( 'Content-Type', 'application/json' );
-		$I->sendGet('graphql', [ 'queryId' => $query_hash ] );
-
-		$I->seeResponseContainsJson([
-			'errors' => [
-				'message' => sprintf( 'Query Not Found %s', $query_hash )
+			'tax_input' => [
+				'graphql_query_label' => [ $query_hash ]
 			]
-		]);
+		] );
 
+		$I->haveHttpHeader( 'Content-Type', 'application/json' );
+		$I->sendGet( 'graphql', [ 'queryId' => $query_hash ] );
+
+        $I->seeResponseContainsJson([
+			'data' => [
+				'__typename' => 'RootQuery'
+			]
+		 ] );
+ 
 		// clean up
-		$I->dontHavePostInDatabase(['post_name' => $query_hash]);
+		$I->dontHavePostInDatabase( ['post_name' => $query_hash] );
+		$I->dontHaveTermInDatabase( ['name' => $query_hash] );
 	}
 
 	// insert hash and query string, expect empty result
@@ -83,15 +93,19 @@ class LookupCest {
 		$query = "{\n  posts {\n    nodes {\n      title";
 		$query_hash = hash( 'sha256', $query );
 
+		$I->haveTermInDatabase( $query_hash, 'graphql_query_label' );
 		$I->havePostInDatabase( [
 			'post_type'    => 'graphql_query',
 			'post_status'  => 'publish',
 			'post_name'    => $query_hash,
 			'post_content' => $query,
+			'tax_input' => [
+				'graphql_query_label' => [ $query_hash ]
+			]
 		] );
 
 		$I->haveHttpHeader( 'Content-Type', 'application/json' );
-		$I->sendGet('graphql', [ 'queryId' => $query_hash ] );
+		$I->sendGet( 'graphql', [ 'queryId' => $query_hash ] );
 
 		$I->seeResponseContainsJson([
 			'errors' => [
@@ -100,7 +114,8 @@ class LookupCest {
 		]);
 
 		// clean up
-		$I->dontHavePostInDatabase(['post_name' => $query_hash]);
+		$I->dontHavePostInDatabase( ['post_name' => $query_hash] );
+		$I->dontHaveTermInDatabase( ['name' => $query_hash] );
 	}
 
 	// insert hash and query string, expect empty result
@@ -110,15 +125,19 @@ class LookupCest {
 		$query = "{\n  posts {\n    nodes {\n      title\n    }\n  }\n}\n";
 		$query_hash = hash( 'sha256', $query );
 
+		$I->haveTermInDatabase( $query_hash, 'graphql_query_label' );
 		$I->havePostInDatabase( [
 			'post_type'    => 'graphql_query',
 			'post_status'  => 'publish',
 			'post_name'    => $query_hash,
 			'post_content' => $query,
+			'tax_input' => [
+				'graphql_query_label' => [ $query_hash ]
+			]
 		] );
 		
 		$I->haveHttpHeader( 'Content-Type', 'application/json' );
-		$I->sendGet('graphql', [ 'queryId' => $query_hash ] );
+		$I->sendGet( 'graphql', [ 'queryId' => $query_hash ] );
 
 		// https://codeception.com/docs/modules/REST.html#jsonpath
 		$I->assertEmpty(
@@ -126,7 +145,8 @@ class LookupCest {
 		);
 
 		// clean up
-		$I->dontHavePostInDatabase(['post_name' => $query_hash]);
+		$I->dontHavePostInDatabase( ['post_name' => $query_hash] );
+		$I->dontHaveTermInDatabase( ['name' => $query_hash] );
 	}
 
 	// insert hash, query string, posts. expect results
@@ -136,11 +156,15 @@ class LookupCest {
 		$query = "{\n  posts {\n    nodes {\n      title\n    }\n  }\n}\n";
 		$query_hash = hash( 'sha256', $query );
 
+		$I->haveTermInDatabase( $query_hash, 'graphql_query_label' );
 		$I->havePostInDatabase( [
 			'post_type'    => 'graphql_query',
 			'post_status'  => 'publish',
 			'post_name'    => $query_hash,
 			'post_content' => $query,
+			'tax_input' => [
+				'graphql_query_label' => [ $query_hash, 'test-query-using-alias-name' ]
+			]
 		] );
 
 		$I->havePostInDatabase( [
@@ -153,7 +177,7 @@ class LookupCest {
 
 		$I->haveHttpHeader( 'Content-Type', 'application/json' );
 
-		$I->sendGet('graphql', [ 'queryId' => $query_hash ] );
+		$I->sendGet( 'graphql', [ 'queryId' => $query_hash ] );
 		$I->seeResponseContainsJson( [
 			'data' => [
 				'posts' => [
@@ -165,7 +189,7 @@ class LookupCest {
 		]);
 
 		// Query using other accepted format
-		$I->sendGet('graphql', [
+		$I->sendGet( 'graphql', [
 			'extensions' => [
 				"persistedQuery" => [
 					"version" => 1,
@@ -183,9 +207,22 @@ class LookupCest {
 			]
 		]);
 
+		// Query using alias query name saved in term
+		$I->sendGet( 'graphql', [ 'queryId' => 'test-query-using-alias-name' ] );
+		$I->seeResponseContainsJson( [
+			'data' => [
+				'posts' => [
+					'nodes' => [
+							'title' => 'foo'
+					]
+				]
+			]
+		]);
+
 		// clean up
 		$I->dontHavePostInDatabase( [ 'post_name' => $query_hash ] );
 		$I->dontHavePostInDatabase( [ 'post_title' => 'foo' ] );
+		$I->dontHaveTermInDatabase( ['name' => $query_hash] );
 	}
 
 }

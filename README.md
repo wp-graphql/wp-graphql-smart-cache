@@ -12,6 +12,10 @@ Use one of the following commands to build the plugin source and it's dependenci
 
     composer update --optimize-autoloader
 
+One option is to use a docker image to run php/composer:
+
+    docker run -v $PWD:/app composer install
+
 # Docker App Image
 
 This section describes how to setup and run this plugin, WP and the wp-graphql plugin locally with docker.  It requires building the images at least once, which can take a few moments the first time. 
