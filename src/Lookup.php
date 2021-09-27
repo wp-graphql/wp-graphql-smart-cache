@@ -7,7 +7,6 @@
 
 namespace WPGraphQL\PersistedQueries;
 
-use WPGraphQL\PersistedQueries\Content;
 use GraphQL\Server\RequestError;
 
 class Lookup {
