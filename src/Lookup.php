@@ -7,7 +7,6 @@
 
 namespace WPGraphQL\PersistedQueries;
 
-use WPGraphQL\PersistedQueries\Content;
 use GraphQL\Server\RequestError;
 
 class Lookup {
@@ -20,7 +19,7 @@ class Lookup {
 	 * @return string | GraphQL\Language\AST\DocumentNode
 	 */
 	public static function by_query_id( $query_id, $operation_params ) {
-		$content = new Content();
+		$content = new SavedQuery();
 		$query   = $content->get( $query_id );
 
 		if ( ! isset( $query ) ) {

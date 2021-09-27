@@ -7,12 +7,12 @@
 
 namespace WPGraphQL\PersistedQueries;
 
-use WPGraphQL\PersistedQueries\Content;
+use WPGraphQL\PersistedQueries\SavedQuery;
 
 /**
  * Test the content class
  */
-class ContentUnitTest extends \Codeception\TestCase\WPTestCase {
+class SavedQueryUnitTest extends \Codeception\TestCase\WPTestCase {
 
 	/**
 	 * Test graphql queries match hash, even with white space differences
@@ -30,7 +30,7 @@ class ContentUnitTest extends \Codeception\TestCase\WPTestCase {
 			}
 		}';
 
-		$content = new Content();
+		$content = new SavedQuery();
 		$query_hash = $content->generateHash( $query );
 
 		$this->assertTrue( $content->verifyHash( $query_hash, $query_compact ) );
@@ -44,7 +44,7 @@ class ContentUnitTest extends \Codeception\TestCase\WPTestCase {
 		$this->expectException( \GraphQL\Error\SyntaxError::class );
 		$invalid_query = "{\n  contentNodes {\n    nodes {\n      uri";
 
-		$content = new Content();
+		$content = new SavedQuery();
 		// @throws SyntaxError
 		$content->generateHash( $invalid_query );
 	}
@@ -56,19 +56,19 @@ class ContentUnitTest extends \Codeception\TestCase\WPTestCase {
 		$this->expectException( \GraphQL\Error\SyntaxError::class );
 		$invalid_query = "{\n  contentNodes {\n    nodes {\n      uri";
 
-		$content = new Content();
+		$content = new SavedQuery();
 		// @throws SyntaxError
 		$content->verifyHash( '1234', $invalid_query );
 	}
 
 	public function test_boolean_term_exists_false() {
-		$content = new Content();
+		$content = new SavedQuery();
 		$this->assertFalse( $content->termExists( 'foo123' ) );
 	}
 
 	public function test_boolean_term_exists_true() {
 		wp_insert_term( 'foo123', 'graphql_query_label' );
-		$content = new Content();
+		$content = new SavedQuery();
 		$this->assertTrue( $content->termExists( 'foo123' ) );
 		wp_delete_term( 'foo123', 'graphql_query_label' );
 	}

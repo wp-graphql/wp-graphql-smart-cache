@@ -23,5 +23,15 @@
         "codeception/util-universalframework": "^1.0",
         "php-webdriver/webdriver": "^1.11",
         "codeception/module-rest": "^1.3"
-    }
+    },
+    "archive": {
+        "exclude": [
+          "*.yml",
+          ".env*",
+          "docker/",
+          "!vendor/",
+          "tests/",
+          "!.wordpress-org/"
+        ]
+      }
 }
