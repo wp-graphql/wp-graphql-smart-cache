@@ -103,7 +103,7 @@ class Content {
 			return false;
 		}
 
-		$post = array_pop( $posts );		
+		$post = array_pop( $posts );
 		if ( ! $post->ID ) {
 			return false;
 		}
@@ -234,7 +234,7 @@ class Content {
 	 * @param  string   Query name/alias
 	 * @return boolean  If term for the taxonomy already exists
 	 */
-	public function termExists( $name, $taxonomy=self::TAXONOMY_NAME ) {
+	public function termExists( $name, $taxonomy = self::TAXONOMY_NAME ) {
 		$query = new \WP_Term_Query(
 			[
 				'taxonomy' => $taxonomy,
