@@ -33,7 +33,10 @@ add_action(
 	1
 );
 
-add_action( 'init', function() {
-	$content = new Content();
-	$content->init();
-});
+add_action(
+	'init',
+	function () {
+		$content = new Content();
+		$content->init();
+	}
+);
