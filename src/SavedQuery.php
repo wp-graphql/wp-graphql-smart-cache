@@ -7,7 +7,7 @@
 
 namespace WPGraphQL\PersistedQueries;
 
-class Content {
+class SavedQuery {
 
 	const TYPE_NAME     = 'graphql_query';
 	const TAXONOMY_NAME = 'graphql_query_label';

@@ -36,7 +36,7 @@ add_action(
 add_action(
 	'init',
 	function () {
-		$content = new Content();
-		$content->init();
+		$query_object = new SavedQuery();
+		$query_object->init();
 	}
 );
