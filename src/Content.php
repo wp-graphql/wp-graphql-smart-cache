@@ -12,9 +12,12 @@ class Content {
 	const TYPE_NAME     = 'graphql_query';
 	const TAXONOMY_NAME = 'graphql_query_label';
 
-	public static function register() {
-		$content = new Content();
+	public function init() {
+		$this->register_post_type();
+		add_filter( 'graphql_request_data', [ $this, 'filter_request_data' ], 10, 2 );
+	}
 
+	public function register_post_type() {
 		register_post_type(
 			self::TYPE_NAME,
 			[
@@ -53,7 +56,6 @@ class Content {
 				'show_ui'      => true,
 			]
 		);
-
 		register_taxonomy_for_object_type( self::TAXONOMY_NAME, self::TYPE_NAME );
 	}
 
@@ -65,11 +67,10 @@ class Content {
 	 * @param  array $request_context An array containing the both body and query params
 	 * @return string Updated $parsed_body_params Request parameters.
 	 */
-	public static function filter_request_data( $parsed_body_params, $request_context ) {
+	public function filter_request_data( $parsed_body_params, $request_context ) {
 		if ( isset( $parsed_body_params['query'] ) && isset( $parsed_body_params['queryId'] ) ) {
 			// save the query
-			$content = new Content();
-			$content->save( $parsed_body_params['queryId'], $parsed_body_params['query'] );
+			$this->save( $parsed_body_params['queryId'], $parsed_body_params['query'] );
 
 			// remove it from process body params so graphql-php operation proceeds without conflict.
 			unset( $parsed_body_params['query'] );
@@ -78,12 +79,10 @@ class Content {
 	}
 
 	/**
-	 * Load a persisted query corresponding to a query ID (hash) or alias/alternate name
-	 *
 	 * @param  string $query_id Query ID
-	 * @return string Query
+	 * @return WP_Post
 	 */
-	public function get( $query_id ) {
+	public function getPostByTermId( $query_id ) {
 		$wp_query = new \WP_Query(
 			[
 				'post_type'      => self::TYPE_NAME,
@@ -101,11 +100,26 @@ class Content {
 		);
 		$posts    = $wp_query->get_posts();
 		if ( empty( $posts ) ) {
-			return;
+			return false;
 		}
 
-		$post = array_pop( $posts );
-		if ( ! $post || empty( $post->post_content ) ) {
+		$post = array_pop( $posts );		
+		if ( ! $post->ID ) {
+			return false;
+		}
+
+		return $post;
+	}
+
+	/**
+	 * Load a persisted query corresponding to a query ID (hash) or alias/alternate name
+	 *
+	 * @param  string $query_id Query ID
+	 * @return string Query
+	 */
+	public function get( $query_id ) {
+		$post = $this->getPostByTermId( $query_id );
+		if ( false === $post || empty( $post->post_content ) ) {
 			return;
 		}
 
@@ -166,6 +180,7 @@ class Content {
 				continue;
 			}
 
+			// Inserting the term will trigger WP 'clean_term_cache' action
 			$term       = wp_insert_term(
 				$term_name,
 				self::TAXONOMY_NAME,
@@ -177,6 +192,7 @@ class Content {
 		}
 
 		if ( ! empty( $term_ids ) ) {
+			// Set terms using wp_add_object_terms instead of wp_insert_post because the user my not have permissions to set terms
 			wp_add_object_terms(
 				$post_id,
 				$term_ids,
@@ -218,10 +234,10 @@ class Content {
 	 * @param  string   Query name/alias
 	 * @return boolean  If term for the taxonomy already exists
 	 */
-	public function termExists( $name ) {
+	public function termExists( $name, $taxonomy=self::TAXONOMY_NAME ) {
 		$query = new \WP_Term_Query(
 			[
-				'taxonomy' => self::TAXONOMY_NAME,
+				'taxonomy' => $taxonomy,
 				'fields'   => 'names',
 				'get'      => 'all',
 			]
@@ -229,4 +245,5 @@ class Content {
 		$terms = $query->get_terms();
 		return in_array( $name, $terms, true );
 	}
+
 }

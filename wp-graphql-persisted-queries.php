@@ -6,7 +6,7 @@
  * Author:          WPGraphQL
  * Author URI:      http://www.wpgraphql.com
  * Domain Path:     /languages
- * Version:         0.1.0
+ * Version:         0.1.0-alpha
  */
 
 namespace WPGraphQL\PersistedQueries;
@@ -33,5 +33,7 @@ add_action(
 	1
 );
 
-add_action( 'init', [ __NAMESPACE__ . '\Content', 'register' ] );
-add_filter( 'graphql_request_data', [ __NAMESPACE__ . '\Content', 'filter_request_data' ], 10, 2 );
+add_action( 'init', function() {
+	$content = new Content();
+	$content->init();
+});
