@@ -8,7 +8,7 @@ namespace WPGraphQL\PersistedQueries;
 
 class CachedResponse {
 
-	const TYPE_NAME     = 'graphql_response_cache';
+	const TYPE_NAME = 'graphql_response_cache';
 
 	public function init() {
 		add_filter( 'pre_graphql_execute_request', [ $this, 'filter_get_query_results_from_cache' ], 10, 2 );
@@ -22,13 +22,13 @@ class CachedResponse {
 			$query     = \GraphQL\Language\Printer::doPrint( $query_ast );
 		}
 
-		$action = [
+		$action    = [
 			'queryId'   => $query_id,
 			'query'     => $query,
 			'variables' => $variables,
-			'operation' => $operation
+			'operation' => $operation,
 		];
-		$unique_id = hash( 'sha256', json_encode( $action ) );
+		$unique_id = hash( 'sha256', wp_json_encode( $action ) );
 
 		// This unique operation identifier
 		return self::TYPE_NAME . '_' . $unique_id;
@@ -36,7 +36,7 @@ class CachedResponse {
 
 	/**
 	 * Look for a 'cached' response for this exact query, variables and operation name
-	 * 
+	 *
 	 * @param WPGraphql/Request
 	 */
 	public function filter_get_query_results_from_cache(
@@ -56,7 +56,7 @@ class CachedResponse {
 	/**
 	 * When a query response is being returned to the client, build map for each item and this query/queryId
 	 * That way we will know what to invalidate on data change.
-	 * 
+	 *
 	 * @param $filtered_response GraphQL\Executor\ExecutionResult
 	 * @param $response GraphQL\Executor\ExecutionResult
 	 * @param $request WPGraphQL\Request
