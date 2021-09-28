@@ -40,3 +40,11 @@ add_action(
 		$query_object->init();
 	}
 );
+
+add_action(
+	'plugins_loaded',
+	function () {
+		$cache_object = new CachedResponse();
+		$cache_object->init();
+	}
+);
