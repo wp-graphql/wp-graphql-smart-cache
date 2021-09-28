@@ -15,12 +15,16 @@ class CachedResponse {
 		add_action( 'graphql_return_response', [ $this, 'action_save_query_results_to_cache' ], 10, 7 );
 	}
 
-	public function get_cache_key( $query, $variables, $operation ) {
+	public function get_cache_key( $query_id, $query, $variables, $operation ) {
 		// Unique identifier for this request is query, operation and variables
-		$query_ast     = \GraphQL\Language\Parser::parse( $query );
+		if ( $query ) {
+			$query_ast = \GraphQL\Language\Parser::parse( $query );
+			$query     = \GraphQL\Language\Printer::doPrint( $query_ast );
+		}
 
 		$action = [
-			'query'     => \GraphQL\Language\Printer::doPrint( $query_ast ),
+			'queryId'   => $query_id,
+			'query'     => $query,
 			'variables' => $variables,
 			'operation' => $operation
 		];
@@ -39,7 +43,7 @@ class CachedResponse {
 		$result,
 		$request
 	) {
-		$key = $this->get_cache_key( $request->params->query, $request->params->variables, $request->params->operation );
+		$key = $this->get_cache_key( $request->params->queryId, $request->params->query, $request->params->variables, $request->params->operation );
 
 		$cached_result = get_transient( $key );
 		if ( false === $cached_result ) {
@@ -66,7 +70,7 @@ class CachedResponse {
 		$variables,
 		$request
 	) {
-		$key = $this->get_cache_key( $request->params->query, $request->params->variables, $request->params->operation );
+		$key = $this->get_cache_key( $request->params->queryId, $request->params->query, $request->params->variables, $request->params->operation );
 
 		// If do not have a cached version, or it expired, save the results again with new expiration
 		$cached_result = get_transient( $key );
