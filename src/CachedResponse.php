@@ -15,27 +15,38 @@ class CachedResponse {
 		add_action( 'graphql_return_response', [ $this, 'action_save_query_results_to_cache' ], 10, 7 );
 	}
 
-	public function get_cache_key( $query_id, $query, $variables, $operation ) {
-		// Unique identifier for this request is query, operation and variables
-		// If request is by queryId, get the query string and normalize on that
-		if ( $query_id && ! $query ) {
+	/**
+	 * Unique identifier for this request is normalized query string, operation and variables
+	 *
+	 * @param string $query_id queryId from the graphql query request
+	 * @param string $query query string
+	 * @param array $variables Variables send with request or null
+	 * @param string $operation Name of operation if specified on the request or null
+	 *
+	 * @return string unique id for this request
+	 */
+	public function get_cache_key( $query_id, $query, $variables = null, $operation = null ) {
+		// Unique identifier for this request is normalized query string, operation and variables
+		// If request is by queryId, get the saved query string, which is already normalized
+		if ( $query_id ) {
 			$saved_query = new SavedQuery();
 			$query       = $saved_query->get( $query_id );
+		} elseif ( $query ) {
+			// Query string provided, normalize it
+			$query_ast = \GraphQL\Language\Parser::parse( $query );
+			$query     = \GraphQL\Language\Printer::doPrint( $query_ast );
 		}
 
 		if ( ! $query ) {
 			return;
 		}
 
-		$query_ast = \GraphQL\Language\Parser::parse( $query );
-		$query     = \GraphQL\Language\Printer::doPrint( $query_ast );
-
-		$action    = [
+		$parts     = [
 			'query'     => $query,
 			'variables' => $variables,
 			'operation' => $operation,
 		];
-		$unique_id = hash( 'sha256', wp_json_encode( $action ) );
+		$unique_id = hash( 'sha256', wp_json_encode( $parts ) );
 
 		// This unique operation identifier
 		return self::TYPE_NAME . '_' . $unique_id;
@@ -56,11 +67,7 @@ class CachedResponse {
 		}
 
 		$cached_result = get_transient( $key );
-		if ( false === $cached_result ) {
-			return null;
-		}
-
-		return $cached_result;
+		return ( false === $cached_result ) ? null : $cached_result;
 	}
 
 	/**
@@ -90,7 +97,11 @@ class CachedResponse {
 
 		if ( false === $cached_result ) {
 			// Converts GraphQL query result to spec-compliant serializable array using provided
-			set_transient( $key, $response->toArray(), DAY_IN_SECONDS );
+			set_transient(
+				$key,
+				is_array( $response ) ? $response : $response->toArray(),
+				DAY_IN_SECONDS
+			);
 		}
 	}
 
