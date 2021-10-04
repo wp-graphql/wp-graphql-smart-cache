@@ -112,4 +112,35 @@ class CachedResponseTest extends \Codeception\TestCase\WPTestCase {
 		$this->assertEquals( 'Response for GetPostsWithSlug. Count 2', $response['data']['foo'] );
 
 	}
+
+	public function testQueryIdGetResultsFromCache() {
+		$query = "query GetPosts {
+			posts {
+				nodes {
+					title
+				}
+			}
+		}";
+		$query_id = "foo-bar-query";
+
+		// Create/save persisted query for the query and query id
+		$saved_query = new SavedQuery();
+		$saved_query->save( $query_id, $query );
+
+		$cache_object = new CachedResponse();
+		$key = $cache_object->get_cache_key( $query_id, null );
+
+		// Put something in the cache for the query key that proves it came from cache.
+		$expected = [
+			'data' => [
+				'__typename' => 'Foo Bar'
+			]
+		];
+		set_transient( $key, $expected );
+
+		// Verify the response contains what we put in cache
+		$response = graphql([ 'queryId' => $query_id ]);
+		$this->assertEquals($expected['data'], $response['data']);
+	}
+
 }
