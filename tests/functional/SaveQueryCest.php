@@ -10,15 +10,16 @@ class SaveQueryCest {
 		$I->dontHaveTermInDatabase( ['taxonomy' => 'graphql_query_label'] );
 	}
 
-	public function saveQueryWithSpecificNameTest( FunctionalTester $I ) {
+	public function saveMultipleOperationQueryWithQueryTitleTest( FunctionalTester $I ) {
 		$I->wantTo( 'Save a named graphql query' );
 
-		$query = "query my_yoyo_query {\n  __typename\n}\n";
+		$query = "query my_query_1 {\n  __typename\n}\n\nquery my_query_2 {\n  __typename\n}\n";
 		$query_hash = hash( 'sha256', $query );
 
 		$I->sendPost('graphql', [
-			'query' => $query,
-			'queryId' => $query_hash
+			'query'         => $query,
+			'queryId'       => $query_hash,
+			'operationName' => 'my_query_1',
 		] );
 		$I->seeResponseContainsJson([
 			'data' => [
@@ -30,12 +31,13 @@ class SaveQueryCest {
 			'post_status'  => 'publish',
 			'post_name'    => $query_hash,
 			'post_content' => $query,
-			'post_title'    => 'my_yoyo_query',
+			'post_title'    => 'my_query_1, my_query_2',
 		] );
 
 		$I->sendPost('graphql', [
-			'query' => $query,
-			'queryId' => $query_hash
+			'query'         => $query,
+			'queryId'       => $query_hash,
+			'operationName' => 'my_query_2',
 		] );
 		$I->seeResponseContainsJson([
 			'data' => [
