@@ -79,46 +79,13 @@ class SavedQuery {
 	}
 
 	/**
-	 * @param  string $query_id Query ID
-	 * @return WP_Post
-	 */
-	public function getPostByTermId( $query_id ) {
-		$wp_query = new \WP_Query(
-			[
-				'post_type'      => self::TYPE_NAME,
-				'post_status'    => 'publish',
-				'posts_per_page' => 1,
-				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
-				'tax_query'      => [
-					[
-						'taxonomy' => self::TAXONOMY_NAME,
-						'field'    => 'name',
-						'terms'    => $query_id,
-					],
-				],
-			]
-		);
-		$posts    = $wp_query->get_posts();
-		if ( empty( $posts ) ) {
-			return false;
-		}
-
-		$post = array_pop( $posts );
-		if ( ! $post->ID ) {
-			return false;
-		}
-
-		return $post;
-	}
-
-	/**
 	 * Load a persisted query corresponding to a query ID (hash) or alias/alternate name
 	 *
 	 * @param  string $query_id Query ID
 	 * @return string Query
 	 */
 	public function get( $query_id ) {
-		$post = $this->getPostByTermId( $query_id );
+		$post = Utils::getPostByTermId( $query_id, self::TYPE_NAME, self::TAXONOMY_NAME );
 		if ( false === $post || empty( $post->post_content ) ) {
 			return;
 		}
@@ -133,7 +100,7 @@ class SavedQuery {
 	 */
 	public function save( $query_id, $query ) {
 		// Get post using the normalized hash of the query string
-		$normalized_hash = $this->generateHash( $query );
+		$normalized_hash = Utils::generateHash( $query );
 
 		// The normalized query should have one saved object/post by hash as the slug name
 		$post = get_page_by_path( $normalized_hash, 'OBJECT', self::TYPE_NAME );
@@ -176,7 +143,7 @@ class SavedQuery {
 		// Gather the term ids to save with the post
 		$term_ids = [];
 		foreach ( $term_names as $term_name ) {
-			if ( $this->termExists( $term_name ) ) {
+			if ( Utils::termExists( $term_name, self::TAXONOMY_NAME ) ) {
 				continue;
 			}
 
@@ -199,51 +166,6 @@ class SavedQuery {
 				self::TAXONOMY_NAME
 			);
 		}
-	}
-
-	/**
-	 * Generate query hash for graphql query string
-	 *
-	 * @param  string Query
-	 * @return string $query_id Query string str256 hash
-	 *
-	 * @throws \GraphQL\Error\SyntaxError
-	 */
-	public function generateHash( $query ) {
-		$ast     = \GraphQL\Language\Parser::parse( $query );
-		$printed = \GraphQL\Language\Printer::doPrint( $ast );
-		return hash( 'sha256', $printed );
-	}
-
-	/**
-	 * Verify the query_id matches the query hash
-	 *
-	 * @param  string $query_id Query string str256 hash
-	 * @param  string Query
-	 * @return boolean
-	 *
-	 * @throws \GraphQL\Error\SyntaxError
-	 */
-	public function verifyHash( $query_id, $query ) {
-		return $this->generateHash( $query ) === $query_id;
-	}
-
-	/**
-	 * Query taxonomy terms for existance of provided name/alias.
-	 *
-	 * @param  string   Query name/alias
-	 * @return boolean  If term for the taxonomy already exists
-	 */
-	public function termExists( $name, $taxonomy = self::TAXONOMY_NAME ) {
-		$query = new \WP_Term_Query(
-			[
-				'taxonomy' => $taxonomy,
-				'fields'   => 'names',
-				'get'      => 'all',
-			]
-		);
-		$terms = $query->get_terms();
-		return in_array( $name, $terms, true );
 	}
 
 }

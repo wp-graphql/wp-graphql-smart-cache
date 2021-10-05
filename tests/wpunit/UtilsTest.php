@@ -7,12 +7,12 @@
 
 namespace WPGraphQL\PersistedQueries;
 
-use WPGraphQL\PersistedQueries\SavedQuery;
+use WPGraphQL\PersistedQueries\Utils;
 
 /**
  * Test the content class
  */
-class SavedQueryUnitTest extends \Codeception\TestCase\WPTestCase {
+class UtilsUnitTest extends \Codeception\TestCase\WPTestCase {
 
 	/**
 	 * Test graphql queries match hash, even with white space differences
@@ -30,11 +30,10 @@ class SavedQueryUnitTest extends \Codeception\TestCase\WPTestCase {
 			}
 		}';
 
-		$content = new SavedQuery();
-		$query_hash = $content->generateHash( $query );
+		$query_hash = Utils::generateHash( $query );
 
-		$this->assertTrue( $content->verifyHash( $query_hash, $query_compact ) );
-		$this->assertTrue( $content->verifyHash( $query_hash, $query_pretty ) );
+		$this->assertTrue( Utils::verifyHash( $query_hash, $query_compact ) );
+		$this->assertTrue( Utils::verifyHash( $query_hash, $query_pretty ) );
 	}
 
 	/**
@@ -44,9 +43,8 @@ class SavedQueryUnitTest extends \Codeception\TestCase\WPTestCase {
 		$this->expectException( \GraphQL\Error\SyntaxError::class );
 		$invalid_query = "{\n  contentNodes {\n    nodes {\n      uri";
 
-		$content = new SavedQuery();
 		// @throws SyntaxError
-		$content->generateHash( $invalid_query );
+		Utils::generateHash( $invalid_query );
 	}
 
 	/**
@@ -56,20 +54,17 @@ class SavedQueryUnitTest extends \Codeception\TestCase\WPTestCase {
 		$this->expectException( \GraphQL\Error\SyntaxError::class );
 		$invalid_query = "{\n  contentNodes {\n    nodes {\n      uri";
 
-		$content = new SavedQuery();
 		// @throws SyntaxError
-		$content->verifyHash( '1234', $invalid_query );
+		Utils::verifyHash( '1234', $invalid_query );
 	}
 
 	public function test_boolean_term_exists_false() {
-		$content = new SavedQuery();
-		$this->assertFalse( $content->termExists( 'foo123' ) );
+		$this->assertFalse( Utils::termExists( 'foo123', 'graphql_query_label' ) );
 	}
 
 	public function test_boolean_term_exists_true() {
 		wp_insert_term( 'foo123', 'graphql_query_label' );
-		$content = new SavedQuery();
-		$this->assertTrue( $content->termExists( 'foo123' ) );
+		$this->assertTrue( Utils::termExists( 'foo123', 'graphql_query_label' ) );
 		wp_delete_term( 'foo123', 'graphql_query_label' );
 	}
 }

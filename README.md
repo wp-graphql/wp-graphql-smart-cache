@@ -25,7 +25,7 @@ Example POST data:
 
 After that successful POST request, you can use the GET request to invoke the query by queryId. 
 
-GET
+    docker run -v $PWD:/app composer install --optimize-autoloader
 
 ```
 https://domain.example/graphql?queryId=query-get-posts-title
