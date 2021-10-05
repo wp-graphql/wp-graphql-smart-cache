@@ -110,14 +110,15 @@ class SavedQuery {
 
 			$operation_names = [];
 
-			for( $i=0 ; $i < $ast->definitions->count(); $i++ ) {
-				$node = $ast->definitions->offsetGet($i);
+			$definition_count = $ast->definitions->count();
+			for ( $i = 0; $i < $definition_count; $i++ ) {
+				$node              = $ast->definitions->offsetGet( $i );
 				$operation_names[] = $node->name->value ?: 'query';
 			}
 			$data = [
 				'post_content' => \GraphQL\Language\Printer::doPrint( $ast ),
 				'post_name'    => $normalized_hash,
-				'post_title'   => join( $operation_names, ', ' ),
+				'post_title'   => join( ', ', $operation_names ),
 				'post_status'  => 'publish',
 				'post_type'    => self::TYPE_NAME,
 			];
