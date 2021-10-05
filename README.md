@@ -14,7 +14,7 @@ Use one of the following commands to build the plugin source and it's dependenci
 
 One option is to use a docker image to run php/composer:
 
-    docker run -v $PWD:/app composer install
+    docker run -v $PWD:/app composer install --optimize-autoloader
 
 # Docker App Image
 
