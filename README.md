@@ -1,111 +1,100 @@
-The wp-graphql-persisted-queries plugin.
+# Welcome
 
-Local development with docker to build the app and a local running WordPress. As well as run the test suites.
+Install the plugin in your WP environment. It is dependent on wp-grapqhl also being installed.
 
-# Plugin
+Save a graphql query string for future use by an easy usable sha 256 hash or an alias name.
 
-## Build
+## Saving Queries
 
-Use one of the following commands to build the plugin source and it's dependencies. Do this at least once after initial checkout or after updating composer.json.
+When submiting a query from your client, in the POST request provide a `queryId={value}` parameter with the submitted data.  This `queryId` becomes the alias name of the saved query.  It can then be used in future requests to invoke the query.
 
-    composer install --optimize-autoloader
+Example POST data:
 
-    composer update --optimize-autoloader
+```
+{
+  "query": "{
+          posts {
+            nodes {
+              title
+            }
+          }
+  }"
+  "queryId": "query-get-posts-title"
+}
+```
 
-One option is to use a docker image to run php/composer:
+After that successful POST request, you can use the GET request to invoke the query by queryId. 
 
-    docker run -v $PWD:/app composer install
+GET
 
-# Docker App Image
+```
+https://domain.example/graphql?queryId=query-get-posts-title
+```
 
-This section describes how to setup and run this plugin, WP and the wp-graphql plugin locally with docker.  It requires building the images at least once, which can take a few moments the first time. 
+## What about graphql variables?
 
-## Build
+Queries that require variables to execute the graphql query, will need the variables specified with each POST or GET request.  The variables are not saved with the query string in the system.
 
-Use one of the following commands to build the local images for the app and testing.
+Here is an example of invoking a saved query and providing variables.
 
-### docker-compose
+If this is the saved query in the system, 
 
-Build all images in the docker compose configuration. Requires having built your own wp-graphql local images.
+POST
 
-    WP_VERSION=5.7.2  PHP_VERSION=7.4 docker-compose build --build-arg WP_VERSION=5.7.2 --build-arg PHP_VERSION=7.4
+```
+{
+  "query": "query ($count:Int) {
+          posts(first:$count) {
+            nodes {
+              title
+            }
+          }
+  }"
+  "queryId": "query-get-posts-title"
+}
+```
 
-Build fresh docker image without cache by adding `--no-cache`.
+The GET request would look like this to provide variables for the request,
 
-    WP_VERSION=5.7.2  PHP_VERSION=7.4 docker-compose build --build-arg WP_VERSION=5.7.2 --build-arg PHP_VERSION=7.4 --no-cache
+```
+https://domain.example/graphql?queryId=query-get-posts-title&variables={"count":2}
+```
 
-Build using wp-graphql image from docker hub registry, instead of building your own wp-graphql image.
+## What about queries with multiple operation names?
 
-    WP_VERSION=5.7.2  PHP_VERSION=7.4 docker-compose build --build-arg WP_VERSION=5.7.2 --build-arg PHP_VERSION=7.4 --build-arg DOCKER_REGISTRY=ghcr.io/wp-graphql/
+Graphql query strings can contain multiple operations per string and an operation name is provided in the request to specify which query to invoke.  The same is true for saved queries.
 
-### docker
+Below is an example of a query string containing multiple operations that can be saved with queryId "multiple-query-get-posts".
 
-Use this command if you want to build a specific image. If you ran the docker-compose command above, this is not necessary.
+POST
 
-    docker build -f docker/Dockerfile -t wp-graphql-persisted-queries:latest-wp5.6-php7.4 --build-arg WP_VERSION=5.6 --build-arg PHP_VERSION=7.4
+```
+{
+  "query": "
+     query GetPosts {
+      posts {
+       nodes{
+        id
+        title
+       }
+      }
+    }
+    query GetPostsSlug {
+      posts {
+       nodes{
+        id
+        title
+        slug
+       }
+      }
+    }
+  ",
+  "queryId": "multiple-query-get-posts"
+}
+```
 
-## Run
+The GET request for the saved query specifying operation name looks like this,
 
-Use one of the following to start the WP app with the plugin installed and running. After running, navigate to the app in a web browser at http://localhost:8091/
+https://domain.example/graphql?queryId=multiple-query-get-posts&operationName=GetPostsSlug
 
-    docker compose up app
-
-This is an example of specifying the WP and PHP version for the wp-graphql images.
-
-    docker compose up -e WP_VERSION=5.7.2 -e PHP_VERSION=7.4 app
-
-## Shell
-
-Use one of the following if you want to access the WP app with bash command shell.
-
-    docker-compose run app bash
-
-    docker-compose run -e WP_VERSION=5.7.2 -e PHP_VERSION=7.4 app bash
-
-## Stop
-
-Use this command to stop the running app and database.
-
-    docker-compose stop
-
-## Attach local wp-graphql plugin
-
-Add this to volumes section in docker-compose.yml if you have a copy of the wp-graphql plugin you'd like to use in the running app. 
-
-      - './local-wp-graphql:/var/www/html/wp-content/plugins/wp-graphql'
-
-# WP Tests
-
-Use this section to run the plugin codeception test suites.
-
-## Build
-
-Use one of the following commands to build the test docker image. 
-
-### docker-compose
-
-If you ran the docker-compose build command, above, this step is not necessary and you should already have the build docker image, skip to run.
-
-### docker
-
-    WP_VERSION=5.7.2 PHP_VERSION=7.4 docker build -f docker/Dockerfile.testing -t wp-graphql-persisted-queries-testing:latest-wp5.7.2-php7.4 --build-arg WP_VERSION=5.7.2 --build-arg PHP_VERSION=7.4 --build-arg DOCKER_REGISTRY=ghcr.io/wp-graphql/ .
-
-    docker build -f docker/Dockerfile.testing -t wp-graphql-persisted-queries-testing:latest-wp5.7.2-php7.4 --build-arg WP_VERSION=5.7.2 --build-arg PHP_VERSION=7.4 --build-arg DOCKER_REGISTRY=ghcr.io/wp-graphql/ .
-
-## Run
-
-Use one of these commands to run the test suites.
-
-    WP_VERSION=5.7.2 PHP_VERSION=7.4 docker-compose run testing
-
-    docker-compose run testing
-
-## Shell
-
-Use one of the following if you want to access the WP testing app with bash command shell.
-
-    docker-compose run --entrypoint bash testing
-
-This is an example of specifying the WP and PHP version for the wp-graphql images.
-
-    docker-compose run -e WP_VERSION=5.7.2 -e PHP_VERSION=7.4 --entrypoint bash testing
+And if your query is multiple operations as well as variables, combine all of it together in your saved query and use the correct name/value parameters on the GET query requests.
