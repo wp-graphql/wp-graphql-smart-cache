@@ -98,3 +98,20 @@ The GET request for the saved query specifying operation name looks like this,
 https://domain.example/graphql?queryId=multiple-query-get-posts&operationName=GetPostsSlug
 
 And if your query is multiple operations as well as variables, combine all of it together in your saved query and use the correct name/value parameters on the GET query requests.
+
+## Not Found Error
+
+If the queryId is not found in the system an error message will be returned in the response payload.  A HTTP code of 200 is returned.
+
+```
+{
+    "errors": [
+        {
+            "message": "Query Not Found get-post-with-slug",
+            "extensions": {
+                "category": "request"
+            }
+        }
+    ],
+}
+```
