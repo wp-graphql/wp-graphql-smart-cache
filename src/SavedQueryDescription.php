@@ -35,13 +35,13 @@ class SavedQueryDescription {
 		wp_nonce_field( 'taxonomy_graphql_query_description', 'taxonomy_noncename' );
 
 		$descriptions = wp_get_object_terms( $post->ID, self::TAXONOMY_NAME );
+		$html  = '<textarea name="graphql_query_description" id="graphql_query_description" style="width:100%;">';
 		if ( count( $descriptions ) ) {
-			$html  = '<textarea name="graphql_query_description" id="graphql_query_description" style="width:100%;">';
 			$html .= esc_attr( $descriptions[0]->name );
-			$html .= '</textarea>';
-			echo wp_kses_post( $html );
 		}
-	}
+		$html .= '</textarea>';
+		echo wp_kses_post( $html );
+}
 
 	public function save_cb( $post_id ) {
 		if ( ! isset( $_POST['taxonomy_noncename'] ) ) {
