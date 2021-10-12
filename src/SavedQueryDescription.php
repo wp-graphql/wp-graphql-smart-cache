@@ -23,6 +23,7 @@ class SavedQueryDescription {
 				'hierarchical'      => false,
 				'show_admin_column' => true,
 				'show_in_menu'      => false,
+				'show_in_quick_edit'=> false,
 				'meta_box_cb'       => [ $this, 'admin_input_box' ],
 			]
 		);
@@ -75,7 +76,7 @@ class SavedQueryDescription {
 			return;
 		}
 
-		$data = sanitize_text_field( sanitize_text_field( wp_unslash( $_POST['graphql_query_description'] ) ) );
+		$data = sanitize_textarea_field( sanitize_text_field( wp_unslash( $_POST['graphql_query_description'] ) ) );
 
 		// Save the data
 		wp_set_post_terms( $post_id, $data, self::TAXONOMY_NAME );

@@ -54,6 +54,7 @@ class SavedQuery {
 					'menu_name'         => __( 'GraphQL Query Names', 'wp-graphql-persisted-queries' ),
 				],
 				'show_ui'      => true,
+				'show_in_quick_edit'=> false,
 			]
 		);
 		register_taxonomy_for_object_type( self::TAXONOMY_NAME, self::TYPE_NAME );
