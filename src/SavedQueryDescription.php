@@ -17,7 +17,9 @@ class SavedQueryDescription {
 			SavedQuery::TYPE_NAME,
 			[
 				'description'       => __( 'Description for a saved GraphQL query', 'wp-graphql-persisted-queries' ),
-				'label'             => __( 'Graphql Query Description', 'wp-graphql-persisted-queries' ),
+				'labels'            => [
+					'name' => __( 'Description', 'wp-graphql-persisted-queries' ),
+				],
 				'hierarchical'      => false,
 				'show_admin_column' => true,
 				'show_in_menu'      => false,
@@ -37,7 +39,7 @@ class SavedQueryDescription {
 		wp_nonce_field( 'taxonomy_graphql_query_description', 'taxonomy_noncename' );
 
 		$descriptions = wp_get_object_terms( $post->ID, self::TAXONOMY_NAME );
-		$html  = '<textarea name="graphql_query_description" id="graphql_query_description" style="width:100%;">';
+		$html         = '<textarea name="graphql_query_description" id="graphql_query_description" style="width:100%;">';
 		if ( count( $descriptions ) ) {
 			$html .= esc_attr( $descriptions[0]->name );
 		}

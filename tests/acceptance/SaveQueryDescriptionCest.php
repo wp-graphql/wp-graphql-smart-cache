@@ -2,10 +2,6 @@
 
 class SaveQueryDescriptionCest
 {
-    public function _before(AcceptanceTester $I)
-    {
-    }
-
     public function createQueryWithDescriptionTest(AcceptanceTester $I)
     {
         $I->loginAsAdmin();
