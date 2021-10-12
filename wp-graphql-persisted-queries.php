@@ -38,5 +38,8 @@ add_action(
 	function () {
 		$query_object = new SavedQuery();
 		$query_object->init();
+
+		$query_grant = new SavedQueryGrant();
+		$query_grant->init();
 	}
 );
