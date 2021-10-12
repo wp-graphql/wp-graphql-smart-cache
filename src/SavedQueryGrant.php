@@ -50,7 +50,18 @@ class SavedQueryGrant {
 			checked( $value, self::ALLOW, false )
 		);
 		$html .= '<label for="graphql_query_grant">Allowed?</label>';
-		echo $html;
+		echo wp_kses(
+			$html,
+			[
+				'input' => [
+					'type'    => true,
+					'id'      => true,
+					'name'    => true,
+					'value'   => true,
+					'checked' => true,
+				],
+			]
+		);
 	}
 
 	/**
