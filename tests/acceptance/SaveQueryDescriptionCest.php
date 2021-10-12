@@ -9,9 +9,13 @@ class SaveQueryDescriptionCest
     public function createQueryWithDescriptionTest(AcceptanceTester $I)
     {
         $I->loginAsAdmin();
+
+        // Create a new graphql query with title and description
         $I->amOnPage('/wp-admin/post-new.php?post_type=graphql_query');
         $I->fillField('post_title', 'My Test Query 1');
         $I->fillField('graphql_query_description', 'Foo Test Description');
+
+        // Save and see the description on same page
         $I->click('Publish');
         $I->seeInField('graphql_query_description', 'Foo Test Description');
 
