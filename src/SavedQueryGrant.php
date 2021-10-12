@@ -19,15 +19,15 @@ class SavedQueryGrant {
 			self::TAXONOMY_NAME,
 			SavedQuery::TYPE_NAME,
 			[
-				'description'       => __( 'Allow/Deny access grant for a saved GraphQL query', 'wp-graphql-persisted-queries' ),
-				'labels'      => [
-					'name'          => __( 'Allow/Deny', 'wp-graphql-persisted-queries' ),
+				'description'        => __( 'Allow/Deny access grant for a saved GraphQL query', 'wp-graphql-persisted-queries' ),
+				'labels'             => [
+					'name' => __( 'Allow/Deny', 'wp-graphql-persisted-queries' ),
 				],
-				'hierarchical'      => false,
-				'show_admin_column' => true,
-				'show_in_menu'      => false,
-				'show_in_quick_edit'=> false,
-				'meta_box_cb'       => [ $this, 'admin_input_box' ],
+				'hierarchical'       => false,
+				'show_admin_column'  => true,
+				'show_in_menu'       => false,
+				'show_in_quick_edit' => false,
+				'meta_box_cb'        => [ $this, 'admin_input_box' ],
 			]
 		);
 
@@ -49,19 +49,19 @@ class SavedQueryGrant {
 			self::ALLOW,
 			checked( $value, self::ALLOW, false )
 		);
-		$html  .= '<label for="graphql_query_grant">Allowed?</label>';
+		$html .= '<label for="graphql_query_grant">Allowed?</label>';
 		echo $html;
 	}
 
 	/**
 	 * Use during processing of submitted form if value of selected input field is selected.
 	 * And return value of the taxonomy.
-	 * 
+	 *
 	 * @param string The input form value
 	 * @return string The string value used to save as the taxonomy value
 	 */
 	public function the_selection( $value ) {
-		return ( self::ALLOW === $_POST['graphql_query_grant'] ) ? self::ALLOW : null;
+		return ( self::ALLOW === $value ) ? self::ALLOW : null;
 	}
 
 	/**
@@ -72,7 +72,7 @@ class SavedQueryGrant {
 			return;
 		}
 
-		if ( ! check_admin_referer( 'graphql_query_grant', 'savedquery_grant_noncename') ) {
+		if ( ! check_admin_referer( 'graphql_query_grant', 'savedquery_grant_noncename' ) ) {
 			return;
 		}
 
@@ -88,7 +88,11 @@ class SavedQueryGrant {
 			return;
 		}
 
-		$data = $this->the_selection( $_POST['graphql_query_grant'] );
+		if ( ! isset( $_POST['graphql_query_grant'] ) ) {
+			return;
+		}
+
+		$data = $this->the_selection( sanitize_text_field( wp_unslash( $_POST['graphql_query_grant'] ) ) );
 
 		// Save the data
 		wp_set_post_terms( $post_id, $data, self::TAXONOMY_NAME );
