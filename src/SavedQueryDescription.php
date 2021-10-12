@@ -30,7 +30,9 @@ class SavedQueryDescription {
 		}
 	}
 
-	// This function gets called in edit-form-advanced.php
+	/**
+	 * Draw the input field for the post edit
+	 */
 	public function admin_input_box( $post ) {
 		wp_nonce_field( 'taxonomy_graphql_query_description', 'taxonomy_noncename' );
 
@@ -41,8 +43,11 @@ class SavedQueryDescription {
 		}
 		$html .= '</textarea>';
 		echo wp_kses_post( $html );
-}
+	}
 
+	/**
+	 * When a post is saved, sanitize and store the data.
+	 */
 	public function save_cb( $post_id ) {
 		if ( ! isset( $_POST['taxonomy_noncename'] ) ) {
 			return;
