@@ -36,7 +36,7 @@ class SavedQueryDescription {
 	 * Draw the input field for the post edit
 	 */
 	public function admin_input_box( $post ) {
-		wp_nonce_field( 'taxonomy_graphql_query_description', 'taxonomy_noncename' );
+		wp_nonce_field( 'graphql_query_description', 'savedquery_description_noncename' );
 
 		$descriptions = wp_get_object_terms( $post->ID, self::TAXONOMY_NAME );
 		$html         = '<textarea name="graphql_query_description" id="graphql_query_description" style="width:100%;">';
@@ -51,11 +51,11 @@ class SavedQueryDescription {
 	 * When a post is saved, sanitize and store the data.
 	 */
 	public function save_cb( $post_id ) {
-		if ( ! isset( $_POST['taxonomy_noncename'] ) ) {
+		if ( empty( $_POST ) ) {
 			return;
 		}
 
-		if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['taxonomy_noncename'] ) ), 'taxonomy_graphql_query_description' ) ) {
+		if ( ! check_admin_referer( 'graphql_query_description', 'savedquery_description_noncename') ) {
 			return;
 		}
 
