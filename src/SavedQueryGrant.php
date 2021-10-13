@@ -100,10 +100,10 @@ class SavedQueryGrant {
 		}
 
 		if ( ! isset( $_POST['graphql_query_grant'] ) ) {
-			return;
+			$data = null;
+		} else {
+			$data = $this->the_selection( sanitize_text_field( wp_unslash( $_POST['graphql_query_grant'] ) ) );
 		}
-
-		$data = $this->the_selection( sanitize_text_field( wp_unslash( $_POST['graphql_query_grant'] ) ) );
 
 		// Save the data
 		wp_set_post_terms( $post_id, $data, self::TAXONOMY_NAME );
