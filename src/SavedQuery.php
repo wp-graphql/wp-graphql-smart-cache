@@ -38,9 +38,9 @@ class SavedQuery {
 			self::TAXONOMY_NAME,
 			self::TYPE_NAME,
 			[
-				'description'  => __( 'Taxonomy for saved GraphQL queries', 'wp-graphql-persisted-queries' ),
-				'hierarchical' => false,
-				'labels'       => [
+				'description'        => __( 'Taxonomy for saved GraphQL queries', 'wp-graphql-persisted-queries' ),
+				'hierarchical'       => false,
+				'labels'             => [
 					'name'              => __( 'GraphQL Query Names', 'wp-graphql-persisted-queries' ),
 					'singular_name'     => __( 'GraphQL Query Name', 'wp-graphql-persisted-queries' ),
 					'search_items'      => __( 'Search Query Names', 'wp-graphql-persisted-queries' ),
@@ -53,8 +53,8 @@ class SavedQuery {
 					'new_item_name'     => __( 'New Query Name', 'wp-graphql-persisted-queries' ),
 					'menu_name'         => __( 'GraphQL Query Names', 'wp-graphql-persisted-queries' ),
 				],
-				'show_ui'      => true,
-				'show_in_quick_edit'=> false,
+				'show_ui'            => true,
+				'show_in_quick_edit' => false,
 			]
 		);
 		register_taxonomy_for_object_type( self::TAXONOMY_NAME, self::TYPE_NAME );

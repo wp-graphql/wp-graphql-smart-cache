@@ -16,15 +16,15 @@ class SavedQueryDescription {
 			self::TAXONOMY_NAME,
 			SavedQuery::TYPE_NAME,
 			[
-				'description'       => __( 'Description for a saved GraphQL query', 'wp-graphql-persisted-queries' ),
-				'labels'            => [
+				'description'        => __( 'Description for a saved GraphQL query', 'wp-graphql-persisted-queries' ),
+				'labels'             => [
 					'name' => __( 'Description', 'wp-graphql-persisted-queries' ),
 				],
-				'hierarchical'      => false,
-				'show_admin_column' => true,
-				'show_in_menu'      => false,
-				'show_in_quick_edit'=> false,
-				'meta_box_cb'       => [ $this, 'admin_input_box' ],
+				'hierarchical'       => false,
+				'show_admin_column'  => true,
+				'show_in_menu'       => false,
+				'show_in_quick_edit' => false,
+				'meta_box_cb'        => [ $this, 'admin_input_box' ],
 			]
 		);
 
@@ -56,7 +56,7 @@ class SavedQueryDescription {
 			return;
 		}
 
-		if ( ! check_admin_referer( 'graphql_query_description', 'savedquery_description_noncename') ) {
+		if ( ! check_admin_referer( 'graphql_query_description', 'savedquery_description_noncename' ) ) {
 			return;
 		}
 
@@ -76,7 +76,7 @@ class SavedQueryDescription {
 			return;
 		}
 
-		$data = sanitize_textarea_field( sanitize_text_field( wp_unslash( $_POST['graphql_query_description'] ) ) );
+		$data = sanitize_textarea_field( wp_unslash( $_POST['graphql_query_description'] ) );
 
 		// Save the data
 		wp_set_post_terms( $post_id, $data, self::TAXONOMY_NAME );
