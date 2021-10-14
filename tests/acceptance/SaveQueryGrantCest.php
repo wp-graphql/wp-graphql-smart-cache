@@ -6,30 +6,38 @@
 
 class SaveQueryGrantCest
 {
+    public function adminGraphqlSettingsModeTest(AcceptanceTester $I)
+    {
+        $I->loginAsAdmin();
+
+        $I->amOnPage('/wp-admin/admin.php?page=graphql#graphql_persisted_queries_section');
+        $I->selectOption("form input[type=radio]", 'only_allowed');
+
+        // Save and see the selection after form submit
+        $I->click('Save Changes');
+        $I->seeOptionIsSelected('form input[type=radio]', 'only_allowed');
+    }
+
     public function adminSetQueryToAllowAndDenyTest(AcceptanceTester $I)
     {
         $I->loginAsAdmin();
 
-        // Create a new graphql query with title and description
+        // Create a new graphql query with title and set the allow/deny
         $I->amOnPage('/wp-admin/post-new.php?post_type=graphql_query');
         $I->fillField('post_title', 'My Test Grant 1');
-        $I->checkOption('graphql_query_grant');
 
-        // Save and see the allow/deny grant after form submit
+        // Now select different option and verify the status
+        $I->selectOption('graphql_query_grant', 'allow');
         $I->click('Publish');
-        $I->seeCheckboxIsChecked('graphql_query_grant'); // I suppose user didn't check the first checkbox in form.
+        $I->seeOptionIsSelected('form input[name=graphql_query_grant]', 'allow');
 
-        // Now deselect the option and verify the status
-        $I->uncheckOption('graphql_query_grant');
+        $I->selectOption('graphql_query_grant', 'deny');
         $I->click('Publish');
-        $I->dontSeeCheckboxIsChecked('graphql_query_grant'); // I suppose user didn't agree to terms
+        $I->seeOptionIsSelected('form input[name=graphql_query_grant]', 'deny');
 
-        // Select to allow then check the listing on the admin page table list of queries
-        $I->checkOption('graphql_query_grant');
-        $I->click('Publish');
+        // Check the listing on the admin page table list of queries
         $I->amOnPage('/wp-admin/edit.php?post_type=graphql_query');
-        $I->see('allow', "//table/tbody/tr[1]/td[@data-colname='Allow/Deny']");
-
+        $I->see('deny', "//table/tbody/tr[1]/td[@data-colname='Allow/Deny']");
     }
  
 }
