@@ -8,6 +8,8 @@ class SaveQueryCest {
 		// clean up and persisted queries terms in the taxonomy
 		$I->dontHavePostInDatabase( [ 'post_type' => 'graphql_query' ] );
 		$I->dontHaveTermInDatabase( ['taxonomy' => 'graphql_query_label'] );
+
+		$I->dontHaveOptionInDatabase( 'graphql_persisted_queries_section'  );
 	}
 
 	public function saveQueryWithSpecificNameTest( FunctionalTester $I ) {

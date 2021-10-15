@@ -38,5 +38,21 @@ add_action(
 	function () {
 		$query_object = new SavedQuery();
 		$query_object->init();
+
+		$query_grant = new SavedQueryGrant();
+		$query_grant->init();
+	}
+);
+
+// Add a tab section to the graphql admin settings page
+add_action(
+	'graphql_register_settings',
+	function () {
+		register_graphql_settings_section(
+			'graphql_persisted_queries_section',
+			[
+				'title' => __( 'Persisted Queries', 'wp-graphql-persisted-queries' ),
+			]
+		);
 	}
 );
