@@ -1,23 +1,11 @@
 <?php
 
 /**
- * Test the allow/deny selection for query grant access.
+ * Test the allow/deny selection for individual query grant access.
  */
 
 class SaveQueryGrantCest
 {
-    public function adminGraphqlSettingsModeTest(AcceptanceTester $I)
-    {
-        $I->loginAsAdmin();
-
-        $I->amOnPage('/wp-admin/admin.php?page=graphql#graphql_persisted_queries_section');
-        $I->selectOption("form input[type=radio]", 'only_allowed');
-
-        // Save and see the selection after form submit
-        $I->click('Save Changes');
-        $I->seeOptionIsSelected('form input[type=radio]', 'only_allowed');
-    }
-
     public function adminSetQueryToAllowAndDenyTest(AcceptanceTester $I)
     {
         $I->loginAsAdmin();

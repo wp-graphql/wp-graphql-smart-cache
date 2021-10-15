@@ -47,7 +47,7 @@ class AllowDenyQueryDocument extends ValidationRule {
                 // If set to allow only specific queries, must be explicitely allowed.
                 // If set to deny some queries, only deny if persisted and explicitely denied.
                 if ( 'some_denied' === $this->access_setting ) {
-                    // If this query is not persisted do not deny.
+                    // If this query is not persisted do not block it.
                     if ( ! $post ) {
                         return;
                     }
@@ -62,10 +62,15 @@ class AllowDenyQueryDocument extends ValidationRule {
                 } elseif ( 'only_allowed' === $this->access_setting ) {
                     // When the allow/deny setting only allows certain queries, verify this query is allowed
 
-                    // If this query is not persisted do not deny.
-                    if ( ! $post || SavedQueryGrant::ALLOW !== $this->getQueryGrantSetting( $post->ID ) ) {
+                    // If this query is not persisted do not allow.
+                    if ( ! $post ) {
                         $context->reportError( new Error(
-                            sprintf( __( 'Blocked. Query Not Found %s', 'wp-graphql-persisted-queries' ), $hash ),
+                            self::notFoundDocumentMessage(),
+                            [$node->type]
+                        ) );
+                    } elseif ( SavedQueryGrant::ALLOW !== $this->getQueryGrantSetting( $post->ID ) ) {
+                        $context->reportError( new Error(
+                            self::deniedDocumentMessage(),
                             [$node->type]
                         ) );
                     }
@@ -81,6 +86,10 @@ class AllowDenyQueryDocument extends ValidationRule {
 
     public static function deniedDocumentMessage() {
         return __( 'This persisted query document has been blocked', 'wp-graphql-persisted-queries' );
+    }
+
+    public static function notFoundDocumentMessage() {
+        return __( 'Not Found. Only specific persisted queries allowed.', 'wp-graphql-persisted-queries' );
     }
 
 }

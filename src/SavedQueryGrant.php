@@ -34,29 +34,29 @@ class SavedQueryGrant {
 			]
 		);
 
-		if ( is_admin() ) {
-			add_action( 'save_post', [ $this, 'save_cb' ] );
-		}
-
 		// Add to the wpgraphql server validation rules.
 		// This filter allows us to add our validation rule to check a query for allow/deny access.
 		add_filter( 'graphql_validation_rules', [ $this, 'filter_add_validation_rules' ], 10, 2 );
 
-		// Add to the wp-graphql admin settings page
-		add_action( 'graphql_register_settings', function() {
-			register_graphql_settings_field( 'graphql_persisted_queries_section', [
-				'name'    => 'grant_mode',
-				'label'   => __( 'Allow/Deny Mode', 'wp-graphql-persisted-queries' ),
-				'desc'    => __( 'Allow or deny specific queries. Or leave your graphql endpoint wideopen with the public option (not recommended).', 'wp-graphql-persisted-queries' ),
-				'type'    => 'radio',
-				'default' => 'only_allowed',
-				'options' => [
-					'public' => 'Public',
-					'only_allowed' => 'Allow only specific queries',
-					'some_denied' => 'Deny some specific queries',
-				]
-			]);
-		});
+		if ( is_admin() ) {
+			add_action( 'save_post', [ $this, 'save_cb' ] );
+
+			// Add to the wp-graphql admin settings page
+			add_action( 'graphql_register_settings', function() {
+				register_graphql_settings_field( 'graphql_persisted_queries_section', [
+					'name'    => 'grant_mode',
+					'label'   => __( 'Allow/Deny Mode', 'wp-graphql-persisted-queries' ),
+					'desc'    => __( 'Allow or deny specific queries. Or leave your graphql endpoint wideopen with the public option (not recommended).', 'wp-graphql-persisted-queries' ),
+					'type'    => 'radio',
+					'default' => 'only_allowed',
+					'options' => [
+						'public' => 'Public',
+						'only_allowed' => 'Allow only specific queries',
+						'some_denied' => 'Deny some specific queries',
+					]
+				]);
+			});
+		}
 	}
 
 	/**
