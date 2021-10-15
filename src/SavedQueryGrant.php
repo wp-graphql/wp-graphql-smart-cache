@@ -13,9 +13,9 @@ class SavedQueryGrant {
 
 	const TAXONOMY_NAME = 'graphql_query_grant';
 
-	const ALLOW    = 'allow';
-	const DENY     = 'deny';
-	const DEFAULT  = 'default';
+	const ALLOW       = 'allow';
+	const DENY        = 'deny';
+	const USE_DEFAULT = 'default';
 
 	public function init() {
 		register_taxonomy(
@@ -42,20 +42,26 @@ class SavedQueryGrant {
 			add_action( 'save_post', [ $this, 'save_cb' ] );
 
 			// Add to the wp-graphql admin settings page
-			add_action( 'graphql_register_settings', function() {
-				register_graphql_settings_field( 'graphql_persisted_queries_section', [
-					'name'    => 'grant_mode',
-					'label'   => __( 'Allow/Deny Mode', 'wp-graphql-persisted-queries' ),
-					'desc'    => __( 'Allow or deny specific queries. Or leave your graphql endpoint wideopen with the public option (not recommended).', 'wp-graphql-persisted-queries' ),
-					'type'    => 'radio',
-					'default' => 'only_allowed',
-					'options' => [
-						'public' => 'Public',
-						'only_allowed' => 'Allow only specific queries',
-						'some_denied' => 'Deny some specific queries',
-					]
-				]);
-			});
+			add_action(
+				'graphql_register_settings',
+				function () {
+					register_graphql_settings_field(
+						'graphql_persisted_queries_section',
+						[
+							'name'    => 'grant_mode',
+							'label'   => __( 'Allow/Deny Mode', 'wp-graphql-persisted-queries' ),
+							'desc'    => __( 'Allow or deny specific queries. Or leave your graphql endpoint wideopen with the public option (not recommended).', 'wp-graphql-persisted-queries' ),
+							'type'    => 'radio',
+							'default' => 'only_allowed',
+							'options' => [
+								'public'       => 'Public',
+								'only_allowed' => 'Allow only specific queries',
+								'some_denied'  => 'Deny some specific queries',
+							],
+						]
+					);
+				}
+			);
 		}
 	}
 
@@ -73,16 +79,16 @@ class SavedQueryGrant {
 			checked( $value, self::ALLOW, false )
 		);
 		$html .= '<label for="graphql_query_grant_allow">Allowed</label>&nbsp;';
-		$html  .= sprintf(
+		$html .= sprintf(
 			'<input type="radio" id="graphql_query_grant_deny" name="graphql_query_grant" value="%s" %s>',
 			self::DENY,
 			checked( $value, self::DENY, false )
 		);
 		$html .= '<label for="graphql_query_grant_deny">Deny</label>&nbsp;';
-		$html  .= sprintf(
+		$html .= sprintf(
 			'<input type="radio" id="graphql_query_grant_default" name="graphql_query_grant" value="%s" %s>',
-			self::DEFAULT,
-			checked( $value, self::DEFAULT, false )
+			self::USE_DEFAULT,
+			checked( $value, self::USE_DEFAULT, false )
 		);
 		$html .= '<label for="graphql_query_grant_default">Use global default</label>&nbsp;';
 		echo wp_kses(
@@ -107,15 +113,19 @@ class SavedQueryGrant {
 	 * @return string The string value used to save as the taxonomy value
 	 */
 	public function the_selection( $value ) {
-		if ( in_array( $value, [
+		if ( in_array(
+			$value,
+			[
 				self::ALLOW,
 				self::DENY,
-				self::DEFAULT
-		] ) ) {
+				self::USE_DEFAULT,
+			],
+			true
+		) ) {
 			return $value;
 		}
 
-		return self::DEFAULT;
+		return self::USE_DEFAULT;
 	}
 
 	/**
