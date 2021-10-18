@@ -12,7 +12,6 @@ modules:
             part: Json
         - WPDb
         - \Helper\Functional
-    disabled:
         - WPBrowser
     config:
         PhpBrowser:
@@ -26,3 +25,8 @@ modules:
             url: '%WP_URL%'
             tablePrefix: '%TEST_SITE_TABLE_PREFIX%'
             urlReplacement: false
+        WPBrowser:
+            url: '%TEST_SITE_WP_URL%'
+            adminUsername: '%TEST_SITE_ADMIN_USERNAME%'
+            adminPassword: '%TEST_SITE_ADMIN_PASSWORD%'
+            adminPath: '/wp-admin'

@@ -32,8 +32,8 @@ class UtilsUnitTest extends \Codeception\TestCase\WPTestCase {
 
 		$query_hash = Utils::generateHash( $query );
 
-		$this->assertTrue( Utils::verifyHash( $query_hash, $query_compact ) );
-		$this->assertTrue( Utils::verifyHash( $query_hash, $query_pretty ) );
+		$this->assertEquals( $query_hash, Utils::generateHash( $query_compact ) );
+		$this->assertEquals( $query_hash, Utils::generateHash( $query_pretty ) );
 	}
 
 	/**
@@ -45,17 +45,6 @@ class UtilsUnitTest extends \Codeception\TestCase\WPTestCase {
 
 		// @throws SyntaxError
 		Utils::generateHash( $invalid_query );
-	}
-
-	/**
-	 * Test graphql query with invalid string throws error
-	 */
-	public function test_query_verify_with_invalid_string() {
-		$this->expectException( \GraphQL\Error\SyntaxError::class );
-		$invalid_query = "{\n  contentNodes {\n    nodes {\n      uri";
-
-		// @throws SyntaxError
-		Utils::verifyHash( '1234', $invalid_query );
 	}
 
 	public function test_boolean_term_exists_false() {

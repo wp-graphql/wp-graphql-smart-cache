@@ -109,10 +109,17 @@ class SavedQuery {
 			$ast             = \GraphQL\Language\Parser::parse( $query );
 			$query_operation = \GraphQL\Utils\AST::getOperationAST( $ast );
 
+			$operation_names = [];
+
+			$definition_count = $ast->definitions->count();
+			for ( $i = 0; $i < $definition_count; $i++ ) {
+				$node              = $ast->definitions->offsetGet( $i );
+				$operation_names[] = $node->name->value ?: 'query';
+			}
 			$data = [
 				'post_content' => \GraphQL\Language\Printer::doPrint( $ast ),
 				'post_name'    => $normalized_hash,
-				'post_title'   => $query_operation->name->value ?: 'query',
+				'post_title'   => join( ', ', $operation_names ),
 				'post_status'  => 'publish',
 				'post_type'    => self::TYPE_NAME,
 			];
