@@ -42,7 +42,7 @@ add_action(
 		$query_description = new SavedQueryDescription();
 		$query_description->init();
 
-    $query_grant = new SavedQueryGrant();
+		$query_grant = new SavedQueryGrant();
 		$query_grant->init();
 	}
 );

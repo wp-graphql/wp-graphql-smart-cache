@@ -34,10 +34,10 @@ class AllowDenyQueryDocument extends ValidationRule {
 	public function getVisitor( ValidationContext $context ) {
 		return [
 			NodeKind::DOCUMENT => function ( DocumentNode $node ) use ( $context ) {
-				// We are here because the global graphql settin is not public. Meaning allow or deny
+				// We are here because the global graphql setting is not public. Meaning allow or deny
 				// certain queries.
 
-				// Check is the query document is persisted
+				// Check if the query document is persisted
 				// Get post using the normalized hash of the query string
 				$hash = Utils::generateHash( $context->getDocument() );
 
