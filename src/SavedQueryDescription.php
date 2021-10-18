@@ -1,6 +1,6 @@
 <?php
 /**
- * Content
+ * Save the persisted query description text in the post type excpert field.
  *
  * @package Wp_Graphql_Persisted_Queries
  */
@@ -9,77 +9,45 @@ namespace WPGraphQL\PersistedQueries;
 
 class SavedQueryDescription {
 
-	const TAXONOMY_NAME = 'graphql_query_description';
-
 	public function init() {
-		register_taxonomy(
-			self::TAXONOMY_NAME,
-			SavedQuery::TYPE_NAME,
-			[
-				'description'        => __( 'Description for a saved GraphQL query', 'wp-graphql-persisted-queries' ),
-				'labels'             => [
-					'name' => __( 'Description', 'wp-graphql-persisted-queries' ),
-				],
-				'hierarchical'       => false,
-				'show_admin_column'  => true,
-				'show_in_menu'       => false,
-				'show_in_quick_edit' => false,
-				'meta_box_cb'        => [ $this, 'admin_input_box' ],
-			]
-		);
+		add_post_type_support( 'graphql_query', 'excerpt' );
 
-		if ( is_admin() ) {
-			add_action( 'save_post', [ $this, 'save_cb' ] );
-		}
+		add_filter( 'manage_graphql_query_posts_columns', [ $this, 'filter_add_description_to_admin' ], 10, 1);
+		add_action( 'manage_graphql_query_posts_custom_column', [ $this, 'action_fill_excerpt_content' ], 10, 2);
+		add_filter( 'manage_edit-graphql_query_sortable_columns', [ $this, 'filter_make_excerpt_column_sortable_in_admin' ], 10, 1 );
+		add_action( 'add_meta_boxes_graphql_query', [ $this, 'action_the_excerpt_admin_meta_box' ], 10, 1);
 	}
 
 	/**
-	 * Draw the input field for the post edit
+	 * Enable excerpt as the description.
 	 */
-	public function admin_input_box( $post ) {
-		wp_nonce_field( 'graphql_query_description', 'savedquery_description_noncename' );
-
-		$descriptions = wp_get_object_terms( $post->ID, self::TAXONOMY_NAME );
-		$html         = '<textarea name="graphql_query_description" id="graphql_query_description" style="width:100%;">';
-		if ( count( $descriptions ) ) {
-			$html .= esc_attr( $descriptions[0]->name );
-		}
-		$html .= '</textarea>';
-		echo wp_kses_post( $html );
+	public function filter_add_description_to_admin( $columns ) {
+		// Use 'description' as the text the user sees
+		$columns['excerpt'] = __( 'Description', 'wp-graphql-persisted-queries' );
+		return $columns;
 	}
 
-	/**
-	 * When a post is saved, sanitize and store the data.
-	 */
-	public function save_cb( $post_id ) {
-		if ( empty( $_POST ) ) {
-			return;
+	public function action_fill_excerpt_content( $column, $post_id ) {
+		if ( 'excerpt' === $column ) {
+			echo get_the_excerpt( $post_id );
 		}
+	  }
 
-		if ( ! check_admin_referer( 'graphql_query_description', 'savedquery_description_noncename' ) ) {
-			return;
-		}
-
-		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-			return;
-		}
-
-		if ( ! current_user_can( 'edit_post', $post_id ) ) {
-			return;
-		}
-
-		if ( ! isset( $_POST['post_type'] ) || SavedQuery::TYPE_NAME !== $_POST['post_type'] ) {
-			return;
-		}
-
-		if ( ! isset( $_POST['graphql_query_description'] ) ) {
-			return;
-		}
-
-		$data = sanitize_textarea_field( wp_unslash( $_POST['graphql_query_description'] ) );
-
-		// Save the data
-		wp_set_post_terms( $post_id, $data, self::TAXONOMY_NAME );
+	public function filter_make_excerpt_column_sortable_in_admin( $columns ) {
+		$columns['excerpt'] = true;
+		return $columns;
 	}
 
+	public function action_the_post_excerpt_admin_meta_box( $post ) {
+		global $wp_meta_boxes;
+	
+		$page = 'graphql_query';
+		$context = 'normal';
+		$priority = 'core';
+		$id = 'postexcerpt';
+
+		if ( isset( $wp_meta_boxes[ $page ][ $context ][ $priority ][ $id ] ) ) {
+			$wp_meta_boxes[ $page ][ $context ][ $priority ][ $id ]['title'] = __('Description', 'wp-graphql-persisted-queries');
+		}
+	}
 }
