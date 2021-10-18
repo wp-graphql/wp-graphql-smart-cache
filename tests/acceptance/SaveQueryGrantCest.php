@@ -25,7 +25,8 @@ class SaveQueryGrantCest
 
         // Check the listing on the admin page table list of queries
         $I->amOnPage('/wp-admin/edit.php?post_type=graphql_query');
-        $I->see('deny', '//table/tbody/tr[1]/td[@data-colname="Allow/Deny"]/a');
+        // td[3] is the 'Allow/Deny' column name
+        $I->see('deny', "//table/tbody/tr[1]/td[3]");
     }
  
 }
