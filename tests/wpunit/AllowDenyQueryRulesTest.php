@@ -42,35 +42,6 @@ class AllowDenyQueryRulesTest extends \Codeception\TestCase\WPTestCase {
 		$query_grant->save( $post_id, $grant );
 
 		return $query_id;
-
-		// WP_UnitTest_Factory_For_Post
-		$post_id = $this->tester->factory()->post->create( [
-			'post_content' => $query_string,
-			'post_name'    => $query_id,
-			'post_status'  => 'public',
-			'post_type'    => 'graphql_query',
-		] );
-
-		// Set the query id hash for the query
-		// WP_UnitTest_Factory_For_Term
-		$term_id = $this->tester->factory()->term->create( [
-			'name' => $query_id,
-			'taxonomy' => 'graphql_query_label',
-		] );
-		//$this->tester->factory()->term->add_post_terms( $post_id, $query_id, 'graphql_query_label' );
-		$id = wp_set_post_terms( $post_id, [$term_id], 'graphql_query_label' );
-		codecept_debug( get_term($id, 'graphql_query_label') );
-
-		// Set the allow/deny grant for this persisted query
-		//$this->tester->factory()->term->add_post_terms( $post_id, $grant, 'graphql_query_grant' );
-		$id = wp_set_post_terms( $post_id, [$grant], 'graphql_query_grant' );
-		codecept_debug( get_term($id, 'graphql_query_grant') );
-
-		codecept_debug( get_post($post_id, 'graphql_query') );
-		codecept_debug( get_term($term_id, 'graphql_query_label') );
-		codecept_debug( wp_get_post_terms($post_id) );
-
-		return $query_id;
 	}
 
 	public function _assertError( $response, $message ) {
