@@ -34,6 +34,9 @@ class QueryMaxAgeCest {
 		$I->haveOptionInDatabase( 'graphql_persisted_queries_section', [ 'global_max_age' => 30 ] );
 		$this->_runQuery( $I, 30 );
 
+		$I->haveOptionInDatabase( 'graphql_persisted_queries_section', [ 'global_max_age' => 10.5 ] );
+		$this->_runQuery( $I, 10 );
+
 		$I->haveOptionInDatabase( 'graphql_persisted_queries_section', [ 'global_max_age' => -1 ] );
 		$this->_runQuery( $I, 600 );
 
