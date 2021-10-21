@@ -41,6 +41,9 @@ add_action(
 
 		$query_grant = new SavedQueryGrant();
 		$query_grant->init();
+
+		$max_age = new QueryMaxAge();
+		$max_age->init();
 	}
 );
 
