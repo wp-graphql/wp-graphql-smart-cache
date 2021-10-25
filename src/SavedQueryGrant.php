@@ -165,12 +165,12 @@ class SavedQueryGrant {
 			return;
 		}
 
-		if ( ! isset( $_REQUEST['_wpnonce'] ) ) {
+		if ( ! isset( $_REQUEST['savedquery_grant_noncename'] ) ) {
 			return;
 		}
 
 		// phpcs:ignore
-		if ( ! wp_verify_nonce( $_REQUEST['_wpnonce'], 'savedquery_grant_noncename' ) ) {
+		if ( ! wp_verify_nonce( $_REQUEST['savedquery_grant_noncename'], 'graphql_query_grant' ) ) {
 			return;
 		}
 
