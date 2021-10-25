@@ -113,7 +113,7 @@ class SavedQuery {
 			$definition_count = $ast->definitions->count();
 			for ( $i = 0; $i < $definition_count; $i++ ) {
 				$node              = $ast->definitions->offsetGet( $i );
-				$operation_names[] = $node->name->value ?: 'query';
+				$operation_names[] = isset( $node->name->value ) ? $node->name->value : __( 'A Persisted Query', 'wp-graphql-persisted-queries' );
 			}
 			$data = [
 				'post_content' => \GraphQL\Language\Printer::doPrint( $ast ),
@@ -173,6 +173,8 @@ class SavedQuery {
 				self::TAXONOMY_NAME
 			);
 		}
+
+		return $post_id;
 	}
 
 }
