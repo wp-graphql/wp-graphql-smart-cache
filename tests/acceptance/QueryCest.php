@@ -42,6 +42,6 @@ class QueryCest
                 '__typename' => 'RootQuery'
             ]
         ]);
-}
+    }
  
 }
