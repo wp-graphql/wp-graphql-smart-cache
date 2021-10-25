@@ -48,7 +48,7 @@ class SavedQueryGrant {
 		// This filter allows us to add our validation rule to check a query for allow/deny access.
 		add_filter( 'graphql_validation_rules', [ $this, 'filter_add_validation_rules' ], 10, 2 );
 
-		add_action( 'save_post', [ $this, 'save_cb' ] );
+		add_action( sprintf( 'save_post_%s', SavedQuery::TYPE_NAME ), [ $this, 'save_cb' ] );
 
 		// Add to the wp-graphql admin settings page
 		add_action(
@@ -153,10 +153,6 @@ class SavedQueryGrant {
 			return;
 		}
 
-		if ( ! check_admin_referer( 'graphql_query_grant', 'savedquery_grant_noncename' ) ) {
-			return;
-		}
-
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 			return;
 		}
@@ -166,6 +162,15 @@ class SavedQueryGrant {
 		}
 
 		if ( ! isset( $_POST['post_type'] ) || SavedQuery::TYPE_NAME !== $_POST['post_type'] ) {
+			return;
+		}
+
+		if ( ! isset( $_REQUEST['_wpnonce'] ) ) {
+			return;
+		}
+
+		// phpcs:ignore
+		if ( ! wp_verify_nonce( $_REQUEST['_wpnonce'], 'savedquery_grant_noncename' ) ) {
 			return;
 		}
 

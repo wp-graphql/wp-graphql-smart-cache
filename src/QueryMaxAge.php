@@ -31,7 +31,7 @@ class QueryMaxAge {
 			]
 		);
 
-		add_action( 'save_post', [ $this, 'save_cb' ] );
+		add_action( sprintf( 'save_post_%s', SavedQuery::TYPE_NAME ), [ $this, 'save_cb' ] );
 
 		// Add to the wp-graphql admin settings page
 		add_action(
@@ -40,11 +40,16 @@ class QueryMaxAge {
 				register_graphql_settings_field(
 					'graphql_persisted_queries_section',
 					[
-						'name'    => 'global_max_age',
-						'label'   => __( 'Access-Control-Max-Age Header', 'wp-graphql-persisted-queries' ),
-						'desc'    => __( 'Global Max-Age HTTP header. Integer value.', 'wp-graphql-persisted-queries' ),
-						'type'    => 'text',
-						'default' => null,
+						'name'              => 'global_max_age',
+						'label'             => __( 'Access-Control-Max-Age Header', 'wp-graphql-persisted-queries' ),
+						'desc'              => __( 'Global Max-Age HTTP header. Integer value, greater or equal to zero.', 'wp-graphql-persisted-queries' ),
+						'type'              => 'number',
+						'sanitize_callback' => function ( $value ) {
+							if ( $value < 0 || ! is_numeric( $value ) ) {
+								return 0;
+							}
+							return intval( $value );
+						},
 					]
 				);
 			}
@@ -138,10 +143,6 @@ class QueryMaxAge {
 			return;
 		}
 
-		if ( ! check_admin_referer( 'graphql_query_maxage', 'savedquery_maxage_noncename' ) ) {
-			return;
-		}
-
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 			return;
 		}
@@ -154,12 +155,20 @@ class QueryMaxAge {
 			return;
 		}
 
+		if ( ! isset( $_REQUEST['_wpnonce'] ) ) {
+			return;
+		}
+
+		// phpcs:ignore
+		if ( ! wp_verify_nonce( $_REQUEST['_wpnonce'], 'savedquery_maxage_noncename' ) ) {
+			return;
+		}
+
 		if ( ! isset( $_POST['graphql_query_maxage'] ) ) {
 			return;
 		}
 
 		$data = sanitize_text_field( wp_unslash( $_POST['graphql_query_maxage'] ) );
-		// TODO: validate the input value
 
 		$this->save( $post_id, $data );
 	}
