@@ -46,22 +46,22 @@ class AllowDenyQueryDocument extends ValidationRule {
 
 				// If set to allow only specific queries, must be explicitely allowed.
 				// If set to deny some queries, only deny if persisted and explicitely denied.
-				if ( 'some_denied' === $this->access_setting ) {
+				if ( SavedQueryGrant::GLOBAL_DENIED === $this->access_setting ) {
 					// If this query is not persisted do not block it.
 					if ( ! $post ) {
 						return;
 					}
 
 					// When the allow/deny setting denies some queries, see if this query is denied
-					if ( SavedQueryGrant::DENY === $this->getQueryGrantSetting( $post->ID ) ) {
+					if ( SavedQueryGrant::DENY === SavedQueryGrant::getQueryGrantSetting( $post->ID ) ) {
 						$context->reportError(
 							new Error(
 								self::deniedDocumentMessage(),
-								[ $node->type ]
+								[ $node ]
 							)
 						);
 					}
-				} elseif ( 'only_allowed' === $this->access_setting ) {
+				} elseif ( SavedQueryGrant::GLOBAL_ALLOWED === $this->access_setting ) {
 					// When the allow/deny setting only allows certain queries, verify this query is allowed
 
 					// If this query is not persisted do not allow.
@@ -69,14 +69,14 @@ class AllowDenyQueryDocument extends ValidationRule {
 						$context->reportError(
 							new Error(
 								self::notFoundDocumentMessage(),
-								[ $node->type ]
+								[ $node ]
 							)
 						);
-					} elseif ( SavedQueryGrant::ALLOW !== $this->getQueryGrantSetting( $post->ID ) ) {
+					} elseif ( SavedQueryGrant::ALLOW !== SavedQueryGrant::getQueryGrantSetting( $post->ID ) ) {
 						$context->reportError(
 							new Error(
 								self::deniedDocumentMessage(),
-								[ $node->type ]
+								[ $node ]
 							)
 						);
 					}
@@ -85,13 +85,8 @@ class AllowDenyQueryDocument extends ValidationRule {
 		];
 	}
 
-	public function getQueryGrantSetting( $post_id ) {
-		$item = wp_get_object_terms( $post_id, SavedQueryGrant::TAXONOMY_NAME );
-		return $item[0]->name;
-	}
-
 	public static function deniedDocumentMessage() {
-		return __( 'This persisted query document has been blocked', 'wp-graphql-persisted-queries' );
+		return __( 'This persisted query document has been blocked.', 'wp-graphql-persisted-queries' );
 	}
 
 	public static function notFoundDocumentMessage() {
