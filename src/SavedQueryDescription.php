@@ -28,11 +28,14 @@ class SavedQueryDescription {
 	 * @return String  The translated or original string
 	 */
 	public function filter_translate_excerpt_text( $string ) {
-		if ( 'Excerpt' === $string ) {
-			return __( 'Description', 'wp-graphql-persisted-queries' );
-		}
-		if ( 'Excerpts are optional hand-crafted summaries of your content that can be used in your theme. <a href="%s">Learn more about manual excerpts</a>.' === $string ) {
-			return __( 'Add the query description.', 'wp-graphql-persisted-queries' );
+		$post = get_post();
+		if ( $post && SavedQuery::TYPE_NAME === $post->post_type ) {
+			if ( 'Excerpt' === $string ) {
+				return __( 'Description', 'wp-graphql-persisted-queries' );
+			}
+			if ( 'Excerpts are optional hand-crafted summaries of your content that can be used in your theme. <a href="%s">Learn more about manual excerpts</a>.' === $string ) {
+				return __( 'Add the query description.', 'wp-graphql-persisted-queries' );
+			}
 		}
 		return $string;
 	}
