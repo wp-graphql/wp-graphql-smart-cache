@@ -39,6 +39,9 @@ add_action(
 		$query_object = new SavedQuery();
 		$query_object->init();
 
+		$query_description = new SavedQueryDescription();
+		$query_description->init();
+
 		$query_grant = new SavedQueryGrant();
 		$query_grant->init();
 
