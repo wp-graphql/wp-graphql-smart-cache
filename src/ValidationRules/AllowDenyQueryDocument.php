@@ -8,7 +8,7 @@ use GraphQL\Language\AST\DocumentNode;
 use GraphQL\Validator\Rules\ValidationRule;
 use GraphQL\Validator\ValidationContext;
 
-use WPGraphQL\PersistedQueries\SavedQuery;
+use WPGraphQL\PersistedQueries\Document;
 use WPGraphQL\PersistedQueries\SavedQueryGrant;
 use WPGraphQL\PersistedQueries\Utils;
 
@@ -42,7 +42,7 @@ class AllowDenyQueryDocument extends ValidationRule {
 				$hash = Utils::generateHash( $context->getDocument() );
 
 				// Look up the persisted query
-				$post = Utils::getPostByTermId( $hash, SavedQuery::TYPE_NAME, SavedQuery::TAXONOMY_NAME );
+				$post = Utils::getPostByTermId( $hash, Document::TYPE_NAME, Document::TAXONOMY_NAME );
 
 				// If set to allow only specific queries, must be explicitely allowed.
 				// If set to deny some queries, only deny if persisted and explicitely denied.

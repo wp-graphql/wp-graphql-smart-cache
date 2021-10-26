@@ -5,11 +5,12 @@
  * @package Wp_Graphql_Persisted_Queries
  */
 
-namespace WPGraphQL\PersistedQueries;
+namespace WPGraphQL\PersistedQueries\Document;
 
+use WPGraphQL\PersistedQueries\Document;
 use GraphQL\Server\RequestError;
 
-class Lookup {
+class Loader {
 	/**
 	 * When a queryId is found on the request, this call back is invoked to look up the query string
 	 * Can be invoked on GET or POST params
@@ -19,7 +20,7 @@ class Lookup {
 	 * @return string | GraphQL\Language\AST\DocumentNode
 	 */
 	public static function by_query_id( $query_id, $operation_params ) {
-		$content = new SavedQuery();
+		$content = new Document();
 		$query   = $content->get( $query_id );
 
 		if ( ! isset( $query ) ) {

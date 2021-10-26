@@ -17,7 +17,7 @@ class QueryMaxAge {
 	public function init() {
 		register_taxonomy(
 			self::TAXONOMY_NAME,
-			SavedQuery::TYPE_NAME,
+			Document::TYPE_NAME,
 			[
 				'description'        => __( 'HTTP Access-Control-Max-Age Header for a saved GraphQL query', 'wp-graphql-persisted-queries' ),
 				'labels'             => [
@@ -31,7 +31,7 @@ class QueryMaxAge {
 			]
 		);
 
-		add_action( sprintf( 'save_post_%s', SavedQuery::TYPE_NAME ), [ $this, 'save_cb' ] );
+		add_action( sprintf( 'save_post_%s', Document::TYPE_NAME ), [ $this, 'save_cb' ] );
 
 		// Add to the wp-graphql admin settings page
 		add_action(
@@ -94,7 +94,7 @@ class QueryMaxAge {
 
 		// Look up this specific request query. If found and has an individual max-age setting, use it.
 		if ( $this->query_id ) {
-			$post = Utils::getPostByTermId( $this->query_id, SavedQuery::TYPE_NAME, SavedQuery::TAXONOMY_NAME );
+			$post = Utils::getPostByTermId( $this->query_id, Document::TYPE_NAME, Document::TAXONOMY_NAME );
 			if ( $post ) {
 				$age = $this->get( $post->ID );
 			}
@@ -151,7 +151,7 @@ class QueryMaxAge {
 			return;
 		}
 
-		if ( ! isset( $_POST['post_type'] ) || SavedQuery::TYPE_NAME !== $_POST['post_type'] ) {
+		if ( ! isset( $_POST['post_type'] ) || Document::TYPE_NAME !== $_POST['post_type'] ) {
 			return;
 		}
 

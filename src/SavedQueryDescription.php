@@ -11,14 +11,14 @@ class SavedQueryDescription {
 
 	public function init() {
 		// Enable excerpts for the persisted query post type
-		add_post_type_support( SavedQuery::TYPE_NAME, 'excerpt' );
+		add_post_type_support( Document::TYPE_NAME, 'excerpt' );
 
 		// Change the text from Excerpt to Description where it is visible.
 		add_filter( 'gettext', [ $this, 'filter_translate_excerpt_text' ], 10, 1 );
 
-		add_filter( sprintf( 'manage_%s_posts_columns', SavedQuery::TYPE_NAME ), [ $this, 'filter_add_description_to_admin' ], 10, 1 );
-		add_action( sprintf( 'manage_%s_posts_custom_column', SavedQuery::TYPE_NAME ), [ $this, 'action_fill_excerpt_content' ], 10, 2 );
-		add_filter( sprintf( 'manage_edit-%s_sortable_columns', SavedQuery::TYPE_NAME ), [ $this, 'filter_make_excerpt_column_sortable_in_admin' ], 10, 1 );
+		add_filter( sprintf( 'manage_%s_posts_columns', Document::TYPE_NAME ), [ $this, 'filter_add_description_to_admin' ], 10, 1 );
+		add_action( sprintf( 'manage_%s_posts_custom_column', Document::TYPE_NAME ), [ $this, 'action_fill_excerpt_content' ], 10, 2 );
+		add_filter( sprintf( 'manage_edit-%s_sortable_columns', Document::TYPE_NAME ), [ $this, 'filter_make_excerpt_column_sortable_in_admin' ], 10, 1 );
 	}
 
 	/**
@@ -29,7 +29,7 @@ class SavedQueryDescription {
 	 */
 	public function filter_translate_excerpt_text( $string ) {
 		$post = get_post();
-		if ( $post && SavedQuery::TYPE_NAME === $post->post_type ) {
+		if ( $post && Document::TYPE_NAME === $post->post_type ) {
 			if ( 'Excerpt' === $string ) {
 				return __( 'Description', 'wp-graphql-persisted-queries' );
 			}

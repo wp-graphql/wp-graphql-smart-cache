@@ -30,7 +30,7 @@ class SavedQueryGrant {
 	public function init() {
 		register_taxonomy(
 			self::TAXONOMY_NAME,
-			SavedQuery::TYPE_NAME,
+			Document::TYPE_NAME,
 			[
 				'description'        => __( 'Allow/Deny access grant for a saved GraphQL query', 'wp-graphql-persisted-queries' ),
 				'labels'             => [
@@ -48,7 +48,7 @@ class SavedQueryGrant {
 		// This filter allows us to add our validation rule to check a query for allow/deny access.
 		add_filter( 'graphql_validation_rules', [ $this, 'filter_add_validation_rules' ], 10, 2 );
 
-		add_action( sprintf( 'save_post_%s', SavedQuery::TYPE_NAME ), [ $this, 'save_cb' ] );
+		add_action( sprintf( 'save_post_%s', Document::TYPE_NAME ), [ $this, 'save_cb' ] );
 
 		// Add to the wp-graphql admin settings page
 		add_action(
@@ -161,7 +161,7 @@ class SavedQueryGrant {
 			return;
 		}
 
-		if ( ! isset( $_POST['post_type'] ) || SavedQuery::TYPE_NAME !== $_POST['post_type'] ) {
+		if ( ! isset( $_POST['post_type'] ) || Document::TYPE_NAME !== $_POST['post_type'] ) {
 			return;
 		}
 

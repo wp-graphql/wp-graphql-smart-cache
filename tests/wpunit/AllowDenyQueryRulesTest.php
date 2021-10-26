@@ -35,7 +35,7 @@ class AllowDenyQueryRulesTest extends \Codeception\TestCase\WPTestCase {
 	public function _createAPersistedQuery( $query_string, $grant ) {
 		$query_id = Utils::generateHash( $query_string );
 
-		$persisted_query = new SavedQuery();
+		$persisted_query = new Document();
 		$post_id = $persisted_query->save( $query_id, $query_string);
 
 		$query_grant = new SavedQueryGrant();

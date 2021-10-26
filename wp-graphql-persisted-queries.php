@@ -26,7 +26,7 @@ add_action(
 	'graphql_server_config',
 	function ( \GraphQL\Server\ServerConfig $config ) {
 		$config->setPersistentQueryLoader(
-			[ __NAMESPACE__ . '\Lookup', 'by_query_id' ]
+			[ __NAMESPACE__ . '\Document\Loader', 'by_query_id' ]
 		);
 	},
 	10,
@@ -36,8 +36,8 @@ add_action(
 add_action(
 	'init',
 	function () {
-		$query_object = new SavedQuery();
-		$query_object->init();
+		$document = new Document();
+		$document->init();
 
 		$query_description = new SavedQueryDescription();
 		$query_description->init();

@@ -48,12 +48,12 @@ class UtilsUnitTest extends \Codeception\TestCase\WPTestCase {
 	}
 
 	public function test_boolean_term_exists_false() {
-		$this->assertFalse( Utils::termExists( 'foo123', 'graphql_query_label' ) );
+		$this->assertFalse( Utils::termExists( 'foo123', 'graphql_query_alias' ) );
 	}
 
 	public function test_boolean_term_exists_true() {
-		wp_insert_term( 'foo123', 'graphql_query_label' );
-		$this->assertTrue( Utils::termExists( 'foo123', 'graphql_query_label' ) );
-		wp_delete_term( 'foo123', 'graphql_query_label' );
+		wp_insert_term( 'foo123', 'graphql_query_alias' );
+		$this->assertTrue( Utils::termExists( 'foo123', 'graphql_query_alias' ) );
+		wp_delete_term( 'foo123', 'graphql_query_alias' );
 	}
 }

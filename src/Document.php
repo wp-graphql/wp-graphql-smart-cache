@@ -7,17 +7,14 @@
 
 namespace WPGraphQL\PersistedQueries;
 
-class SavedQuery {
+class Document {
 
-	const TYPE_NAME     = 'graphql_query';
-	const TAXONOMY_NAME = 'graphql_query_label';
+	const TYPE_NAME     = 'graphql_document';
+	const TAXONOMY_NAME = 'graphql_query_alias';
 
 	public function init() {
-		$this->register_post_type();
-		add_filter( 'graphql_request_data', [ $this, 'filter_request_data' ], 10, 2 );
-	}
+		add_filter( 'graphql_request_data', [ $this, '_save_document_cb' ], 10, 2 );
 
-	public function register_post_type() {
 		register_post_type(
 			self::TYPE_NAME,
 			[
@@ -68,7 +65,7 @@ class SavedQuery {
 	 * @param  array $request_context An array containing the both body and query params
 	 * @return string Updated $parsed_body_params Request parameters.
 	 */
-	public function filter_request_data( $parsed_body_params, $request_context ) {
+	public function _save_document_cb( $parsed_body_params, $request_context ) {
 		if ( isset( $parsed_body_params['query'] ) && isset( $parsed_body_params['queryId'] ) ) {
 			// save the query
 			$this->save( $parsed_body_params['queryId'], $parsed_body_params['query'] );
