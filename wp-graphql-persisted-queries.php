@@ -12,6 +12,7 @@
 namespace WPGraphQL\PersistedQueries;
 
 use WPGraphQL\PersistedQueries\Document\MaxAge;
+use WPGraphQL\PersistedQueries\Document\Description;
 
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
@@ -41,8 +42,8 @@ add_action(
 		$document = new Document();
 		$document->init();
 
-		$query_description = new SavedQueryDescription();
-		$query_description->init();
+		$description = new Description();
+		$description->init();
 
 		$query_grant = new SavedQueryGrant();
 		$query_grant->init();
