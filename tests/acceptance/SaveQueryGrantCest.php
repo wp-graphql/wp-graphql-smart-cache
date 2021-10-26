@@ -22,10 +22,16 @@ class SaveQueryGrantCest
         $I->selectOption('graphql_query_grant', 'deny');
         $I->click('save');
         $I->seeOptionIsSelected('form input[id=graphql_query_grant_deny]', 'deny');
-
+        $post_id = $I->grabFromCurrentUrl('~\?post=(\d+)&~');
+        
         // Check the listing on the admin page table list of queries
         $I->amOnPage('/wp-admin/edit.php?post_type=graphql_query');
-        $I->assertEquals('deny', $I->grabTextFrom('//table/tbody/tr[1]/td[@data-colname="Allow/Deny"]'));
+        $I->assertEquals(
+            'deny',
+            $I->grabTextFrom(
+                sprintf( '//*[@id="post-%d"]/td[2]/a', $post_id )
+            )
+        );
     }
 
 }
