@@ -1,6 +1,6 @@
 <?php
 
-class SaveQueryCest {
+class DocumentCest {
 	public function _before( FunctionalTester $I ) {
 		// Make sure that is gone.
 		$I->dontHavePostInDatabase(['post_title' => 'Hello world!']);

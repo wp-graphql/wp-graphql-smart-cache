@@ -1,6 +1,6 @@
 <?php
 
-class QueryCest
+class QueryIdCest
 {
     public function _before(AcceptanceTester $I)
     {
