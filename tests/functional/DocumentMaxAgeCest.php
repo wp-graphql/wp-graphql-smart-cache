@@ -4,7 +4,7 @@
  * Test the wp-graphql settings page for global max age header.
  */
 
-class QueryMaxAgeCest {
+class DocumentMaxAgeCest {
 	public function _before( FunctionalTester $I ) {
 		$I->dontHaveOptionInDatabase( 'graphql_persisted_queries_section'  );
 	}

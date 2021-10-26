@@ -8,8 +8,8 @@ use GraphQL\Language\AST\DocumentNode;
 use GraphQL\Validator\Rules\ValidationRule;
 use GraphQL\Validator\ValidationContext;
 
-use WPGraphQL\PersistedQueries\SavedQuery;
-use WPGraphQL\PersistedQueries\SavedQueryGrant;
+use WPGraphQL\PersistedQueries\Document;
+use WPGraphQL\PersistedQueries\Document\Grant;
 use WPGraphQL\PersistedQueries\Utils;
 
 /**
@@ -42,18 +42,18 @@ class AllowDenyQueryDocument extends ValidationRule {
 				$hash = Utils::generateHash( $context->getDocument() );
 
 				// Look up the persisted query
-				$post = Utils::getPostByTermId( $hash, SavedQuery::TYPE_NAME, SavedQuery::TAXONOMY_NAME );
+				$post = Utils::getPostByTermId( $hash, Document::TYPE_NAME, Document::TAXONOMY_NAME );
 
 				// If set to allow only specific queries, must be explicitely allowed.
 				// If set to deny some queries, only deny if persisted and explicitely denied.
-				if ( SavedQueryGrant::GLOBAL_DENIED === $this->access_setting ) {
+				if ( Grant::GLOBAL_DENIED === $this->access_setting ) {
 					// If this query is not persisted do not block it.
 					if ( ! $post ) {
 						return;
 					}
 
 					// When the allow/deny setting denies some queries, see if this query is denied
-					if ( SavedQueryGrant::DENY === SavedQueryGrant::getQueryGrantSetting( $post->ID ) ) {
+					if ( Grant::DENY === Grant::getQueryGrantSetting( $post->ID ) ) {
 						$context->reportError(
 							new Error(
 								self::deniedDocumentMessage(),
@@ -61,7 +61,7 @@ class AllowDenyQueryDocument extends ValidationRule {
 							)
 						);
 					}
-				} elseif ( SavedQueryGrant::GLOBAL_ALLOWED === $this->access_setting ) {
+				} elseif ( Grant::GLOBAL_ALLOWED === $this->access_setting ) {
 					// When the allow/deny setting only allows certain queries, verify this query is allowed
 
 					// If this query is not persisted do not allow.
@@ -72,7 +72,7 @@ class AllowDenyQueryDocument extends ValidationRule {
 								[ $node ]
 							)
 						);
-					} elseif ( SavedQueryGrant::ALLOW !== SavedQueryGrant::getQueryGrantSetting( $post->ID ) ) {
+					} elseif ( Grant::ALLOW !== Grant::getQueryGrantSetting( $post->ID ) ) {
 						$context->reportError(
 							new Error(
 								self::deniedDocumentMessage(),

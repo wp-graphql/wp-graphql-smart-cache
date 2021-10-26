@@ -5,13 +5,14 @@
  * @package Wp_Graphql_Persisted_Queries
  */
 
-namespace WPGraphQL\PersistedQueries;
+namespace WPGraphQL\PersistedQueries\Document;
 
+use WPGraphQL\PersistedQueries\Document;
 use WPGraphQL\PersistedQueries\ValidationRules\AllowDenyQueryDocument;
 
-class SavedQueryGrant {
+class Grant {
 
-	const TAXONOMY_NAME = 'graphql_query_grant';
+	const TAXONOMY_NAME = 'graphql_document_grant';
 
 	// The string value used for the individual saved query
 	const ALLOW                = 'allow';
@@ -30,9 +31,9 @@ class SavedQueryGrant {
 	public function init() {
 		register_taxonomy(
 			self::TAXONOMY_NAME,
-			SavedQuery::TYPE_NAME,
+			Document::TYPE_NAME,
 			[
-				'description'        => __( 'Allow/Deny access grant for a saved GraphQL query', 'wp-graphql-persisted-queries' ),
+				'description'        => __( 'Allow/Deny access grant for a saved GraphQL query document', 'wp-graphql-persisted-queries' ),
 				'labels'             => [
 					'name' => __( 'Allow/Deny', 'wp-graphql-persisted-queries' ),
 				],
@@ -40,15 +41,15 @@ class SavedQueryGrant {
 				'show_admin_column'  => true,
 				'show_in_menu'       => false,
 				'show_in_quick_edit' => false,
-				'meta_box_cb'        => [ $this, 'admin_input_box' ],
+				'meta_box_cb'        => [ $this, 'admin_input_box_cb' ],
 			]
 		);
 
 		// Add to the wpgraphql server validation rules.
 		// This filter allows us to add our validation rule to check a query for allow/deny access.
-		add_filter( 'graphql_validation_rules', [ $this, 'filter_add_validation_rules' ], 10, 2 );
+		add_filter( 'graphql_validation_rules', [ $this, 'add_validation_rules_cb' ], 10, 2 );
 
-		add_action( sprintf( 'save_post_%s', SavedQuery::TYPE_NAME ), [ $this, 'save_cb' ] );
+		add_action( sprintf( 'save_post_%s', Document::TYPE_NAME ), [ $this, 'save_cb' ] );
 
 		// Add to the wp-graphql admin settings page
 		add_action(
@@ -76,7 +77,7 @@ class SavedQueryGrant {
 	/**
 	 * Draw the input field for the post edit
 	 */
-	public function admin_input_box( $post ) {
+	public function admin_input_box_cb( $post ) {
 		wp_nonce_field( 'graphql_query_grant', 'savedquery_grant_noncename' );
 
 		$value = $this->getQueryGrantSetting( $post->ID );
@@ -161,7 +162,7 @@ class SavedQueryGrant {
 			return;
 		}
 
-		if ( ! isset( $_POST['post_type'] ) || SavedQuery::TYPE_NAME !== $_POST['post_type'] ) {
+		if ( ! isset( $_POST['post_type'] ) || Document::TYPE_NAME !== $_POST['post_type'] ) {
 			return;
 		}
 
@@ -188,10 +189,10 @@ class SavedQueryGrant {
 		return wp_set_post_terms( $post_id, $grant, self::TAXONOMY_NAME );
 	}
 
-	public function filter_add_validation_rules( $validation_rules, $request ) {
+	public function add_validation_rules_cb( $validation_rules, $request ) {
 		// Check the grant mode. If public for all, don't add this rule.
-		$setting = get_graphql_setting( self::GLOBAL_SETTING_NAME, SavedQueryGrant::GLOBAL_DEFAULT, 'graphql_persisted_queries_section' );
-		if ( SavedQueryGrant::GLOBAL_PUBLIC !== $setting ) {
+		$setting = get_graphql_setting( self::GLOBAL_SETTING_NAME, self::GLOBAL_DEFAULT, 'graphql_persisted_queries_section' );
+		if ( self::GLOBAL_PUBLIC !== $setting ) {
 			$validation_rules['allow_deny_query_document'] = new AllowDenyQueryDocument( $setting );
 		}
 

@@ -1,13 +1,13 @@
 <?php
 
-class SaveQueryCest {
+class DocumentCest {
 	public function _before( FunctionalTester $I ) {
 		// Make sure that is gone.
 		$I->dontHavePostInDatabase(['post_title' => 'Hello world!']);
 
 		// clean up and persisted queries terms in the taxonomy
-		$I->dontHavePostInDatabase( [ 'post_type' => 'graphql_query' ] );
-		$I->dontHaveTermInDatabase( ['taxonomy' => 'graphql_query_label'] );
+		$I->dontHavePostInDatabase( [ 'post_type' => 'graphql_document' ] );
+		$I->dontHaveTermInDatabase( ['taxonomy' => 'graphql_query_alias'] );
 
 		$I->dontHaveOptionInDatabase( 'graphql_persisted_queries_section'  );
 	}
@@ -29,7 +29,7 @@ class SaveQueryCest {
 			]
 		]);
 		$I->seePostInDatabase( [
-			'post_type'    => 'graphql_query',
+			'post_type'    => 'graphql_document',
 			'post_status'  => 'publish',
 			'post_name'    => $query_hash,
 			'post_content' => $query,
@@ -57,7 +57,7 @@ class SaveQueryCest {
 		$query_hash = hash( 'sha256', $query );
 		$query_alias = 'test-save-query-creates-alias';
 
-		$I->dontSeeTermInDatabase( [ 'name' => 'graphql_query_label' ] );
+		$I->dontSeeTermInDatabase( [ 'name' => 'graphql_query_alias' ] );
 		$I->sendPost('graphql', [
 			'query' => $query,
 			'queryId' => $query_alias
@@ -90,7 +90,7 @@ class SaveQueryCest {
 			]
 		]);
 		$I->dontSeePostInDatabase( [
-			'post_type'    => 'graphql_query',
+			'post_type'    => 'graphql_document',
 			'post_name'    => $query_hash,
 			'post_content' => $query,
 		] );
