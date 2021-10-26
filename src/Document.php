@@ -13,7 +13,7 @@ class Document {
 	const TAXONOMY_NAME = 'graphql_query_alias';
 
 	public function init() {
-		add_filter( 'graphql_request_data', [ $this, '_save_document_cb' ], 10, 2 );
+		add_filter( 'graphql_request_data', [ $this, 'save_document_cb' ], 10, 2 );
 
 		register_post_type(
 			self::TYPE_NAME,
@@ -38,17 +38,8 @@ class Document {
 				'description'        => __( 'Taxonomy for saved GraphQL queries', 'wp-graphql-persisted-queries' ),
 				'hierarchical'       => false,
 				'labels'             => [
-					'name'              => __( 'GraphQL Query Names', 'wp-graphql-persisted-queries' ),
-					'singular_name'     => __( 'GraphQL Query Name', 'wp-graphql-persisted-queries' ),
-					'search_items'      => __( 'Search Query Names', 'wp-graphql-persisted-queries' ),
-					'all_items'         => __( 'All Query Name', 'wp-graphql-persisted-queries' ),
-					'parent_item'       => __( 'Parent Query Name', 'wp-graphql-persisted-queries' ),
-					'parent_item_colon' => __( 'Parent Query Name:', 'wp-graphql-persisted-queries' ),
-					'edit_item'         => __( 'Edit Query Name', 'wp-graphql-persisted-queries' ),
-					'update_item'       => __( 'Update Query Name', 'wp-graphql-persisted-queries' ),
-					'add_new_item'      => __( 'Add New Query Name', 'wp-graphql-persisted-queries' ),
-					'new_item_name'     => __( 'New Query Name', 'wp-graphql-persisted-queries' ),
-					'menu_name'         => __( 'GraphQL Query Names', 'wp-graphql-persisted-queries' ),
+					'name'          => __( 'GraphQL Query Names', 'wp-graphql-persisted-queries' ),
+					'singular_name' => __( 'GraphQL Query Name', 'wp-graphql-persisted-queries' ),
 				],
 				'show_ui'            => true,
 				'show_in_quick_edit' => false,
@@ -65,7 +56,7 @@ class Document {
 	 * @param  array $request_context An array containing the both body and query params
 	 * @return string Updated $parsed_body_params Request parameters.
 	 */
-	public function _save_document_cb( $parsed_body_params, $request_context ) {
+	public function save_document_cb( $parsed_body_params, $request_context ) {
 		if ( isset( $parsed_body_params['query'] ) && isset( $parsed_body_params['queryId'] ) ) {
 			// save the query
 			$this->save( $parsed_body_params['queryId'], $parsed_body_params['query'] );

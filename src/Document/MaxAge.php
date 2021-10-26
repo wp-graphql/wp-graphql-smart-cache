@@ -30,11 +30,11 @@ class MaxAge {
 				'show_admin_column'  => true,
 				'show_in_menu'       => false,
 				'show_in_quick_edit' => false,
-				'meta_box_cb'        => [ $this, '_admin_input_box_cb' ],
+				'meta_box_cb'        => [ $this, 'admin_input_box_cb' ],
 			]
 		);
 
-		add_action( sprintf( 'save_post_%s', Document::TYPE_NAME ), [ $this, '_save_cb' ] );
+		add_action( sprintf( 'save_post_%s', Document::TYPE_NAME ), [ $this, 'save_cb' ] );
 
 		// Add to the wp-graphql admin settings page
 		add_action(
@@ -59,8 +59,8 @@ class MaxAge {
 		);
 
 		// From WPGraphql Router
-		add_filter( 'graphql_response_headers_to_send', [ $this, '_http_headers_cb' ], 10, 1 );
-		add_filter( 'pre_graphql_execute_request', [ $this, '_peak_at_executing_query_cb' ], 10, 2 );
+		add_filter( 'graphql_response_headers_to_send', [ $this, 'http_headers_cb' ], 10, 1 );
+		add_filter( 'pre_graphql_execute_request', [ $this, 'peak_at_executing_query_cb' ], 10, 2 );
 	}
 
 	/**
@@ -83,7 +83,7 @@ class MaxAge {
 		return wp_set_post_terms( $post_id, $value, self::TAXONOMY_NAME );
 	}
 
-	public function _peak_at_executing_query_cb( $result, $request ) {
+	public function peak_at_executing_query_cb( $result, $request ) {
 		if ( $request->params->queryId ) {
 			$this->query_id = $request->params->queryId;
 		} elseif ( $request->params->query ) {
@@ -92,7 +92,7 @@ class MaxAge {
 		return $result;
 	}
 
-	public function _http_headers_cb( $headers ) {
+	public function http_headers_cb( $headers ) {
 		$age = null;
 
 		// Look up this specific request query. If found and has an individual max-age setting, use it.
@@ -118,7 +118,7 @@ class MaxAge {
 	/**
 	 * Draw the input field for the post edit
 	 */
-	public function _admin_input_box_cb( $post ) {
+	public function admin_input_box_cb( $post ) {
 		wp_nonce_field( 'graphql_query_maxage', 'savedquery_maxage_noncename' );
 
 		$value = $this->get( $post->ID );
@@ -141,7 +141,7 @@ class MaxAge {
 	/**
 	 * When a post is saved, sanitize and store the data.
 	 */
-	public function _save_cb( $post_id ) {
+	public function save_cb( $post_id ) {
 		if ( empty( $_POST ) ) {
 			return;
 		}

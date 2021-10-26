@@ -41,15 +41,15 @@ class Grant {
 				'show_admin_column'  => true,
 				'show_in_menu'       => false,
 				'show_in_quick_edit' => false,
-				'meta_box_cb'        => [ $this, '_admin_input_box_cb' ],
+				'meta_box_cb'        => [ $this, 'admin_input_box_cb' ],
 			]
 		);
 
 		// Add to the wpgraphql server validation rules.
 		// This filter allows us to add our validation rule to check a query for allow/deny access.
-		add_filter( 'graphql_validation_rules', [ $this, '_add_validation_rules_cb' ], 10, 2 );
+		add_filter( 'graphql_validation_rules', [ $this, 'add_validation_rules_cb' ], 10, 2 );
 
-		add_action( sprintf( 'save_post_%s', Document::TYPE_NAME ), [ $this, '_save_cb' ] );
+		add_action( sprintf( 'save_post_%s', Document::TYPE_NAME ), [ $this, 'save_cb' ] );
 
 		// Add to the wp-graphql admin settings page
 		add_action(
@@ -77,7 +77,7 @@ class Grant {
 	/**
 	 * Draw the input field for the post edit
 	 */
-	public function _admin_input_box_cb( $post ) {
+	public function admin_input_box_cb( $post ) {
 		wp_nonce_field( 'graphql_query_grant', 'savedquery_grant_noncename' );
 
 		$value = $this->getQueryGrantSetting( $post->ID );
@@ -149,7 +149,7 @@ class Grant {
 	/**
 	 * When a post is saved, sanitize and store the data.
 	 */
-	public function _save_cb( $post_id ) {
+	public function save_cb( $post_id ) {
 		if ( empty( $_POST ) ) {
 			return;
 		}
@@ -189,7 +189,7 @@ class Grant {
 		return wp_set_post_terms( $post_id, $grant, self::TAXONOMY_NAME );
 	}
 
-	public function _add_validation_rules_cb( $validation_rules, $request ) {
+	public function add_validation_rules_cb( $validation_rules, $request ) {
 		// Check the grant mode. If public for all, don't add this rule.
 		$setting = get_graphql_setting( self::GLOBAL_SETTING_NAME, self::GLOBAL_DEFAULT, 'graphql_persisted_queries_section' );
 		if ( self::GLOBAL_PUBLIC !== $setting ) {
