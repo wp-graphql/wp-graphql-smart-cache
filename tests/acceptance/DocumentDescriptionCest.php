@@ -1,6 +1,6 @@
 <?php
 
-class SaveQueryDescriptionCest
+class DocumentDescriptionCest
 {
     public function createQueryWithDescriptionTest(AcceptanceTester $I)
     {

@@ -17,8 +17,8 @@ class Grant {
 	// The string value used for the individual saved query
 	const ALLOW                = 'allow';
 	const DENY                 = 'deny';
-	const USE_DEFAULT          = 'default';
-	const NOT_SELECTED_DEFAULT = false;
+	const USE_DEFAULT          = false;
+	const NOT_SELECTED_DEFAULT = self::USE_DEFAULT;
 
 	// The string value stored for the global admin setting
 	const GLOBAL_ALLOWED = 'only_allowed';
@@ -84,21 +84,21 @@ class Grant {
 		$html  = sprintf(
 			'<input type="radio" id="graphql_query_grant_allow" name="graphql_query_grant" value="%s" %s>',
 			self::ALLOW,
-			checked( $value, self::ALLOW, self::NOT_SELECTED_DEFAULT )
+			checked( $value, self::ALLOW, false )
 		);
-		$html .= '<label for="graphql_query_grant_allow">Allowed</label>&nbsp;';
+		$html .= '<label for="graphql_query_grant_allow">Allowed</label><br >';
 		$html .= sprintf(
 			'<input type="radio" id="graphql_query_grant_deny" name="graphql_query_grant" value="%s" %s>',
 			self::DENY,
-			checked( $value, self::DENY, self::NOT_SELECTED_DEFAULT )
+			checked( $value, self::DENY, false )
 		);
-		$html .= '<label for="graphql_query_grant_deny">Deny</label>&nbsp;';
+		$html .= '<label for="graphql_query_grant_deny">Deny</label><br >';
 		$html .= sprintf(
 			'<input type="radio" id="graphql_query_grant_default" name="graphql_query_grant" value="%s" %s>',
 			self::USE_DEFAULT,
-			checked( $value, self::USE_DEFAULT, self::NOT_SELECTED_DEFAULT )
+			checked( $value, self::USE_DEFAULT, false )
 		);
-		$html .= '<label for="graphql_query_grant_default">Use global default</label>&nbsp;';
+		$html .= '<label for="graphql_query_grant_default">Use global default</label><br >';
 		echo wp_kses(
 			$html,
 			[
@@ -109,6 +109,7 @@ class Grant {
 					'value'   => true,
 					'checked' => true,
 				],
+				'br'    => true,
 			]
 		);
 	}
