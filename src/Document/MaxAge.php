@@ -1,17 +1,20 @@
 <?php
 /**
- * The max age admin and filter for individual querys
+ * The max age admin and filter for individual query documents.
  *
  * @package Wp_Graphql_Persisted_Queries
  */
 
-namespace WPGraphQL\PersistedQueries;
+namespace WPGraphQL\PersistedQueries\Document;
 
-class QueryMaxAge {
+use WPGraphQL\PersistedQueries\Document;
+use WPGraphQL\PersistedQueries\Utils;
 
-	const TAXONOMY_NAME = 'graphql_query_http_maxage';
+class MaxAge {
 
-	// The in progress query
+	const TAXONOMY_NAME = 'graphql_document_http_maxage';
+
+	// The in-progress query
 	public $query_id;
 
 	public function init() {
@@ -19,7 +22,7 @@ class QueryMaxAge {
 			self::TAXONOMY_NAME,
 			Document::TYPE_NAME,
 			[
-				'description'        => __( 'HTTP Access-Control-Max-Age Header for a saved GraphQL query', 'wp-graphql-persisted-queries' ),
+				'description'        => __( 'HTTP Access-Control-Max-Age Header for a saved GraphQL document', 'wp-graphql-persisted-queries' ),
 				'labels'             => [
 					'name' => __( 'Max-Age Header', 'wp-graphql-persisted-queries' ),
 				],
@@ -27,11 +30,11 @@ class QueryMaxAge {
 				'show_admin_column'  => true,
 				'show_in_menu'       => false,
 				'show_in_quick_edit' => false,
-				'meta_box_cb'        => [ $this, 'admin_input_box' ],
+				'meta_box_cb'        => [ $this, '_admin_input_box_cb' ],
 			]
 		);
 
-		add_action( sprintf( 'save_post_%s', Document::TYPE_NAME ), [ $this, 'save_cb' ] );
+		add_action( sprintf( 'save_post_%s', Document::TYPE_NAME ), [ $this, '_save_cb' ] );
 
 		// Add to the wp-graphql admin settings page
 		add_action(
@@ -56,8 +59,8 @@ class QueryMaxAge {
 		);
 
 		// From WPGraphql Router
-		add_filter( 'graphql_response_headers_to_send', [ $this, 'filter_response_headers' ], 10, 1 );
-		add_filter( 'pre_graphql_execute_request', [ $this, 'filter_what_is_the_query_id' ], 10, 2 );
+		add_filter( 'graphql_response_headers_to_send', [ $this, '_http_headers_cb' ], 10, 1 );
+		add_filter( 'pre_graphql_execute_request', [ $this, '_peak_at_executing_query_cb' ], 10, 2 );
 	}
 
 	/**
@@ -80,7 +83,7 @@ class QueryMaxAge {
 		return wp_set_post_terms( $post_id, $value, self::TAXONOMY_NAME );
 	}
 
-	public function filter_what_is_the_query_id( $result, $request ) {
+	public function _peak_at_executing_query_cb( $result, $request ) {
 		if ( $request->params->queryId ) {
 			$this->query_id = $request->params->queryId;
 		} elseif ( $request->params->query ) {
@@ -89,7 +92,7 @@ class QueryMaxAge {
 		return $result;
 	}
 
-	public function filter_response_headers( $headers ) {
+	public function _http_headers_cb( $headers ) {
 		$age = null;
 
 		// Look up this specific request query. If found and has an individual max-age setting, use it.
@@ -115,7 +118,7 @@ class QueryMaxAge {
 	/**
 	 * Draw the input field for the post edit
 	 */
-	public function admin_input_box( $post ) {
+	public function _admin_input_box_cb( $post ) {
 		wp_nonce_field( 'graphql_query_maxage', 'savedquery_maxage_noncename' );
 
 		$value = $this->get( $post->ID );
@@ -138,7 +141,7 @@ class QueryMaxAge {
 	/**
 	 * When a post is saved, sanitize and store the data.
 	 */
-	public function save_cb( $post_id ) {
+	public function _save_cb( $post_id ) {
 		if ( empty( $_POST ) ) {
 			return;
 		}
