@@ -8,6 +8,7 @@
 actor: AcceptanceTester
 modules:
     enabled:
+        - Asserts
         - WPBrowser
         - REST:
             depends: PhpBrowser

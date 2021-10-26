@@ -4,7 +4,7 @@
  * Test the wp-graphql settings page for global allow/deny.
  */
 
-class AdminGlobalSettingsCest
+class AdminSettingsGrantCest
 {
 	public function _after( FunctionalTester $I ) {
 		$I->dontHaveOptionInDatabase( 'graphql_persisted_queries_section'  );
