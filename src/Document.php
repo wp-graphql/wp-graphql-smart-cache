@@ -35,14 +35,16 @@ class Document {
 			self::TAXONOMY_NAME,
 			self::TYPE_NAME,
 			[
-				'description'        => __( 'Taxonomy for saved GraphQL queries', 'wp-graphql-persisted-queries' ),
+				'description'        => __( 'Alias names for saved GraphQL queries', 'wp-graphql-persisted-queries' ),
 				'hierarchical'       => false,
 				'labels'             => [
-					'name'          => __( 'GraphQL Query Names', 'wp-graphql-persisted-queries' ),
-					'singular_name' => __( 'GraphQL Query Name', 'wp-graphql-persisted-queries' ),
+					'name'          => __( 'Alias Names', 'wp-graphql-persisted-queries' ),
+					'singular_name' => __( 'Alias Name', 'wp-graphql-persisted-queries' ),
 				],
-				'show_ui'            => true,
+				'show_admin_column'  => true,
+				'show_in_menu'       => false,
 				'show_in_quick_edit' => false,
+				'meta_box_cb'        => [ $this, 'admin_input_box_cb' ],
 			]
 		);
 		register_taxonomy_for_object_type( self::TAXONOMY_NAME, self::TYPE_NAME );
@@ -164,6 +166,30 @@ class Document {
 		}
 
 		return $post_id;
+	}
+
+	/**
+	 * Draw the input field for the post edit
+	 */
+	public function admin_input_box_cb( $post ) {
+		wp_nonce_field( 'graphql_query_grant', '_document_noncename' );
+
+		$html  = '<ul>';
+		$terms = get_the_terms( $post, self::TAXONOMY_NAME );
+
+		foreach ( $terms as $term ) {
+			$string = mb_strimwidth( $term->name, 0, 30, '...' );
+			$html  .= "<li>$string</li>";
+		}
+		$html .= '</ul>';
+		$html .= __( 'The aliases associated with this graphql document. Use in a graphql request as the queryId={} parameter', 'wp-graphql-persisted-queries' );
+		echo wp_kses(
+			$html,
+			[
+				'ul' => true,
+				'li' => true,
+			]
+		);
 	}
 
 }

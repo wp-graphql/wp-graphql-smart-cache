@@ -4,7 +4,7 @@
  * Test the allow/deny selection for individual query grant access.
  */
 
-class SaveQueryGrantCest
+class DocumentGrantCest
 {
     public function adminSetQueryToAllowAndDenyTest(AcceptanceTester $I)
     {
@@ -29,7 +29,7 @@ class SaveQueryGrantCest
         $I->assertEquals(
             'deny',
             $I->grabTextFrom(
-                sprintf( '//*[@id="post-%d"]/td[2]/a', $post_id )
+                sprintf( '//*[@id="post-%d"]/td[3]/a', $post_id )
             )
         );
     }
