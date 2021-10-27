@@ -13,7 +13,7 @@ class Utils {
 	 * @param  string $query_id Query ID
 	 * @return WP_Post
 	 */
-	public static function getPostByTermId( $query_id, $type, $taxonomy ) {
+	public static function getPostByTermName( $query_id, $type, $taxonomy ) {
 		$wp_query = new \WP_Query(
 			[
 				'post_type'      => $type,

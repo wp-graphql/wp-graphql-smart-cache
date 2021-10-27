@@ -125,7 +125,7 @@ class DocumentCest {
 		]);
 		$I->seeTermInDatabase( [ 'name' => $query_hash ] );
 
-		// Query with this persisted hash works, but not with the query we want, yet.
+		// Query with this persisted hash works, but not with the query hash we expected.
 		$I->sendGet( 'graphql', [ 'queryId' => $query_hash ] );
 		$I->seeResponseContainsJson( [
 			'data' => [
@@ -140,8 +140,8 @@ class DocumentCest {
 			'queryId' => $query_hash
 		] );
 		$I->seeResponseContainsJson([
-			'data' => [
-				'__typename' => 'RootQuery'
+			'errors' => [
+				'message' => 'This query has already been associated with another query "A Persisted Query"'
 			]
 		]);
 	}

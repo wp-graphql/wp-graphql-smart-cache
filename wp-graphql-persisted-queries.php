@@ -51,6 +51,9 @@ add_action(
 
 		$max_age = new MaxAge();
 		$max_age->init();
+
+		$errors = new AdminErrors();
+		$errors->init();
 	}
 );
 

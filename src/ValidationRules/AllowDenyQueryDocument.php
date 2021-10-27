@@ -42,7 +42,7 @@ class AllowDenyQueryDocument extends ValidationRule {
 				$hash = Utils::generateHash( $context->getDocument() );
 
 				// Look up the persisted query
-				$post = Utils::getPostByTermId( $hash, Document::TYPE_NAME, Document::TAXONOMY_NAME );
+				$post = Utils::getPostByTermName( $hash, Document::TYPE_NAME, Document::TAXONOMY_NAME );
 
 				// If set to allow only specific queries, must be explicitely allowed.
 				// If set to deny some queries, only deny if persisted and explicitely denied.
