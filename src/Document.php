@@ -149,12 +149,14 @@ class Document {
 		try {
 			// Get the existing normalized hash for this post and remove it before build a new on, only if the query has changed.
 			$old_query_id = Utils::generateHash( $post_before->post_content );
-			$term         = get_term_by( 'name', $old_query_id, self::TAXONOMY_NAME );
-			if ( $term ) {
-				wp_delete_term( $term->term_id, self::TAXONOMY_NAME );
-			}
 		} catch ( SyntaxError $e ) {
 			return;
+		}
+
+		// If the old query string hash is assigned to this post, don't delete it
+		$terms = wp_get_post_terms( $post_ID, self::TAXONOMY_NAME, [ 'fields' => 'names' ] );
+		if ( in_array( $old_query_id, $terms, true ) ) {
+			wp_remove_object_terms( $post_ID, $old_query_id, self::TAXONOMY_NAME );
 		}
 	}
 
@@ -216,12 +218,6 @@ class Document {
 			if ( is_wp_error( $post ) ) {
 				// throw some error?
 				return;
-			}
-
-			// Upon saving the new persisted query, remove any terms that already exist as aliases
-			$term_object = get_term_by( 'name', $normalized_hash, self::TAXONOMY_NAME );
-			if ( $term_object ) {
-				wp_delete_term( $term_object->term_id, self::TAXONOMY_NAME );
 			}
 		} elseif ( $query !== $post->post_content ) {
 			// If the hash for the query string loads a post with a different query string,
