@@ -70,22 +70,4 @@ class Utils {
 		return hash( 'sha256', $query );
 	}
 
-	/**
-	 * Query taxonomy terms for existance of provided name/alias.
-	 *
-	 * @param  string   Query name/alias
-	 * @return boolean  If term for the taxonomy already exists
-	 */
-	public static function termExists( $name, $taxonomy ) {
-		$query = new \WP_Term_Query(
-			[
-				'taxonomy' => $taxonomy,
-				'fields'   => 'names',
-				'get'      => 'all',
-			]
-		);
-		$terms = $query->get_terms();
-		return in_array( $name, $terms, true );
-	}
-
 }

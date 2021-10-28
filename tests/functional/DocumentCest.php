@@ -141,13 +141,15 @@ class DocumentCest {
 		] );
 		$I->seeResponseContainsJson([
 			'errors' => [
-				'message' => 'This query has already been associated with another query "A Persisted Query"'
+				0 => [
+					'message' => 'This query has already been associated with another query "A Persisted Query"',
+				],
 			]
 		]);
 	}
 
 	public function saveQueryUsingExistingAliasTest( FunctionalTester $I ) {
-		$I->wantTo( 'Save a graphql query using existing query alias' );
+		$I->wantTo( 'Error when save a graphql query using existing query alias' );
 
 		// Set up some content
 		$I->havePostInDatabase( [
@@ -185,14 +187,11 @@ class DocumentCest {
 			'query' => $query,
 			'queryId' => $query_alias
 		] );
-		$I->seeResponseContainsJson( [
-			'data' => [
-				'posts' => [
-					'nodes' => [
-							'__typename' => 'Post',
-							'content' => "<p>foo bar. biz bang.</p>\n",
-					]
-				]
+		$I->seeResponseContainsJson([
+			'errors' => [
+				0 => [
+					'message' => 'This queryId has already been associated with another query "A Persisted Query"',
+				],
 			]
 		]);
 

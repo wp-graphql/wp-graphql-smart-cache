@@ -27,11 +27,11 @@ class Document {
 		register_post_type(
 			self::TYPE_NAME,
 			[
+				'description' => __( 'Saved GraphQL queries', 'wp-graphql-persisted-queries' ),
 				'labels'      => [
 					'name'          => __( 'GraphQLQueries', 'wp-graphql-persisted-queries' ),
 					'singular_name' => __( 'GraphQLQuery', 'wp-graphql-persisted-queries' ),
 				],
-				'description' => __( 'Saved GraphQL queries', 'wp-graphql-persisted-queries' ),
 				'public'      => true,
 				'show_ui'     => true,
 				'taxonomies'  => [
@@ -56,7 +56,6 @@ class Document {
 				'meta_box_cb'        => [ $this, 'admin_input_box_cb' ],
 			]
 		);
-		register_taxonomy_for_object_type( self::TAXONOMY_NAME, self::TYPE_NAME );
 	}
 
 	/**
@@ -129,19 +128,8 @@ class Document {
 		// Verify the post content is valid graphql query document
 		$query_id = Utils::generateHash( $post->post_content );
 
-		// If the term already exists don't add, meaning the query content string didn't change to generate a new hash
-		if ( ! Utils::termExists( $query_id, self::TAXONOMY_NAME ) ) {
-			$term = wp_insert_term(
-				$query_id,
-				self::TAXONOMY_NAME,
-				[
-					'description' => __( 'A graphql query relationship', 'wp-graphql-persisted-queries' ),
-				]
-			);
-
-			// Set terms using wp_add_object_terms instead of wp_insert_post because the user my not have permissions to set terms
-			wp_add_object_terms( $post_ID, $term['term_id'], self::TAXONOMY_NAME );
-		}
+		// Set terms using wp_add_object_terms instead of wp_insert_post because the user my not have permissions to set terms
+		wp_add_object_terms( $post_ID, $query_id, self::TAXONOMY_NAME );
 	}
 
 	/**
@@ -196,6 +184,13 @@ class Document {
 		$query           = \GraphQL\Language\Printer::doPrint( $ast );
 		$normalized_hash = Utils::getHashFromFormattedString( $query );
 
+		// If queryId alias name is already in the system and doesn't match the query hash
+		$post = Utils::getPostByTermName( $query_id, self::TYPE_NAME, self::TAXONOMY_NAME );
+		if ( $post && $post->post_name !== $normalized_hash ) {
+			// translators: existing query title
+			throw new RequestError( sprintf( __( 'This queryId has already been associated with another query "%s"', 'wp-graphql-persisted-queries' ), $post->post_title ) );
+		}
+
 		// If the normalized query is associated with a saved document
 		$post = Utils::getPostByTermName( $normalized_hash, self::TYPE_NAME, self::TAXONOMY_NAME );
 		if ( empty( $post ) ) {
@@ -226,7 +221,7 @@ class Document {
 			// Upon saving the new persisted query, remove any terms that already exist as aliases
 			$term_object = get_term_by( 'name', $normalized_hash, self::TAXONOMY_NAME );
 			if ( $term_object ) {
-				$r = wp_delete_term( $term_object->term_id, self::TAXONOMY_NAME );
+				wp_delete_term( $term_object->term_id, self::TAXONOMY_NAME );
 			}
 		} elseif ( $query !== $post->post_content ) {
 			// If the hash for the query string loads a post with a different query string,
@@ -245,32 +240,8 @@ class Document {
 			$term_names[] = $query_id;
 		}
 
-		// Gather the term ids to save with the post
-		$term_ids = [];
-		foreach ( $term_names as $term_name ) {
-			if ( Utils::termExists( $term_name, self::TAXONOMY_NAME ) ) {
-				continue;
-			}
-
-			// Inserting the term will trigger WP 'clean_term_cache' action
-			$term       = wp_insert_term(
-				$term_name,
-				self::TAXONOMY_NAME,
-				[
-					'description' => __( 'A graphql query relationship', 'wp-graphql-persisted-queries' ),
-				]
-			);
-			$term_ids[] = $term['term_id'];
-		}
-
-		if ( ! empty( $term_ids ) ) {
-			// Set terms using wp_add_object_terms instead of wp_insert_post because the user my not have permissions to set terms
-			wp_add_object_terms(
-				$post_id,
-				$term_ids,
-				self::TAXONOMY_NAME
-			);
-		}
+		// Set terms using wp_add_object_terms instead of wp_insert_post because the user my not have permissions to set terms
+		wp_add_object_terms( $post_id, $term_names, self::TAXONOMY_NAME );
 
 		return $post_id;
 	}
