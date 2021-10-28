@@ -142,7 +142,7 @@ class DocumentCest {
 		$I->seeResponseContainsJson([
 			'errors' => [
 				0 => [
-					'message' => 'This query has already been associated with another query "A Persisted Query"',
+					'message' => 'This queryId has already been associated with another query "A Persisted Query"',
 				],
 			]
 		]);
