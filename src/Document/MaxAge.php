@@ -97,7 +97,7 @@ class MaxAge {
 
 		// Look up this specific request query. If found and has an individual max-age setting, use it.
 		if ( $this->query_id ) {
-			$post = Utils::getPostByTermId( $this->query_id, Document::TYPE_NAME, Document::TAXONOMY_NAME );
+			$post = Utils::getPostByTermName( $this->query_id, Document::TYPE_NAME, Document::TAXONOMY_NAME );
 			if ( $post ) {
 				$age = $this->get( $post->ID );
 			}

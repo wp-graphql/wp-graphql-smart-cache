@@ -13,7 +13,7 @@ class Utils {
 	 * @param  string $query_id Query ID
 	 * @return WP_Post
 	 */
-	public static function getPostByTermId( $query_id, $type, $taxonomy ) {
+	public static function getPostByTermName( $query_id, $type, $taxonomy ) {
 		$wp_query = new \WP_Query(
 			[
 				'post_type'      => $type,
@@ -68,24 +68,6 @@ class Utils {
 	 */
 	public static function getHashFromFormattedString( $query ) {
 		return hash( 'sha256', $query );
-	}
-
-	/**
-	 * Query taxonomy terms for existance of provided name/alias.
-	 *
-	 * @param  string   Query name/alias
-	 * @return boolean  If term for the taxonomy already exists
-	 */
-	public static function termExists( $name, $taxonomy ) {
-		$query = new \WP_Term_Query(
-			[
-				'taxonomy' => $taxonomy,
-				'fields'   => 'names',
-				'get'      => 'all',
-			]
-		);
-		$terms = $query->get_terms();
-		return in_array( $name, $terms, true );
 	}
 
 }

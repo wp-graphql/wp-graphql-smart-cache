@@ -125,7 +125,7 @@ class DocumentCest {
 		]);
 		$I->seeTermInDatabase( [ 'name' => $query_hash ] );
 
-		// Query with this persisted hash works, but not with the query we want, yet.
+		// Query with this persisted hash works, but not with the query hash we expected.
 		$I->sendGet( 'graphql', [ 'queryId' => $query_hash ] );
 		$I->seeResponseContainsJson( [
 			'data' => [
@@ -140,14 +140,16 @@ class DocumentCest {
 			'queryId' => $query_hash
 		] );
 		$I->seeResponseContainsJson([
-			'data' => [
-				'__typename' => 'RootQuery'
+			'errors' => [
+				0 => [
+					'message' => 'This queryId has already been associated with another query "A Persisted Query"',
+				],
 			]
 		]);
 	}
 
 	public function saveQueryUsingExistingAliasTest( FunctionalTester $I ) {
-		$I->wantTo( 'Save a graphql query using existing query alias' );
+		$I->wantTo( 'Error when save a graphql query using existing query alias' );
 
 		// Set up some content
 		$I->havePostInDatabase( [
@@ -185,14 +187,11 @@ class DocumentCest {
 			'query' => $query,
 			'queryId' => $query_alias
 		] );
-		$I->seeResponseContainsJson( [
-			'data' => [
-				'posts' => [
-					'nodes' => [
-							'__typename' => 'Post',
-							'content' => "<p>foo bar. biz bang.</p>\n",
-					]
-				]
+		$I->seeResponseContainsJson([
+			'errors' => [
+				0 => [
+					'message' => 'This queryId has already been associated with another query "A Persisted Query"',
+				],
 			]
 		]);
 
