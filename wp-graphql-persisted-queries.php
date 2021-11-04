@@ -69,3 +69,11 @@ add_action(
 		);
 	}
 );
+
+// graphiql specific
+add_action( 'enqueue_graphiql_extension', function () {
+	// do stuff
+	$asset_file = include plugin_dir_path(__FILE__) . '/build/index.asset.php';
+	wp_enqueue_script( 'wp-graphql-persisted-queries', plugins_url( 'build/index.js', __FILE__), $asset_file['dependencies'], $asset_file['version'], true );
+
+});

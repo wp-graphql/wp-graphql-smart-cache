@@ -1,0 +1,11 @@
+{
+    "name": "wp-graphql-persisted-queries",
+    "scripts": {
+        "build": "wp-scripts build",
+        "start": "wp-scripts start"
+    },
+    "dependencies": {
+        "@wordpress/scripts": "^19.0.0",
+        "antd": "^4.16.13"
+    }
+}
