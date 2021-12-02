@@ -37,6 +37,9 @@ class Document {
 				'taxonomies'  => [
 					self::TAXONOMY_NAME,
 				],
+				'show_in_graphql' => true,
+				'graphql_single_name' => 'graphqlDocument',
+				'graphql_plural_name' => 'graphqlDocuments',
 			]
 		);
 
@@ -54,6 +57,9 @@ class Document {
 				'show_in_menu'       => false,
 				'show_in_quick_edit' => false,
 				'meta_box_cb'        => [ $this, 'admin_input_box_cb' ],
+				'show_in_graphql' => true,
+				'graphql_single_name' => 'graphqlQueryAlias',
+				'graphql_plural_name' => 'graphqlQueryAliases',
 			]
 		);
 	}

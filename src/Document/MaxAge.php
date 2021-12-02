@@ -31,6 +31,9 @@ class MaxAge {
 				'show_in_menu'       => false,
 				'show_in_quick_edit' => false,
 				'meta_box_cb'        => [ $this, 'admin_input_box_cb' ],
+				'show_in_graphql' => true,
+				'graphql_single_name' => 'graphqlQueryMaxage',
+				'graphql_plural_name' => 'graphqlQueryMaxages',
 			]
 		);
 
