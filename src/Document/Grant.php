@@ -9,6 +9,7 @@ namespace WPGraphQL\PersistedQueries\Document;
 
 use WPGraphQL\PersistedQueries\Document;
 use WPGraphQL\PersistedQueries\ValidationRules\AllowDenyQueryDocument;
+use GraphQL\Server\RequestError;
 
 class Grant {
 
@@ -17,7 +18,7 @@ class Grant {
 	// The string value used for the individual saved query
 	const ALLOW                = 'allow';
 	const DENY                 = 'deny';
-	const USE_DEFAULT          = false;
+	const USE_DEFAULT          = '';
 	const NOT_SELECTED_DEFAULT = self::USE_DEFAULT;
 
 	// The string value stored for the global admin setting
@@ -42,10 +43,27 @@ class Grant {
 				'show_in_menu'       => false,
 				'show_in_quick_edit' => false,
 				'meta_box_cb'        => [ $this, 'admin_input_box_cb' ],
-				'show_in_graphql' => true,
-				'graphql_single_name' => 'graphqlQueryGrant',
-				'graphql_plural_name' => 'graphqlQueryGrants',
+				'show_in_graphql'    => false, // false because we register a field with different name
 			]
+		);
+
+		add_action(
+			'graphql_register_types',
+			function () {
+				$register_type_name = ucfirst( Document::GRAPHQL_NAME );
+				$config             = [
+					'type'        => 'String',
+					'description' => __( 'Allow, deny or default access grant for specific query', 'wp-graphql-persisted-queries' ),
+				];
+
+				register_graphql_field( 'Create' . $register_type_name . 'Input', 'grant', $config );
+				register_graphql_field( 'Update' . $register_type_name . 'Input', 'grant', $config );
+
+				$config['resolve'] = function ( \WPGraphQL\Model\Post $post, $args, $context, $info ) {
+					return self::getQueryGrantSetting( $post->ID );
+				};
+				register_graphql_field( $register_type_name, 'grant', $config );
+			}
 		);
 
 		// Add to the wpgraphql server validation rules.
@@ -75,11 +93,32 @@ class Grant {
 				);
 			}
 		);
+
+		add_action( 'graphql_insert_graphql_document', [ $this, 'graphql_mutation_insert' ], 10, 3 );
+	}
+
+	// This runs on post create/update
+	// Check the grant allow/deny value is within limits
+	public function graphql_mutation_insert( $post_id, $input, $mutation_name ) {
+		if ( ! in_array( $mutation_name, [ 'createGraphqlDocument', 'updateGraphqlDocument' ], true ) ) {
+			return;
+		}
+
+		if ( ! isset( $input['grant'] ) ) {
+			return;
+		}
+
+		if ( ! in_array( $input['grant'], [ self::ALLOW, self::DENY, self::USE_DEFAULT ], true ) ) {
+			// Translators: The placeholder is the input allow/deny value
+			throw new RequestError( sprintf( __( 'Invalid value for allow/deny grant: "%s"', 'wp-graphql-persisted-queries' ), $input['grant'] ) );
+		}
+
+		$this->save( $post_id, $input['grant'] );
 	}
 
 	/**
-	 * Draw the input field for the post edit
-	 */
+	* Draw the input field for the post edit
+	*/
 	public function admin_input_box_cb( $post ) {
 		wp_nonce_field( 'graphql_query_grant', 'savedquery_grant_noncename' );
 
@@ -123,7 +162,7 @@ class Grant {
 	 * @param int  The post id
 	 */
 	public static function getQueryGrantSetting( $post_id ) {
-		$item = wp_get_object_terms( $post_id, self::TAXONOMY_NAME );
+		$item = get_the_terms( $post_id, self::TAXONOMY_NAME );
 		return ! is_wp_error( $item ) && isset( $item[0]->name ) ? $item[0]->name : self::NOT_SELECTED_DEFAULT;
 	}
 
@@ -151,8 +190,8 @@ class Grant {
 	}
 
 	/**
-	 * When a post is saved, sanitize and store the data.
-	 */
+	* When a post is saved, sanitize and store the data.
+	*/
 	public function save_cb( $post_id ) {
 		if ( empty( $_POST ) ) {
 			return;
@@ -193,6 +232,10 @@ class Grant {
 		return wp_set_post_terms( $post_id, $grant, self::TAXONOMY_NAME );
 	}
 
+	/**
+	 * Use graphql-php built in validation rules when a query is being requested.
+	 * This allows the query to check access grant rules (allow/deny) and return correct error if needed.
+	 */
 	public function add_validation_rules_cb( $validation_rules, $request ) {
 		// Check the grant mode. If public for all, don't add this rule.
 		$setting = get_graphql_setting( self::GLOBAL_SETTING_NAME, self::GLOBAL_DEFAULT, 'graphql_persisted_queries_section' );

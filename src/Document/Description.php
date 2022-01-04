@@ -12,8 +12,10 @@ use WPGraphQL\PersistedQueries\Document;
 class Description {
 
 	public function init() {
-		// Enable excerpts for the persisted query post type
-		add_post_type_support( Document::TYPE_NAME, 'excerpt' );
+		// Enable excerpts for the persisted query post type for the wp admin editor
+		if ( is_admin() ) {
+			add_post_type_support( Document::TYPE_NAME, 'excerpt' );
+		}
 
 		// Change the text from Excerpt to Description where it is visible.
 		add_filter( 'gettext', [ $this, 'translate_excerpt_text_cb' ], 10, 1 );
@@ -21,6 +23,26 @@ class Description {
 		add_filter( sprintf( 'manage_%s_posts_columns', Document::TYPE_NAME ), [ $this, 'add_description_column_to_admin_cb' ], 10, 1 );
 		add_action( sprintf( 'manage_%s_posts_custom_column', Document::TYPE_NAME ), [ $this, 'fill_excerpt_content_cb' ], 10, 2 );
 		add_filter( sprintf( 'manage_edit-%s_sortable_columns', Document::TYPE_NAME ), [ $this, 'make_excerpt_column_sortable_in_admin_cb' ], 10, 1 );
+
+		add_action(
+			'graphql_register_types',
+			function () {
+				// We use the post type 'excerpt' field as the saved query document 'description'
+				$register_type_name = ucfirst( Document::GRAPHQL_NAME );
+				$config             = [
+					'type'        => 'String',
+					'description' => __( 'Description for the saved GraphQL document', 'wp-graphql-persisted-queries' ),
+				];
+
+				register_graphql_field( 'Create' . $register_type_name . 'Input', 'description', $config );
+				register_graphql_field( 'Update' . $register_type_name . 'Input', 'description', $config );
+
+				$config['resolve'] = function ( \WPGraphQL\Model\Post $post, $args, $context, $info ) {
+					return get_the_excerpt( $post->ID );
+				};
+				register_graphql_field( $register_type_name, 'description', $config );
+			}
+		);
 	}
 
 	/**

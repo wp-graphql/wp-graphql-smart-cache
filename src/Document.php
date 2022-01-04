@@ -16,6 +16,7 @@ class Document {
 
 	const TYPE_NAME     = 'graphql_document';
 	const TAXONOMY_NAME = 'graphql_query_alias';
+	const GRAPHQL_NAME  = 'graphqlDocument';
 
 	public function init() {
 		add_filter( 'graphql_request_data', [ $this, 'graphql_request_save_document_cb' ], 10, 2 );
@@ -27,18 +28,19 @@ class Document {
 		register_post_type(
 			self::TYPE_NAME,
 			[
-				'description' => __( 'Saved GraphQL queries', 'wp-graphql-persisted-queries' ),
-				'labels'      => [
+				'description'         => __( 'Saved GraphQL queries', 'wp-graphql-persisted-queries' ),
+				'labels'              => [
 					'name'          => __( 'GraphQLQueries', 'wp-graphql-persisted-queries' ),
 					'singular_name' => __( 'GraphQLQuery', 'wp-graphql-persisted-queries' ),
 				],
-				'public'      => true,
-				'show_ui'     => true,
-				'taxonomies'  => [
+				'public'              => true,
+				'show_ui'             => \WPGraphQL::debug(),
+				'taxonomies'          => [
 					self::TAXONOMY_NAME,
 				],
-				'show_in_graphql' => true,
-				'graphql_single_name' => 'graphqlDocument',
+				'meta_box_cb'         => [ $this, 'admin_input_box_cb' ],
+				'show_in_graphql'     => true,
+				'graphql_single_name' => self::GRAPHQL_NAME,
 				'graphql_plural_name' => 'graphqlDocuments',
 			]
 		);
@@ -54,14 +56,82 @@ class Document {
 					'singular_name' => __( 'Alias Name', 'wp-graphql-persisted-queries' ),
 				],
 				'show_admin_column'  => true,
-				'show_in_menu'       => false,
+				'show_in_menu'       => \WPGraphQL::debug(),
 				'show_in_quick_edit' => false,
-				'meta_box_cb'        => [ $this, 'admin_input_box_cb' ],
-				'show_in_graphql' => true,
-				'graphql_single_name' => 'graphqlQueryAlias',
-				'graphql_plural_name' => 'graphqlQueryAliases',
+				'show_in_graphql'    => false, // false because we register a field with different name
 			]
 		);
+
+		add_action(
+			'graphql_register_types',
+			function () {
+				$register_type_name = ucfirst( self::GRAPHQL_NAME );
+				$config             = [
+					'type'        => [ 'list_of' => [ 'non_null' => 'String' ] ],
+					'description' => __( 'Alias names for saved GraphQL query documents', 'wp-graphql-persisted-queries' ),
+				];
+
+				register_graphql_field( 'Create' . $register_type_name . 'Input', 'alias', $config );
+				register_graphql_field( 'Update' . $register_type_name . 'Input', 'alias', $config );
+
+				$config['resolve'] = function ( \WPGraphQL\Model\Post $post, $args, $context, $info ) {
+					$terms = get_the_terms( $post->ID, self::TAXONOMY_NAME );
+					if ( ! is_array( $terms ) ) {
+						return [];
+					}
+					return array_map(
+						function ( $term ) {
+							return $term->name;
+						},
+						$terms
+					);
+				};
+				register_graphql_field( $register_type_name, 'alias', $config );
+			}
+		);
+
+		add_filter( 'graphql_post_object_insert_post_args', [ $this, 'mutation_filter_post_args' ], 10, 4 );
+		add_action( 'graphql_insert_graphql_document', [ $this, 'graphql_mutation_insert' ], 10, 3 );
+	}
+
+	/**
+	 * Run on mutation create/update.
+	 */
+	public function mutation_filter_post_args( $insert_post_args, $input, $post_type_object, $mutation_name ) {
+		if ( in_array( $mutation_name, [ 'createGraphqlDocument', 'updateGraphqlDocument' ], true ) ) {
+			$insert_post_args = array_merge( $insert_post_args, $input );
+		}
+		return $insert_post_args;
+	}
+
+	// This runs on post create/update
+	// Insert/Update the alias name. Make sure it is unique
+	public function graphql_mutation_insert( $post_id, $input, $mutation_name ) {
+		if ( ! in_array( $mutation_name, [ 'createGraphqlDocument', 'updateGraphqlDocument' ], true ) ) {
+			return;
+		}
+
+		if ( ! isset( $input['alias'] ) ) {
+			return;
+		}
+
+		// If the create/update a document, see if any of these aliases already exist
+		$existing_post = Utils::getPostByTermName( $input['alias'], self::TYPE_NAME, self::TAXONOMY_NAME );
+		if ( $existing_post && $existing_post->ID !== $post_id ) {
+			// Translators: The placeholders are the input aliases and the existing post containing a matching alias
+			throw new RequestError( sprintf( __( 'Alias "%1$s" already in use by another query "%2$s"', 'wp-graphql-persisted-queries' ), join( ', ', $input['alias'] ), $existing_post->post_title ) );
+		}
+
+		// Make sure the normalized hash for the query string isset.
+		$input['alias'][] = Utils::generateHash( $input['content'] );
+
+		// Remove the existing/old alias terms
+		$terms = wp_get_post_terms( $post_id, self::TAXONOMY_NAME, [ 'fields' => 'names' ] );
+		if ( $terms ) {
+			wp_remove_object_terms( $post_id, $terms, self::TAXONOMY_NAME );
+		}
+
+		wp_set_post_terms( $post_id, $input['alias'], self::TAXONOMY_NAME );
 	}
 
 	/**
@@ -96,9 +166,26 @@ class Document {
 			try {
 				// Use graphql parser to check query string validity.
 				$ast = \GraphQL\Language\Parser::parse( $post['post_content'] );
+
+				// Get post using the normalized hash of the query string. If not valid graphql, throws syntax error
+				$normalized_hash = Utils::generateHash( $ast );
+
+				// If queryId alias name is already in the system and doesn't match the query hash
+				if ( ! is_admin() ) {
+					$existing_post = Utils::getPostByTermName( $normalized_hash, self::TYPE_NAME, self::TAXONOMY_NAME );
+					if ( $existing_post && $existing_post->ID !== $post['ID'] ) {
+						// Translators: The placeholder is the existing saved query with matching hash/query-id
+						throw new RequestError( sprintf( __( 'This query has already been associated with another query "%s"', 'wp-graphql-persisted-queries' ), $existing_post->post_title ) );
+					}
+				}
+
 				// Format the query string and save that
 				$data['post_content'] = \GraphQL\Language\Printer::doPrint( $ast );
 			} catch ( SyntaxError $e ) {
+				if ( ! is_admin() ) {
+					// Translators: The placeholder is the query string content
+					throw new RequestError( sprintf( __( 'Did not save invalid graphql query string "%s"', 'wp-graphql-persisted-queries' ), $post['post_content'] ) );
+				}
 				$existing_post = get_post( $post['ID'] );
 
 				// Overwrite new/invalid query with previous working query, or empty
@@ -249,8 +336,8 @@ class Document {
 	}
 
 	/**
-	 * Draw the input field for the post edit
-	 */
+	* Draw the input field for the post edit
+	*/
 	public function admin_input_box_cb( $post ) {
 		wp_nonce_field( 'graphql_query_grant', '_document_noncename' );
 
@@ -272,5 +359,4 @@ class Document {
 			]
 		);
 	}
-
 }

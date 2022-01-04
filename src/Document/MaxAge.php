@@ -9,6 +9,7 @@ namespace WPGraphQL\PersistedQueries\Document;
 
 use WPGraphQL\PersistedQueries\Document;
 use WPGraphQL\PersistedQueries\Utils;
+use GraphQL\Server\RequestError;
 
 class MaxAge {
 
@@ -31,13 +32,31 @@ class MaxAge {
 				'show_in_menu'       => false,
 				'show_in_quick_edit' => false,
 				'meta_box_cb'        => [ $this, 'admin_input_box_cb' ],
-				'show_in_graphql' => true,
-				'graphql_single_name' => 'graphqlQueryMaxage',
-				'graphql_plural_name' => 'graphqlQueryMaxages',
+				'show_in_graphql'    => false, // false because we register a field with different name
 			]
 		);
 
 		add_action( sprintf( 'save_post_%s', Document::TYPE_NAME ), [ $this, 'save_cb' ] );
+
+		add_action(
+			'graphql_register_types',
+			function () {
+				$register_type_name = ucfirst( Document::GRAPHQL_NAME );
+				$config             = [
+					'type'        => 'Int',
+					'description' => __( 'HTTP Access-Control-Max-Age Header for a saved GraphQL document', 'wp-graphql-persisted-queries' ),
+				];
+
+				register_graphql_field( 'Create' . $register_type_name . 'Input', 'max_age_header', $config );
+				register_graphql_field( 'Update' . $register_type_name . 'Input', 'max_age_header', $config );
+
+				$config['resolve'] = function ( \WPGraphQL\Model\Post $post, $args, $context, $info ) {
+					$term = get_the_terms( $post->ID, self::TAXONOMY_NAME );
+					return isset( $term[0]->name ) ? $term[0]->name : null;
+				};
+				register_graphql_field( $register_type_name, 'max_age_header', $config );
+			}
+		);
 
 		// Add to the wp-graphql admin settings page
 		add_action(
@@ -64,22 +83,47 @@ class MaxAge {
 		// From WPGraphql Router
 		add_filter( 'graphql_response_headers_to_send', [ $this, 'http_headers_cb' ], 10, 1 );
 		add_filter( 'pre_graphql_execute_request', [ $this, 'peak_at_executing_query_cb' ], 10, 2 );
+
+		add_action( 'graphql_insert_graphql_document', [ $this, 'graphql_mutation_insert' ], 10, 3 );
+	}
+
+	// This runs on post create/update
+	// Check the max age value is within limits
+	public function graphql_mutation_insert( $post_id, $input, $mutation_name ) {
+		if ( ! in_array( $mutation_name, [ 'createGraphqlDocument', 'updateGraphqlDocument' ], true ) ) {
+			return;
+		}
+
+		if ( ! isset( $input['maxAgeHeader'] ) ) {
+			return;
+		}
+
+		$this->save( $post_id, $input['maxAgeHeader'] );
 	}
 
 	/**
 	 * Get the max age if it exists for a saved persisted query
 	 */
 	public function get( $post_id ) {
-		$item  = wp_get_object_terms( $post_id, self::TAXONOMY_NAME );
+		$item  = get_the_terms( $post_id, self::TAXONOMY_NAME );
 		$value = $item[0]->name ?: null;
 		return $value;
+	}
+
+	public function valid( $value ) {
+		// TODO: terms won't save 0, as considers that empty and removes the term. Consider 'zero' or 'stale' or greater than zero.
+		return ( is_numeric( $value ) && $value >= 0 );
 	}
 
 	/**
 	 * Save the data
 	 */
 	public function save( $post_id, $value ) {
-		if ( ! is_numeric( $value ) || 0 > $value ) {
+		if ( ! $this->valid( $value ) ) {
+			if ( ! is_admin() ) {
+				// Translators: The placeholder is the max-age-header input value
+				throw new RequestError( sprintf( __( 'Invalid max age header value "%s". Must be greater than or equal to zero', 'wp-graphql-persisted-queries' ), $value ) );
+			}
 			// some sort of error?
 			return [];
 		}
@@ -112,7 +156,7 @@ class MaxAge {
 		}
 
 		// Access-Control-Max-Age header should be zero or positive integer, no decimals.
-		if ( is_numeric( $age ) && $age >= 0 ) {
+		if ( $this->valid( $age ) ) {
 			$headers['Access-Control-Max-Age'] = intval( $age );
 		}
 		return $headers;
