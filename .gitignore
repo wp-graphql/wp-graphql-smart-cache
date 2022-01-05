@@ -12,3 +12,4 @@ vendor
 *.sql
 *.tar.gz
 *.zip
+.idea
