@@ -43,6 +43,21 @@ class Description {
 				register_graphql_field( $register_type_name, 'description', $config );
 			}
 		);
+
+		add_filter( 'graphql_post_object_insert_post_args', [ $this, 'mutation_filter_post_args' ], 10, 4 );
+	}
+
+	/**
+	 * Run on mutation create/update.
+	 */
+	public function mutation_filter_post_args( $insert_post_args, $input, $post_type_object, $mutation_name ) {
+		if ( in_array( $mutation_name, [ 'createGraphqlDocument', 'updateGraphqlDocument' ], true ) ) {
+			// Save the description in excerpt
+			if ( isset( $input['description'] ) ) {
+				$insert_post_args['post_excerpt'] = $input['description'];
+			}
+		}
+		return $insert_post_args;
 	}
 
 	/**

@@ -4,28 +4,28 @@ namespace WPGraphQL\PersistedQueries;
 
 class MutationCreateDocumentTest extends \Codeception\TestCase\WPTestCase {
 
-	public $admin;
+    public $admin;
 
-	public function setUp(): void {
-		parent::setUp();
+    public function setUp(): void {
+        parent::setUp();
 
-		\WPGraphQL::clear_schema();
+        \WPGraphQL::clear_schema();
 
-		$this->admin = $this->factory->user->create( [
-			'role' => 'administrator',
-		] );
+        $this->admin = $this->factory->user->create( [
+            'role' => 'administrator',
+        ] );
 
-	}
+    }
 
-	public function tearDown(): void {
-		\WPGraphQL::clear_schema();
+    public function tearDown(): void {
+        \WPGraphQL::clear_schema();
 
-		parent::tearDown();
-	}
+        parent::tearDown();
+    }
 
-	public function testCreateDocumentMutationWithBadQueryStringFails() {
+    public function testCreateDocumentMutationWithBadQueryStringFails() {
 
-		wp_set_current_user( $this->admin );
+        wp_set_current_user( $this->admin );
 
         $mutation = 'mutation MyMutation($input: CreateGraphqlDocumentInput!) {
             createGraphqlDocument(input: $input) {
@@ -41,23 +41,23 @@ class MutationCreateDocumentTest extends \Codeception\TestCase\WPTestCase {
           }
         ';
 
-		$query_string = "query my_query { __typename missing bracket ";
+        $query_string = "query my_query { __typename missing bracket ";
         $variables = [
             "input" => [
                 "content" => $query_string,
             ]
         ];
 
-		$actual = do_graphql_request( $mutation, 'MyMutation', $variables );
+        $actual = do_graphql_request( $mutation, 'MyMutation', $variables );
 
-		codecept_debug( $actual );
+        codecept_debug( $actual );
 
-		$this->assertEquals( $actual['errors'][0]['message'], "Did not save invalid graphql query string \"$query_string\"" );
-	}
+        $this->assertEquals( $actual['errors'][0]['message'], "Did not save invalid graphql query string \"$query_string\"" );
+    }
 
-	public function testCreateDocumentMutationWorks() {
+    public function testCreateDocumentMutationWorks() {
 
-		wp_set_current_user( $this->admin );
+        wp_set_current_user( $this->admin );
 
         $mutation = 'mutation MyMutation($input: CreateGraphqlDocumentInput!) {
             createGraphqlDocument(input: $input) {
@@ -68,13 +68,13 @@ class MutationCreateDocumentTest extends \Codeception\TestCase\WPTestCase {
                 status
                 title
                 slug
-				grant
+                grant
               }
             }
           }
         ';
 
-		$query_title = "cest test mutation";
+        $query_title = "cest test mutation";
         $variables = [
             "input" => [
                 "content" => "query my_query_1 { __typename, uri, title }",
@@ -88,30 +88,30 @@ class MutationCreateDocumentTest extends \Codeception\TestCase\WPTestCase {
             ]
         ];
 
-		$actual = do_graphql_request( $mutation, 'MyMutation', $variables );
+        $actual = do_graphql_request( $mutation, 'MyMutation', $variables );
 
-		codecept_debug( $actual );
+        codecept_debug( $actual );
 
-		$this->assertEquals( $actual['data']['createGraphqlDocument']['graphqlDocument']['title'], "cest test mutation" );
-		$this->assertEquals( $actual['data']['createGraphqlDocument']['graphqlDocument']['status'], "publish" );
-		$this->assertContains( "foo", $actual['data']['createGraphqlDocument']['graphqlDocument']['alias'] );
-		$this->assertContains( "bar", $actual['data']['createGraphqlDocument']['graphqlDocument']['alias'] );
-		$this->assertEquals( $actual['data']['createGraphqlDocument']['graphqlDocument']['grant'], "" );
+        $this->assertEquals( $actual['data']['createGraphqlDocument']['graphqlDocument']['title'], "cest test mutation" );
+        $this->assertEquals( $actual['data']['createGraphqlDocument']['graphqlDocument']['status'], "publish" );
+        $this->assertContains( "foo", $actual['data']['createGraphqlDocument']['graphqlDocument']['alias'] );
+        $this->assertContains( "bar", $actual['data']['createGraphqlDocument']['graphqlDocument']['alias'] );
+        $this->assertEquals( $actual['data']['createGraphqlDocument']['graphqlDocument']['grant'], "" );
 
-		// Trying to create/save another document with same query string, should throw error
+        // Trying to create/save another document with same query string, should throw error
         $variables = [
             "input" => [
                 "content" => "query my_query_1 { __typename, uri, title }",
             ]
         ];
 
-		$actual = do_graphql_request( $mutation, 'MyMutation', $variables );
+        $actual = do_graphql_request( $mutation, 'MyMutation', $variables );
 
-		codecept_debug( $actual );
+        codecept_debug( $actual );
 
-		$this->assertEquals( $actual['errors'][0]['message'], "This query has already been associated with another query \"$query_title\"" );
+        $this->assertEquals( $actual['errors'][0]['message'], "This query has already been associated with another query \"$query_title\"" );
 
-		// Trying to create/save another document with alias that is already in use, should throw error
+        // Trying to create/save another document with alias that is already in use, should throw error
         $variables = [
             "input" => [
                 "content" => "query my_query_2 { __typename, uri, title }",
@@ -121,23 +121,23 @@ class MutationCreateDocumentTest extends \Codeception\TestCase\WPTestCase {
             ]
         ];
 
-		$actual = do_graphql_request( $mutation, 'MyMutation', $variables );
+        $actual = do_graphql_request( $mutation, 'MyMutation', $variables );
 
-		codecept_debug( $actual );
+        codecept_debug( $actual );
 
-		$this->assertEquals( $actual['errors'][0]['message'], "Alias \"foo\" already in use by another query \"$query_title\"" );
+        $this->assertEquals( $actual['errors'][0]['message'], "Alias \"foo\" already in use by another query \"$query_title\"" );
 
-	}
+    }
 
-	public function testCreateDocumentMutationGrantAllowWorks() {
+    public function testCreateDocumentMutationGrantAllowWorks() {
 
-		wp_set_current_user( $this->admin );
+        wp_set_current_user( $this->admin );
 
         $mutation = 'mutation MyMutation($input: CreateGraphqlDocumentInput!) {
             createGraphqlDocument(input: $input) {
               graphqlDocument {
                 id
-				grant
+                grant
               }
             }
           }
@@ -151,18 +151,18 @@ class MutationCreateDocumentTest extends \Codeception\TestCase\WPTestCase {
             ]
         ];
 
-		$actual = do_graphql_request( $mutation, 'MyMutation', $variables );
+        $actual = do_graphql_request( $mutation, 'MyMutation', $variables );
 
-		codecept_debug( $actual );
+        codecept_debug( $actual );
 
-		$this->assertEquals( $actual['data']['createGraphqlDocument']['graphqlDocument']['grant'], "allow" );
+        $this->assertEquals( $actual['data']['createGraphqlDocument']['graphqlDocument']['grant'], "allow" );
 
-		// Update the same query to deny
-		$query_id = $actual['data']['createGraphqlDocument']['graphqlDocument']['id'];
+        // Update the same query to deny
+        $query_id = $actual['data']['createGraphqlDocument']['graphqlDocument']['id'];
         $mutation = 'mutation MyMutation($input: UpdateGraphqlDocumentInput!) {
             updateGraphqlDocument(input: $input) {
               graphqlDocument {
-				grant
+                grant
               }
             }
           }
@@ -170,51 +170,51 @@ class MutationCreateDocumentTest extends \Codeception\TestCase\WPTestCase {
 
         $variables = [
             "input" => [
-				"id" => $query_id,
+                "id" => $query_id,
                 "grant" => "deny"
             ]
         ];
 
-		$actual = do_graphql_request( $mutation, 'MyMutation', $variables );
+        $actual = do_graphql_request( $mutation, 'MyMutation', $variables );
 
-		codecept_debug( $actual );
+        codecept_debug( $actual );
 
-		$this->assertEquals( $actual['data']['updateGraphqlDocument']['graphqlDocument']['grant'], "deny" );
+        $this->assertEquals( $actual['data']['updateGraphqlDocument']['graphqlDocument']['grant'], "deny" );
 
-		// Request with invalid grant value to invoke error
+        // Request with invalid grant value to invoke error
         $mutation = 'mutation MyMutation($input: UpdateGraphqlDocumentInput!) {
             updateGraphqlDocument(input: $input) {
               graphqlDocument {
-				grant
+                grant
               }
             }
           }
         ';
 
-		$query_grant = "bad";
+        $query_grant = "bad";
         $variables = [
             "input" => [
-				"id" => $query_id,
+                "id" => $query_id,
                 "grant" => $query_grant
             ]
         ];
 
-		$actual = do_graphql_request( $mutation, 'MyMutation', $variables );
+        $actual = do_graphql_request( $mutation, 'MyMutation', $variables );
 
-		codecept_debug( $actual );
+        codecept_debug( $actual );
 
-		$this->assertEquals( $actual['errors'][0]['message'], "Invalid value for allow/deny grant: \"$query_grant\"" );
-	}
+        $this->assertEquals( $actual['errors'][0]['message'], "Invalid value for allow/deny grant: \"$query_grant\"" );
+    }
 
-	public function testCreateDocumentMutationMaxAgeHeaderWorks() {
+    public function testCreateDocumentMutationMaxAgeHeaderWorks() {
 
-		wp_set_current_user( $this->admin );
+        wp_set_current_user( $this->admin );
 
         $mutation = 'mutation MyMutation($input: CreateGraphqlDocumentInput!) {
             createGraphqlDocument(input: $input) {
               graphqlDocument {
                 id
-				maxAgeHeader
+                maxAgeHeader
               }
             }
           }
@@ -228,18 +228,18 @@ class MutationCreateDocumentTest extends \Codeception\TestCase\WPTestCase {
             ]
         ];
 
-		$actual = do_graphql_request( $mutation, 'MyMutation', $variables );
+        $actual = do_graphql_request( $mutation, 'MyMutation', $variables );
 
-		codecept_debug( $actual );
+        codecept_debug( $actual );
 
-		$this->assertEquals( $actual['data']['createGraphqlDocument']['graphqlDocument']['maxAgeHeader'], 100 );
+        $this->assertEquals( $actual['data']['createGraphqlDocument']['graphqlDocument']['maxAgeHeader'], 100 );
 
-		// Update the same query to deny
-		$query_id = $actual['data']['createGraphqlDocument']['graphqlDocument']['id'];
+        // Update the same query to deny
+        $query_id = $actual['data']['createGraphqlDocument']['graphqlDocument']['id'];
         $mutation = 'mutation MyMutation($input: UpdateGraphqlDocumentInput!) {
             updateGraphqlDocument(input: $input) {
               graphqlDocument {
-				maxAgeHeader
+                maxAgeHeader
               }
             }
           }
@@ -247,39 +247,92 @@ class MutationCreateDocumentTest extends \Codeception\TestCase\WPTestCase {
 
         $variables = [
             "input" => [
-				"id" => $query_id,
+                "id" => $query_id,
                 "maxAgeHeader" => 200
             ]
         ];
 
-		$actual = do_graphql_request( $mutation, 'MyMutation', $variables );
+        $actual = do_graphql_request( $mutation, 'MyMutation', $variables );
 
-		codecept_debug( $actual );
+        codecept_debug( $actual );
 
-		$this->assertEquals( $actual['data']['updateGraphqlDocument']['graphqlDocument']['maxAgeHeader'], 200 );
+        $this->assertEquals( $actual['data']['updateGraphqlDocument']['graphqlDocument']['maxAgeHeader'], 200 );
 
-		// Request with invalid grant value to invoke error
+        // Request with invalid grant value to invoke error
         $mutation = 'mutation MyMutation($input: UpdateGraphqlDocumentInput!) {
             updateGraphqlDocument(input: $input) {
               graphqlDocument {
-				maxAgeHeader
+                maxAgeHeader
               }
             }
           }
         ';
 
-		$query_age = -1;
+        $query_age = -1;
         $variables = [
             "input" => [
-				"id" => $query_id,
+                "id" => $query_id,
                 "maxAgeHeader" => $query_age
             ]
         ];
 
-		$actual = do_graphql_request( $mutation, 'MyMutation', $variables );
+        $actual = do_graphql_request( $mutation, 'MyMutation', $variables );
 
-		codecept_debug( $actual );
+        codecept_debug( $actual );
 
-		$this->assertEquals( $actual['errors'][0]['message'], "Invalid max age header value \"$query_age\". Must be greater than or equal to zero" );
-	}
+        $this->assertEquals( $actual['errors'][0]['message'], "Invalid max age header value \"$query_age\". Must be greater than or equal to zero" );
+    }
+
+    public function testCreateDocumentMutationDescriptionWorks() {
+
+        wp_set_current_user( $this->admin );
+
+        $mutation = 'mutation MyMutation($input: CreateGraphqlDocumentInput!) {
+            createGraphqlDocument(input: $input) {
+              graphqlDocument {
+                id
+                description
+              }
+            }
+          }
+        ';
+
+        $variables = [
+            "input" => [
+                "content" => "query my_query_1 { __typename, uri, title }",
+                "status" => "PUBLISH",
+                "description" => "foo bar description"
+            ]
+        ];
+
+        $actual = do_graphql_request( $mutation, 'MyMutation', $variables );
+
+        codecept_debug( $actual );
+
+        $this->assertEquals( $actual['data']['createGraphqlDocument']['graphqlDocument']['description'], "foo bar description" );
+
+        // Update the same query to deny
+        $query_id = $actual['data']['createGraphqlDocument']['graphqlDocument']['id'];
+        $mutation = 'mutation MyMutation($input: UpdateGraphqlDocumentInput!) {
+            updateGraphqlDocument(input: $input) {
+              graphqlDocument {
+                description
+              }
+            }
+          }
+        ';
+
+        $variables = [
+            "input" => [
+                "id" => $query_id,
+                "description" => "bix bang description"
+            ]
+        ];
+
+        $actual = do_graphql_request( $mutation, 'MyMutation', $variables );
+
+        codecept_debug( $actual );
+
+        $this->assertEquals( $actual['data']['updateGraphqlDocument']['graphqlDocument']['description'], "bix bang description" );
+    }
 }
