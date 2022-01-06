@@ -84,21 +84,36 @@ class MaxAge {
 		add_filter( 'graphql_response_headers_to_send', [ $this, 'http_headers_cb' ], 10, 1 );
 		add_filter( 'pre_graphql_execute_request', [ $this, 'peak_at_executing_query_cb' ], 10, 2 );
 
-		add_action( 'graphql_insert_graphql_document', [ $this, 'graphql_mutation_insert' ], 10, 3 );
+		add_filter( 'graphql_mutation_input', [ $this, 'graphql_mutation_filter' ], 10, 4 );
+		add_action( 'graphql_mutation_response', [ $this, 'graphql_mutation_insert' ], 10, 6 );
 	}
 
 	// This runs on post create/update
 	// Check the max age value is within limits
-	public function graphql_mutation_insert( $post_id, $input, $mutation_name ) {
+	public function graphql_mutation_filter( $input, $context, $info, $mutation_name ) {
+		if ( ! in_array( $mutation_name, [ 'createGraphqlDocument', 'updateGraphqlDocument' ], true ) ) {
+			return $input;
+		}
+
+		if ( ! isset( $input['maxAgeHeader'] ) ) {
+			return $input;
+		}
+
+		return $input;
+	}
+
+	// This runs on post create/update
+	// Check the grant allow/deny value is within limits
+	public function graphql_mutation_insert( $post_object, $filtered_input, $input, $context, $info, $mutation_name ) {
 		if ( ! in_array( $mutation_name, [ 'createGraphqlDocument', 'updateGraphqlDocument' ], true ) ) {
 			return;
 		}
 
-		if ( ! isset( $input['maxAgeHeader'] ) ) {
+		if ( ! isset( $filtered_input['maxAgeHeader'] ) || ! isset( $post_object['postObjectId'] ) ) {
 			return;
 		}
 
-		$this->save( $post_id, $input['maxAgeHeader'] );
+		$this->save( $post_object['postObjectId'], $filtered_input['maxAgeHeader'] );
 	}
 
 	/**

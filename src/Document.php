@@ -91,7 +91,8 @@ class Document {
 		);
 
 		add_filter( 'graphql_post_object_insert_post_args', [ $this, 'mutation_filter_post_args' ], 10, 4 );
-		add_action( 'graphql_insert_graphql_document', [ $this, 'graphql_mutation_insert' ], 10, 3 );
+		add_filter( 'graphql_mutation_input', [ $this, 'graphql_mutation_filter' ], 10, 4 );
+		add_action( 'graphql_mutation_response', [ $this, 'graphql_mutation_insert' ], 10, 6 );
 	}
 
 	/**
@@ -106,18 +107,18 @@ class Document {
 
 	// This runs on post create/update
 	// Insert/Update the alias name. Make sure it is unique
-	public function graphql_mutation_insert( $post_id, $input, $mutation_name ) {
+	public function graphql_mutation_filter( $input, $context, $info, $mutation_name ) {
 		if ( ! in_array( $mutation_name, [ 'createGraphqlDocument', 'updateGraphqlDocument' ], true ) ) {
-			return;
+			return $input;
 		}
 
 		if ( ! isset( $input['alias'] ) ) {
-			return;
+			return $input;
 		}
 
 		// If the create/update a document, see if any of these aliases already exist
 		$existing_post = Utils::getPostByTermName( $input['alias'], self::TYPE_NAME, self::TAXONOMY_NAME );
-		if ( $existing_post && $existing_post->ID !== $post_id ) {
+		if ( $existing_post ) {
 			// Translators: The placeholders are the input aliases and the existing post containing a matching alias
 			throw new RequestError( sprintf( __( 'Alias "%1$s" already in use by another query "%2$s"', 'wp-graphql-persisted-queries' ), join( ', ', $input['alias'] ), $existing_post->post_title ) );
 		}
@@ -125,13 +126,25 @@ class Document {
 		// Make sure the normalized hash for the query string isset.
 		$input['alias'][] = Utils::generateHash( $input['content'] );
 
-		// Remove the existing/old alias terms
-		$terms = wp_get_post_terms( $post_id, self::TAXONOMY_NAME, [ 'fields' => 'names' ] );
-		if ( $terms ) {
-			wp_remove_object_terms( $post_id, $terms, self::TAXONOMY_NAME );
+		return $input;
+	}
+
+	public function graphql_mutation_insert( $post_object, $filtered_input, $input, $context, $info, $mutation_name ) {
+		if ( ! in_array( $mutation_name, [ 'createGraphqlDocument', 'updateGraphqlDocument' ], true ) ) {
+			return;
 		}
 
-		wp_set_post_terms( $post_id, $input['alias'], self::TAXONOMY_NAME );
+		if ( ! isset( $filtered_input['alias'] ) || ! isset( $post_object['postObjectId'] ) ) {
+			return;
+		}
+
+		// Remove the existing/old alias terms
+		$terms = wp_get_post_terms( $post_object['postObjectId'], self::TAXONOMY_NAME, [ 'fields' => 'names' ] );
+		if ( $terms ) {
+			wp_remove_object_terms( $post_object['postObjectId'], $terms, self::TAXONOMY_NAME );
+		}
+
+		wp_set_post_terms( $post_object['postObjectId'], $filtered_input['alias'], self::TAXONOMY_NAME );
 	}
 
 	/**

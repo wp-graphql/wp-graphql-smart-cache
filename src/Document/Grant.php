@@ -94,18 +94,19 @@ class Grant {
 			}
 		);
 
-		add_action( 'graphql_insert_graphql_document', [ $this, 'graphql_mutation_insert' ], 10, 3 );
+		add_filter( 'graphql_mutation_input', [ $this, 'graphql_mutation_filter' ], 10, 4 );
+		add_action( 'graphql_mutation_response', [ $this, 'graphql_mutation_insert' ], 10, 6 );
 	}
 
 	// This runs on post create/update
 	// Check the grant allow/deny value is within limits
-	public function graphql_mutation_insert( $post_id, $input, $mutation_name ) {
+	public function graphql_mutation_filter( $input, $context, $info, $mutation_name ) {
 		if ( ! in_array( $mutation_name, [ 'createGraphqlDocument', 'updateGraphqlDocument' ], true ) ) {
-			return;
+			return $input;
 		}
 
 		if ( ! isset( $input['grant'] ) ) {
-			return;
+			return $input;
 		}
 
 		if ( ! in_array( $input['grant'], [ self::ALLOW, self::DENY, self::USE_DEFAULT ], true ) ) {
@@ -113,7 +114,21 @@ class Grant {
 			throw new RequestError( sprintf( __( 'Invalid value for allow/deny grant: "%s"', 'wp-graphql-persisted-queries' ), $input['grant'] ) );
 		}
 
-		$this->save( $post_id, $input['grant'] );
+		return $input;
+	}
+
+	// This runs on post create/update
+	// Check the grant allow/deny value is within limits
+	public function graphql_mutation_insert( $post_object, $filtered_input, $input, $context, $info, $mutation_name ) {
+		if ( ! in_array( $mutation_name, [ 'createGraphqlDocument', 'updateGraphqlDocument' ], true ) ) {
+			return;
+		}
+
+		if ( ! isset( $filtered_input['grant'] ) || ! isset( $post_object['postObjectId'] ) ) {
+			return;
+		}
+
+		$this->save( $post_object['postObjectId'], $filtered_input['grant'] );
 	}
 
 	/**
