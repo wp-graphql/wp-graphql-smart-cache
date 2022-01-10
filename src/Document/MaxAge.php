@@ -121,8 +121,10 @@ class MaxAge {
 	 */
 	public function get( $post_id ) {
 		$item  = get_the_terms( $post_id, self::TAXONOMY_NAME );
-		$value = $item[0]->name ?: null;
-		return $value;
+		if ( is_wp_error( $item ) ) {
+			return $item;
+		}
+		return isset( $item[0]->name ) ? $item[0]->name : null;
 	}
 
 	public function valid( $value ) {
