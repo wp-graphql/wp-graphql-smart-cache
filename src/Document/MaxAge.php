@@ -120,7 +120,7 @@ class MaxAge {
 	 * Get the max age if it exists for a saved persisted query
 	 */
 	public function get( $post_id ) {
-		$item  = get_the_terms( $post_id, self::TAXONOMY_NAME );
+		$item = get_the_terms( $post_id, self::TAXONOMY_NAME );
 		if ( is_wp_error( $item ) ) {
 			return $item;
 		}
