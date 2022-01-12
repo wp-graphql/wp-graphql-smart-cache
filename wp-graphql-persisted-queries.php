@@ -11,6 +11,7 @@
 
 namespace WPGraphQL\PersistedQueries;
 
+use WPGraphQL\PersistedQueries\Admin\Editor;
 use WPGraphQL\PersistedQueries\Document\Description;
 use WPGraphQL\PersistedQueries\Document\Grant;
 use WPGraphQL\PersistedQueries\Document\MaxAge;
@@ -54,6 +55,9 @@ add_action(
 
 		$errors = new AdminErrors();
 		$errors->init();
+
+		$editor = new Editor();
+		$editor->init();
 	}
 );
 
