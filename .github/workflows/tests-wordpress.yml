@@ -53,7 +53,7 @@ jobs:
         run: composer install
 
       - name: Run acceptance, functional tests
-        run: docker-compose run testing
+        run: docker-compose run -e DEBUG=1 testing
         env:
           WP_VERSION: ${{ matrix.wordpress }}
           PHP_VERSION: ${{ matrix.php }}

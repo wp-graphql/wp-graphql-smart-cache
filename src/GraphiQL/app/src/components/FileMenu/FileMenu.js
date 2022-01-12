@@ -1,6 +1,6 @@
 import { useDocumentEditorContext } from '../../context/DocumentEditorContext';
 import { Menu, Layout } from 'antd';
-import { CloseCircleOutlined, DeleteOutlined, DownOutlined, FileAddOutlined, QuestionCircleOutlined, SaveOutlined, SlackOutlined, YoutubeOutlined } from '@ant-design/icons';
+import { CloseCircleOutlined, DeleteOutlined, FileAddOutlined, QuestionCircleOutlined, SaveOutlined, SlackOutlined, YoutubeOutlined } from '@ant-design/icons';
 
 const { Header } = Layout;
 const { SubMenu } = Menu;
