@@ -8,8 +8,8 @@
 namespace WPGraphQL\PersistedQueries\Admin;
 
 class Editor {
-    
-    // set this to true to see these in wp-admin
+
+	// set this to true to see these in wp-admin
 	public static function show_in_admin() {
 		$display_admin = get_graphql_setting( 'editor_display', false, 'graphql_persisted_queries_section' );
 		return ( 'on' === $display_admin );
@@ -32,7 +32,6 @@ class Editor {
 				);
 			}
 		);
-
-    }
+	}
 
 }
