@@ -7,7 +7,7 @@
 
 namespace WPGraphQL\PersistedQueries\Document;
 
-use WPGraphQL\PersistedQueries\Admin\Editor;
+use WPGraphQL\PersistedQueries\Admin\Settings;
 use WPGraphQL\PersistedQueries\Document;
 use WPGraphQL\PersistedQueries\ValidationRules\AllowDenyQueryDocument;
 use GraphQL\Server\RequestError;
@@ -41,7 +41,7 @@ class Grant {
 				],
 				'hierarchical'       => false,
 				'show_admin_column'  => true,
-				'show_in_menu'       => Editor::show_in_admin(),
+				'show_in_menu'       => Settings::show_in_admin(),
 				'show_in_quick_edit' => false,
 				'meta_box_cb'        => [ $this, 'admin_input_box_cb' ],
 				'show_in_graphql'    => false, // false because we register a field with different name
@@ -72,28 +72,6 @@ class Grant {
 		add_filter( 'graphql_validation_rules', [ $this, 'add_validation_rules_cb' ], 10, 2 );
 
 		add_action( sprintf( 'save_post_%s', Document::TYPE_NAME ), [ $this, 'save_cb' ] );
-
-		// Add to the wp-graphql admin settings page
-		add_action(
-			'graphql_register_settings',
-			function () {
-				register_graphql_settings_field(
-					'graphql_persisted_queries_section',
-					[
-						'name'    => self::GLOBAL_SETTING_NAME,
-						'label'   => __( 'Allow/Deny Mode', 'wp-graphql-persisted-queries' ),
-						'desc'    => __( 'Allow or deny specific queries. Or leave your graphql endpoint wideopen with the public option (not recommended).', 'wp-graphql-persisted-queries' ),
-						'type'    => 'radio',
-						'default' => self::GLOBAL_DEFAULT,
-						'options' => [
-							self::GLOBAL_PUBLIC  => 'Public',
-							self::GLOBAL_ALLOWED => 'Allow only specific queries',
-							self::GLOBAL_DENIED  => 'Deny some specific queries',
-						],
-					]
-				);
-			}
-		);
 
 		add_filter( 'graphql_mutation_input', [ $this, 'graphql_mutation_filter' ], 10, 4 );
 		add_action( 'graphql_mutation_response', [ $this, 'graphql_mutation_insert' ], 10, 6 );

@@ -7,7 +7,7 @@
 
 namespace WPGraphQL\PersistedQueries;
 
-use WPGraphQL\PersistedQueries\Admin\Editor;
+use WPGraphQL\PersistedQueries\Admin\Settings;
 use WPGraphQL\PersistedQueries\AdminErrors;
 use WPGraphQL\PersistedQueries\Utils;
 use GraphQL\Error\SyntaxError;
@@ -35,7 +35,7 @@ class Document {
 					'singular_name' => __( 'GraphQLQuery', 'wp-graphql-persisted-queries' ),
 				],
 				'public'              => true,
-				'show_ui'             => Editor::show_in_admin(),
+				'show_ui'             => Settings::show_in_admin(),
 				'taxonomies'          => [
 					self::TAXONOMY_NAME,
 				],
@@ -57,7 +57,7 @@ class Document {
 					'singular_name' => __( 'Alias Name', 'wp-graphql-persisted-queries' ),
 				],
 				'show_admin_column'  => true,
-				'show_in_menu'       => Editor::show_in_admin(),
+				'show_in_menu'       => Settings::show_in_admin(),
 				'show_in_quick_edit' => false,
 				'show_in_graphql'    => false, // false because we register a field with different name
 			]

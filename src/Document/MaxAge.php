@@ -7,7 +7,7 @@
 
 namespace WPGraphQL\PersistedQueries\Document;
 
-use WPGraphQL\PersistedQueries\Admin\Editor;
+use WPGraphQL\PersistedQueries\Admin\Settings;
 use WPGraphQL\PersistedQueries\Document;
 use WPGraphQL\PersistedQueries\Utils;
 use GraphQL\Server\RequestError;
@@ -30,7 +30,7 @@ class MaxAge {
 				],
 				'hierarchical'       => false,
 				'show_admin_column'  => true,
-				'show_in_menu'       => Editor::show_in_admin(),
+				'show_in_menu'       => Settings::show_in_admin(),
 				'show_in_quick_edit' => false,
 				'meta_box_cb'        => [ $this, 'admin_input_box_cb' ],
 				'show_in_graphql'    => false, // false because we register a field with different name
@@ -56,28 +56,6 @@ class MaxAge {
 					return isset( $term[0]->name ) ? $term[0]->name : null;
 				};
 				register_graphql_field( $register_type_name, 'max_age_header', $config );
-			}
-		);
-
-		// Add to the wp-graphql admin settings page
-		add_action(
-			'graphql_register_settings',
-			function () {
-				register_graphql_settings_field(
-					'graphql_persisted_queries_section',
-					[
-						'name'              => 'global_max_age',
-						'label'             => __( 'Access-Control-Max-Age Header', 'wp-graphql-persisted-queries' ),
-						'desc'              => __( 'Global Max-Age HTTP header. Integer value, greater or equal to zero.', 'wp-graphql-persisted-queries' ),
-						'type'              => 'number',
-						'sanitize_callback' => function ( $value ) {
-							if ( $value < 0 || ! is_numeric( $value ) ) {
-								return 0;
-							}
-							return intval( $value );
-						},
-					]
-				);
 			}
 		);
 
