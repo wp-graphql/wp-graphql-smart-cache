@@ -233,7 +233,7 @@ class Document {
 	 * If existing post is edited in the wp admin editor, use previous content to remove query term ids
 	 */
 	public function editor_update_before_save_cb( $post_ID, $post_after, $post_before ) {
-		if ( Document::TYPE_NAME !== $post_before->post_type ) {
+		if ( self::TYPE_NAME !== $post_before->post_type ) {
 			return;
 		}
 
