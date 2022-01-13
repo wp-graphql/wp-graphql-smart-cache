@@ -22,9 +22,16 @@ class Document {
 	public function init() {
 		add_filter( 'graphql_request_data', [ $this, 'graphql_request_save_document_cb' ], 10, 2 );
 
-		add_filter( 'wp_insert_post_data', [ $this, 'editor_validate_save_data_cb' ], 10, 2 );
 		add_action( 'post_updated', [ $this, 'editor_update_before_save_cb' ], 10, 3 );
-		add_action( sprintf( 'save_post_%s', Document::TYPE_NAME ), [ $this, 'save_document_cb' ], 10, 2 );
+
+		if ( ! is_admin() ) {
+			add_filter( 'wp_insert_post_data', [ $this, 'validate_save_data_cb' ], 10, 2 );
+			add_action( sprintf( 'save_post_%s', self::TYPE_NAME ), [ $this, 'save_document_cb' ], 10, 2 );
+		}
+
+		add_filter( 'graphql_post_object_insert_post_args', [ $this, 'mutation_filter_post_args' ], 10, 4 );
+		add_filter( 'graphql_mutation_input', [ $this, 'graphql_mutation_filter' ], 10, 4 );
+		add_action( 'graphql_mutation_response', [ $this, 'graphql_mutation_insert' ], 10, 6 );
 
 		register_post_type(
 			self::TYPE_NAME,
@@ -89,10 +96,6 @@ class Document {
 				register_graphql_field( $register_type_name, 'alias', $config );
 			}
 		);
-
-		add_filter( 'graphql_post_object_insert_post_args', [ $this, 'mutation_filter_post_args' ], 10, 4 );
-		add_filter( 'graphql_mutation_input', [ $this, 'graphql_mutation_filter' ], 10, 4 );
-		add_action( 'graphql_mutation_response', [ $this, 'graphql_mutation_insert' ], 10, 6 );
 	}
 
 	/**
@@ -169,13 +172,16 @@ class Document {
 	/**
 	 * If existing post is edited, verify query string in content is valid graphql
 	 */
-	public function editor_validate_save_data_cb( $data, $post ) {
+	public function validate_save_data_cb( $data, $post ) {
+		if ( self::TYPE_NAME !== $post['post_type'] ) {
+			return $data;
+		}
+
 		/**
 		 * Before post is saved, check content for valid graphql.
 		 */
-		if ( ! empty( $data ) &&
-			! empty( $data['post_content'] ) &&
-			self::TYPE_NAME === $post['post_type'] ) {
+		if ( array_key_exists( 'post_content', $data ) &&
+			! empty( $data['post_content'] ) ) {
 			try {
 				// Use graphql parser to check query string validity.
 				$ast = \GraphQL\Language\Parser::parse( $post['post_content'] );
@@ -184,27 +190,17 @@ class Document {
 				$normalized_hash = Utils::generateHash( $ast );
 
 				// If queryId alias name is already in the system and doesn't match the query hash
-				if ( ! is_admin() ) {
-					$existing_post = Utils::getPostByTermName( $normalized_hash, self::TYPE_NAME, self::TAXONOMY_NAME );
-					if ( $existing_post && $existing_post->ID !== $post['ID'] ) {
-						// Translators: The placeholder is the existing saved query with matching hash/query-id
-						throw new RequestError( sprintf( __( 'This query has already been associated with another query "%s"', 'wp-graphql-persisted-queries' ), $existing_post->post_title ) );
-					}
+				$existing_post = Utils::getPostByTermName( $normalized_hash, self::TYPE_NAME, self::TAXONOMY_NAME );
+				if ( $existing_post && $existing_post->ID !== $post['ID'] ) {
+					// Translators: The placeholder is the existing saved query with matching hash/query-id
+					throw new RequestError( sprintf( __( 'This query has already been associated with another query "%s"', 'wp-graphql-persisted-queries' ), $existing_post->post_title ) );
 				}
 
 				// Format the query string and save that
 				$data['post_content'] = \GraphQL\Language\Printer::doPrint( $ast );
 			} catch ( SyntaxError $e ) {
-				if ( ! is_admin() ) {
-					// Translators: The placeholder is the query string content
-					throw new RequestError( sprintf( __( 'Did not save invalid graphql query string "%s"', 'wp-graphql-persisted-queries' ), $post['post_content'] ) );
-				}
-				$existing_post = get_post( $post['ID'] );
-
-				// Overwrite new/invalid query with previous working query, or empty
-				$data['post_content'] = $existing_post->post_content;
-
-				AdminErrors::add_message( 'Did not save invalid graphql query string. ' . $post['post_content'] );
+				// Translators: The placeholder is the query string content
+				throw new RequestError( sprintf( __( 'Did not save invalid graphql query string "%s"', 'wp-graphql-persisted-queries' ), $post['post_content'] ) );
 			}
 		}
 		return $data;

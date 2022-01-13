@@ -12,18 +12,37 @@ use WPGraphQL\PersistedQueries\Document;
 use WPGraphQL\PersistedQueries\Document\Grant;
 use WPGraphQL\PersistedQueries\Document\MaxAge;
 use GraphQL\Error\SyntaxError;
+use GraphQL\Server\RequestError;
 
 class Editor {
 
 	public function admin_init() {
-		remove_action( sprintf( 'save_post_%s', Document::TYPE_NAME ), 'WPGraphQL\PersistedQueries\Document', 'save_document_cb', 10 );
-		add_action( sprintf( 'save_post_%s', Document::TYPE_NAME ), [ $this, 'vaildate_and_save_cb' ], 10, 2 );
+		add_action( sprintf( 'save_post_%s', Document::TYPE_NAME ), [ $this, 'save_document_cb' ], 10, 2 );
+		add_filter( 'wp_insert_post_data', [ $this, 'validate_save_data_cb' ], 10, 2 );
+	}
+
+	/**
+	 * If existing post is edited, verify query string in content is valid graphql
+	 */
+	public function validate_save_data_cb( $data, $post ) {
+		try {
+			$document = new Document();
+			$data     = $document->validate_save_data_cb( $data, $post );
+		} catch ( RequestError $e ) {
+			$existing_post = get_post( $post['ID'] );
+
+			// Overwrite new/invalid query with previous working query, or empty
+			$data['post_content'] = $existing_post->post_content;
+
+			AdminErrors::add_message( $e->getMessage() );
+		}
+		return $data;
 	}
 
 	/**
 	* When a post is saved, sanitize and store the data.
 	*/
-	public function vaildate_and_save_cb( $post_id, $post ) {
+	public function save_document_cb( $post_id, $post ) {
 		if ( empty( $_POST ) ) {
 			return;
 		}
