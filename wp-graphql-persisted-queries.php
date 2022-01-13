@@ -11,6 +11,7 @@
 
 namespace WPGraphQL\PersistedQueries;
 
+use WPGraphQL\PersistedQueries\Admin\Editor;
 use WPGraphQL\PersistedQueries\Admin\Settings;
 use WPGraphQL\PersistedQueries\Document\Description;
 use WPGraphQL\PersistedQueries\Document\Grant;
@@ -58,5 +59,13 @@ add_action(
 
 		$settings = new Settings();
 		$settings->init();
+	}
+);
+
+add_action(
+	'admin_init',
+	function() {
+		$editor = new Editor();
+		$editor->admin_init();
 	}
 );

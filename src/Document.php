@@ -24,7 +24,7 @@ class Document {
 
 		add_filter( 'wp_insert_post_data', [ $this, 'editor_validate_save_data_cb' ], 10, 2 );
 		add_action( 'post_updated', [ $this, 'editor_update_before_save_cb' ], 10, 3 );
-		add_action( sprintf( 'save_post_%s', Document::TYPE_NAME ), [ $this, 'editor_save_document_cb' ], 10, 3 );
+		add_action( sprintf( 'save_post_%s', Document::TYPE_NAME ), [ $this, 'save_document_cb' ], 10, 2 );
 
 		register_post_type(
 			self::TYPE_NAME,
@@ -212,24 +212,19 @@ class Document {
 	}
 
 	/**
-	 * When query is saved in the wp admin editor, save the query, update the slug to match the content.
+	 * When wp_insert_post saves the query, update the slug to match the content.
 	 *
 	 * @param int $post_ID
 	 * @param WP_Post $post
-	 * @param bool $update
 	 */
-	public function editor_save_document_cb( $post_ID, $post, $update ) {
+	public function save_document_cb( $post_ID, $post ) {
 		if ( empty( $post->post_content ) ) {
 			return;
 		}
 
 		// Use graphql parser to check query string validity.
-		try {
-			\GraphQL\Language\Parser::parse( $post->post_content );
-		} catch ( SyntaxError $e ) {
-			AdminErrors::add_message( 'Did not save invalid graphql query string. ' . $post['post_content'] );
-			return;
-		}
+		// @throws on syntax error
+		\GraphQL\Language\Parser::parse( $post->post_content );
 
 		// Get the query id for the new query and save as a term
 		// Verify the post content is valid graphql query document

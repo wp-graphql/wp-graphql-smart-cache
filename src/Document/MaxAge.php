@@ -37,8 +37,6 @@ class MaxAge {
 			]
 		);
 
-		add_action( sprintf( 'save_post_%s', Document::TYPE_NAME ), [ $this, 'save_cb' ] );
-
 		add_action(
 			'graphql_register_types',
 			function () {
@@ -179,44 +177,6 @@ class MaxAge {
 				'br'    => [],
 			]
 		);
-	}
-
-	/**
-	 * When a post is saved, sanitize and store the data.
-	 */
-	public function save_cb( $post_id ) {
-		if ( empty( $_POST ) ) {
-			return;
-		}
-
-		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-			return;
-		}
-
-		if ( ! current_user_can( 'edit_post', $post_id ) ) {
-			return;
-		}
-
-		if ( ! isset( $_POST['post_type'] ) || Document::TYPE_NAME !== $_POST['post_type'] ) {
-			return;
-		}
-
-		if ( ! isset( $_REQUEST['savedquery_maxage_noncename'] ) ) {
-			return;
-		}
-
-		// phpcs:ignore
-		if ( ! wp_verify_nonce( $_REQUEST['savedquery_maxage_noncename'], 'graphql_query_maxage' ) ) {
-			return;
-		}
-
-		if ( ! isset( $_POST['graphql_query_maxage'] ) ) {
-			return;
-		}
-
-		$data = sanitize_text_field( wp_unslash( $_POST['graphql_query_maxage'] ) );
-
-		$this->save( $post_id, $data );
 	}
 
 }
