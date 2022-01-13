@@ -20,9 +20,9 @@ class Document {
 	const GRAPHQL_NAME  = 'graphqlDocument';
 
 	public function init() {
-		add_filter( 'graphql_request_data', [ $this, 'graphql_request_save_document_cb' ], 10, 2 );
+		add_filter( 'graphql_request_data', [ $this, 'graphql_query_contains_queryid_cb' ], 10, 2 );
 
-		add_action( 'post_updated', [ $this, 'editor_update_before_save_cb' ], 10, 3 );
+		add_action( 'post_updated', [ $this, 'after_updated_cb' ], 10, 3 );
 
 		if ( ! is_admin() ) {
 			add_filter( 'wp_insert_post_data', [ $this, 'validate_save_data_cb' ], 10, 2 );
@@ -158,7 +158,7 @@ class Document {
 	 * @param  array $request_context An array containing the both body and query params
 	 * @return string Updated $parsed_body_params Request parameters.
 	 */
-	public function graphql_request_save_document_cb( $parsed_body_params, $request_context ) {
+	public function graphql_query_contains_queryid_cb( $parsed_body_params, $request_context ) {
 		if ( isset( $parsed_body_params['query'] ) && isset( $parsed_body_params['queryId'] ) ) {
 			// save the query
 			$this->save( $parsed_body_params['queryId'], $parsed_body_params['query'] );
@@ -232,7 +232,7 @@ class Document {
 	/**
 	 * If existing post is edited in the wp admin editor, use previous content to remove query term ids
 	 */
-	public function editor_update_before_save_cb( $post_ID, $post_after, $post_before ) {
+	public function after_updated_cb( $post_ID, $post_after, $post_before ) {
 		if ( self::TYPE_NAME !== $post_before->post_type ) {
 			return;
 		}
@@ -247,6 +247,7 @@ class Document {
 			// Get the existing normalized hash for this post and remove it before build a new on, only if the query has changed.
 			$old_query_id = Utils::generateHash( $post_before->post_content );
 		} catch ( SyntaxError $e ) {
+			// syntax error in the old query, nothing to do here.
 			return;
 		}
 
