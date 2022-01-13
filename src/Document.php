@@ -7,6 +7,7 @@
 
 namespace WPGraphQL\PersistedQueries;
 
+use WPGraphQL\PersistedQueries\Admin\Settings;
 use WPGraphQL\PersistedQueries\AdminErrors;
 use WPGraphQL\PersistedQueries\Utils;
 use GraphQL\Error\SyntaxError;
@@ -23,7 +24,7 @@ class Document {
 
 		add_filter( 'wp_insert_post_data', [ $this, 'editor_validate_save_data_cb' ], 10, 2 );
 		add_action( 'post_updated', [ $this, 'editor_update_before_save_cb' ], 10, 3 );
-		add_action( sprintf( 'save_post_%s', Document::TYPE_NAME ), [ $this, 'editor_save_document_cb' ], 10, 3 );
+		add_action( sprintf( 'save_post_%s', Document::TYPE_NAME ), [ $this, 'save_document_cb' ], 10, 2 );
 
 		register_post_type(
 			self::TYPE_NAME,
@@ -34,11 +35,10 @@ class Document {
 					'singular_name' => __( 'GraphQLQuery', 'wp-graphql-persisted-queries' ),
 				],
 				'public'              => true,
-				'show_ui'             => false, // set this to true to see these in wp-admin
+				'show_ui'             => Settings::show_in_admin(),
 				'taxonomies'          => [
 					self::TAXONOMY_NAME,
 				],
-				'meta_box_cb'         => [ $this, 'admin_input_box_cb' ],
 				'show_in_graphql'     => true,
 				'graphql_single_name' => self::GRAPHQL_NAME,
 				'graphql_plural_name' => 'graphqlDocuments',
@@ -56,7 +56,7 @@ class Document {
 					'singular_name' => __( 'Alias Name', 'wp-graphql-persisted-queries' ),
 				],
 				'show_admin_column'  => true,
-				'show_in_menu'       => false, // set this to true to see these in wp-admin
+				'show_in_menu'       => Settings::show_in_admin(),
 				'show_in_quick_edit' => false,
 				'show_in_graphql'    => false, // false because we register a field with different name
 			]
@@ -167,7 +167,7 @@ class Document {
 	}
 
 	/**
-	 * If existing post is edited in the wp admin editor, verify query string in content is valid graphql
+	 * If existing post is edited, verify query string in content is valid graphql
 	 */
 	public function editor_validate_save_data_cb( $data, $post ) {
 		/**
@@ -211,24 +211,19 @@ class Document {
 	}
 
 	/**
-	 * When query is saved in the wp admin editor, save the query, update the slug to match the content.
+	 * When wp_insert_post saves the query, update the slug to match the content.
 	 *
 	 * @param int $post_ID
 	 * @param WP_Post $post
-	 * @param bool $update
 	 */
-	public function editor_save_document_cb( $post_ID, $post, $update ) {
+	public function save_document_cb( $post_ID, $post ) {
 		if ( empty( $post->post_content ) ) {
 			return;
 		}
 
 		// Use graphql parser to check query string validity.
-		try {
-			\GraphQL\Language\Parser::parse( $post->post_content );
-		} catch ( SyntaxError $e ) {
-			AdminErrors::add_message( 'Did not save invalid graphql query string. ' . $post['post_content'] );
-			return;
-		}
+		// @throws on syntax error
+		\GraphQL\Language\Parser::parse( $post->post_content );
 
 		// Get the query id for the new query and save as a term
 		// Verify the post content is valid graphql query document
@@ -348,28 +343,4 @@ class Document {
 		return $post_id;
 	}
 
-	/**
-	* Draw the input field for the post edit
-	*/
-	public function admin_input_box_cb( $post ) {
-		wp_nonce_field( 'graphql_query_grant', '_document_noncename' );
-
-		$html  = '<ul>';
-		$terms = get_the_terms( $post, self::TAXONOMY_NAME );
-		if ( is_array( $terms ) ) {
-			foreach ( $terms as $term ) {
-				$string = mb_strimwidth( $term->name, 0, 30, '...' );
-				$html  .= "<li>$string</li>";
-			}
-		}
-		$html .= '</ul>';
-		$html .= __( 'The aliases associated with this graphql document. Use in a graphql request as the queryId={} parameter', 'wp-graphql-persisted-queries' );
-		echo wp_kses(
-			$html,
-			[
-				'ul' => true,
-				'li' => true,
-			]
-		);
-	}
 }
