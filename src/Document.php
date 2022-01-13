@@ -39,7 +39,6 @@ class Document {
 				'taxonomies'          => [
 					self::TAXONOMY_NAME,
 				],
-				'meta_box_cb'         => [ $this, 'admin_input_box_cb' ],
 				'show_in_graphql'     => true,
 				'graphql_single_name' => self::GRAPHQL_NAME,
 				'graphql_plural_name' => 'graphqlDocuments',
@@ -168,7 +167,7 @@ class Document {
 	}
 
 	/**
-	 * If existing post is edited in the wp admin editor, verify query string in content is valid graphql
+	 * If existing post is edited, verify query string in content is valid graphql
 	 */
 	public function editor_validate_save_data_cb( $data, $post ) {
 		/**
@@ -344,28 +343,4 @@ class Document {
 		return $post_id;
 	}
 
-	/**
-	* Draw the input field for the post edit
-	*/
-	public function admin_input_box_cb( $post ) {
-		wp_nonce_field( 'graphql_query_grant', '_document_noncename' );
-
-		$html  = '<ul>';
-		$terms = get_the_terms( $post, self::TAXONOMY_NAME );
-		if ( is_array( $terms ) ) {
-			foreach ( $terms as $term ) {
-				$string = mb_strimwidth( $term->name, 0, 30, '...' );
-				$html  .= "<li>$string</li>";
-			}
-		}
-		$html .= '</ul>';
-		$html .= __( 'The aliases associated with this graphql document. Use in a graphql request as the queryId={} parameter', 'wp-graphql-persisted-queries' );
-		echo wp_kses(
-			$html,
-			[
-				'ul' => true,
-				'li' => true,
-			]
-		);
-	}
 }

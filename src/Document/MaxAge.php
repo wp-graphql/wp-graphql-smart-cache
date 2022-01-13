@@ -32,7 +32,7 @@ class MaxAge {
 				'show_admin_column'  => true,
 				'show_in_menu'       => Settings::show_in_admin(),
 				'show_in_quick_edit' => false,
-				'meta_box_cb'        => [ $this, 'admin_input_box_cb' ],
+				'meta_box_cb'        => [ 'WPGraphQL\PersistedQueries\Admin\Editor', 'maxage_input_box_cb' ],
 				'show_in_graphql'    => false, // false because we register a field with different name
 			]
 		);
@@ -154,29 +154,6 @@ class MaxAge {
 			$headers['Access-Control-Max-Age'] = intval( $age );
 		}
 		return $headers;
-	}
-
-	/**
-	 * Draw the input field for the post edit
-	 */
-	public function admin_input_box_cb( $post ) {
-		wp_nonce_field( 'graphql_query_maxage', 'savedquery_maxage_noncename' );
-
-		$value = $this->get( $post->ID );
-		$html  = sprintf( '<input type="text" id="graphql_query_maxage" name="graphql_query_maxage" value="%s" />', $value );
-		$html .= '<br><label for="graphql_query_maxage">Max-Age HTTP header. Integer value.</label>';
-		echo wp_kses(
-			$html,
-			[
-				'input' => [
-					'type'  => true,
-					'id'    => true,
-					'name'  => true,
-					'value' => true,
-				],
-				'br'    => [],
-			]
-		);
 	}
 
 }

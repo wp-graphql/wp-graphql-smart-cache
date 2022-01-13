@@ -64,7 +64,7 @@ add_action(
 
 add_action(
 	'admin_init',
-	function() {
+	function () {
 		$editor = new Editor();
 		$editor->admin_init();
 	}

@@ -44,7 +44,7 @@ class Grant {
 				'show_admin_column'  => true,
 				'show_in_menu'       => Settings::show_in_admin(),
 				'show_in_quick_edit' => false,
-				'meta_box_cb'        => [ $this, 'admin_input_box_cb' ],
+				'meta_box_cb'        => [ 'WPGraphQL\PersistedQueries\Admin\Editor', 'grant_input_box_cb' ],
 				'show_in_graphql'    => false, // false because we register a field with different name
 			]
 		);
@@ -107,46 +107,6 @@ class Grant {
 		}
 
 		$this->save( $post_object['postObjectId'], $filtered_input['grant'] );
-	}
-
-	/**
-	* Draw the input field for the post edit
-	*/
-	public function admin_input_box_cb( $post ) {
-		wp_nonce_field( 'graphql_query_grant', 'savedquery_grant_noncename' );
-
-		$value = $this->getQueryGrantSetting( $post->ID );
-		$html  = sprintf(
-			'<input type="radio" id="graphql_query_grant_allow" name="graphql_query_grant" value="%s" %s>',
-			self::ALLOW,
-			checked( $value, self::ALLOW, false )
-		);
-		$html .= '<label for="graphql_query_grant_allow">Allowed</label><br >';
-		$html .= sprintf(
-			'<input type="radio" id="graphql_query_grant_deny" name="graphql_query_grant" value="%s" %s>',
-			self::DENY,
-			checked( $value, self::DENY, false )
-		);
-		$html .= '<label for="graphql_query_grant_deny">Deny</label><br >';
-		$html .= sprintf(
-			'<input type="radio" id="graphql_query_grant_default" name="graphql_query_grant" value="%s" %s>',
-			self::USE_DEFAULT,
-			checked( $value, self::USE_DEFAULT, false )
-		);
-		$html .= '<label for="graphql_query_grant_default">Use global default</label><br >';
-		echo wp_kses(
-			$html,
-			[
-				'input' => [
-					'type'    => true,
-					'id'      => true,
-					'name'    => true,
-					'value'   => true,
-					'checked' => true,
-				],
-				'br'    => true,
-			]
-		);
 	}
 
 	/**
