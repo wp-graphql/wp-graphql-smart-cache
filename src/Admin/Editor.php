@@ -17,14 +17,14 @@ use GraphQL\Server\RequestError;
 class Editor {
 
 	public function admin_init() {
+		add_filter( 'wp_insert_post_data', [ $this, 'validate_before_save_cb' ], 10, 2 );
 		add_action( sprintf( 'save_post_%s', Document::TYPE_NAME ), [ $this, 'save_document_cb' ], 10, 2 );
-		add_filter( 'wp_insert_post_data', [ $this, 'validate_save_data_cb' ], 10, 2 );
 	}
 
 	/**
 	 * If existing post is edited, verify query string in content is valid graphql
 	 */
-	public function validate_save_data_cb( $data, $post ) {
+	public function validate_before_save_cb( $data, $post ) {
 		try {
 			$document = new Document();
 			$data     = $document->validate_save_data_cb( $data, $post );
