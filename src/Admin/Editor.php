@@ -37,7 +37,6 @@ class Editor {
 		try {
 			$document = new Document();
 			$data     = $document->validate_before_save_cb( $data, $post );
-
 		} catch ( RequestError $e ) {
 			$existing_post = get_post( $post['ID'] );
 
@@ -105,6 +104,7 @@ class Editor {
 		}
 
 		$grant = new Grant();
+		// phpcs:ignore
 		$data  = $grant->the_selection( sanitize_text_field( wp_unslash( $_POST['graphql_query_grant'] ) ) );
 		$grant->save( $post_id, $data );
 
@@ -113,9 +113,9 @@ class Editor {
 			$document->save_document_cb( $post_id, $post );
 
 			$max_age = new MaxAge();
+			// phpcs:ignore
 			$data    = sanitize_text_field( wp_unslash( $_POST['graphql_query_maxage'] ) );
 			$max_age->save( $post_id, $data );
-
 		} catch ( SyntaxError $e ) {
 			AdminErrors::add_message( 'Did not save invalid graphql query string. ' . $post['post_content'] );
 		} catch ( RequestError $e ) {
