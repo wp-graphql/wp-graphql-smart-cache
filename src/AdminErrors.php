@@ -18,7 +18,7 @@ class AdminErrors {
 		add_action( 'admin_notices', [ $this, 'display_validation_messages' ] );
 	}
 
-	public function add_message( $message ) {
+	public static function add_message( $message ) {
 		set_transient( self::TRANSIENT_NAME, [ $message ], self::MESSAGE_TTL_SECONDS );
 	}
 

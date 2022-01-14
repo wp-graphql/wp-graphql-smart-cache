@@ -11,6 +11,8 @@
 
 namespace WPGraphQL\PersistedQueries;
 
+use WPGraphQL\PersistedQueries\Admin\Editor;
+use WPGraphQL\PersistedQueries\Admin\Settings;
 use WPGraphQL\PersistedQueries\Document\Description;
 use WPGraphQL\PersistedQueries\Document\Grant;
 use WPGraphQL\PersistedQueries\Document\MaxAge;
@@ -54,18 +56,16 @@ add_action(
 
 		$errors = new AdminErrors();
 		$errors->init();
+
+		$settings = new Settings();
+		$settings->init();
 	}
 );
 
-// Add a tab section to the graphql admin settings page
 add_action(
-	'graphql_register_settings',
+	'admin_init',
 	function () {
-		register_graphql_settings_section(
-			'graphql_persisted_queries_section',
-			[
-				'title' => __( 'Persisted Queries', 'wp-graphql-persisted-queries' ),
-			]
-		);
+		$editor = new Editor();
+		$editor->admin_init();
 	}
 );
