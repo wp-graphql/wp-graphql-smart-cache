@@ -114,12 +114,8 @@ class MaxAge {
 	 */
 	public function save( $post_id, $value ) {
 		if ( ! $this->valid( $value ) ) {
-			if ( ! is_admin() ) {
-				// Translators: The placeholder is the max-age-header input value
-				throw new RequestError( sprintf( __( 'Invalid max age header value "%s". Must be greater than or equal to zero', 'wp-graphql-persisted-queries' ), $value ) );
-			}
-			// some sort of error?
-			return [];
+			// Translators: The placeholder is the max-age-header input value
+			throw new RequestError( sprintf( __( 'Invalid max age header value "%s". Must be greater than or equal to zero', 'wp-graphql-persisted-queries' ), $value ) );
 		}
 		return wp_set_post_terms( $post_id, $value, self::TAXONOMY_NAME );
 	}

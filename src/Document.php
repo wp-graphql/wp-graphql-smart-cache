@@ -25,7 +25,7 @@ class Document {
 		add_action( 'post_updated', [ $this, 'after_updated_cb' ], 10, 3 );
 
 		if ( ! is_admin() ) {
-			add_filter( 'wp_insert_post_data', [ $this, 'validate_save_data_cb' ], 10, 2 );
+			add_filter( 'wp_insert_post_data', [ $this, 'validate_before_save_cb' ], 10, 2 );
 			add_action( sprintf( 'save_post_%s', self::TYPE_NAME ), [ $this, 'save_document_cb' ], 10, 2 );
 		}
 
@@ -172,7 +172,7 @@ class Document {
 	/**
 	 * If existing post is edited, verify query string in content is valid graphql
 	 */
-	public function validate_save_data_cb( $data, $post ) {
+	public function validate_before_save_cb( $data, $post ) {
 		if ( self::TYPE_NAME !== $post['post_type'] ) {
 			return $data;
 		}

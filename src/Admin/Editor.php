@@ -36,7 +36,8 @@ class Editor {
 	public function validate_before_save_cb( $data, $post ) {
 		try {
 			$document = new Document();
-			$data     = $document->validate_save_data_cb( $data, $post );
+			$data     = $document->validate_before_save_cb( $data, $post );
+
 		} catch ( RequestError $e ) {
 			$existing_post = get_post( $post['ID'] );
 
@@ -48,10 +49,7 @@ class Editor {
 		return $data;
 	}
 
-	/**
-	* When a post is saved, sanitize and store the data.
-	*/
-	public function save_document_cb( $post_id, $post ) {
+	public function is_valid_form( $post_id ) {
 		if ( empty( $_POST ) ) {
 			return;
 		}
@@ -94,19 +92,34 @@ class Editor {
 			return;
 		}
 
+		return true;
+	}
+
+	/**
+	* When a post is saved, sanitize and store the data.
+	*/
+	public function save_document_cb( $post_id, $post ) {
+		if ( ! $this->is_valid_form( $post_id ) ) {
+			AdminErrors::add_message( 'Something is wrong with the form data' );
+			return;
+		}
+
 		$grant = new Grant();
 		$data  = $grant->the_selection( sanitize_text_field( wp_unslash( $_POST['graphql_query_grant'] ) ) );
 		$grant->save( $post_id, $data );
 
-		$max_age = new MaxAge();
-		$data    = sanitize_text_field( wp_unslash( $_POST['graphql_query_maxage'] ) );
-		$max_age->save( $post_id, $data );
-
 		try {
 			$document = new Document();
 			$document->save_document_cb( $post_id, $post );
+
+			$max_age = new MaxAge();
+			$data    = sanitize_text_field( wp_unslash( $_POST['graphql_query_maxage'] ) );
+			$max_age->save( $post_id, $data );
+
 		} catch ( SyntaxError $e ) {
 			AdminErrors::add_message( 'Did not save invalid graphql query string. ' . $post['post_content'] );
+		} catch ( RequestError $e ) {
+			AdminErrors::add_message( $e->getMessage() );
 		}
 	}
 
