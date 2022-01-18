@@ -1,4 +1,4 @@
-The wp-graphql-persisted-queries plugin.
+The wp-graphql-labs plugin.
 
 Local development with docker to build the app and a local running WordPress. As well as run the test suites.
 

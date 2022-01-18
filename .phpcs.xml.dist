@@ -40,7 +40,7 @@
 	<rule ref="WordPress.WP.I18n">
 		<properties>
 			<!-- Value: replace the text domain used. -->
-			<property name="text_domain" type="array" value="wp-graphql-persisted-queries"/>
+			<property name="text_domain" type="array" value="wp-graphql-labs"/>
 		</properties>
 	</rule>
 	<rule ref="WordPress.WhiteSpace.ControlStructureSpacing">

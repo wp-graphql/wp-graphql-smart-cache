@@ -36,9 +36,9 @@ class Grant {
 			self::TAXONOMY_NAME,
 			Document::TYPE_NAME,
 			[
-				'description'        => __( 'Allow/Deny access grant for a saved GraphQL query document', 'wp-graphql-persisted-queries' ),
+				'description'        => __( 'Allow/Deny access grant for a saved GraphQL query document', 'wp-graphql-labs' ),
 				'labels'             => [
-					'name' => __( 'Allow/Deny', 'wp-graphql-persisted-queries' ),
+					'name' => __( 'Allow/Deny', 'wp-graphql-labs' ),
 				],
 				'hierarchical'       => false,
 				'show_admin_column'  => true,
@@ -55,7 +55,7 @@ class Grant {
 				$register_type_name = ucfirst( Document::GRAPHQL_NAME );
 				$config             = [
 					'type'        => 'String',
-					'description' => __( 'Allow, deny or default access grant for specific query', 'wp-graphql-persisted-queries' ),
+					'description' => __( 'Allow, deny or default access grant for specific query', 'wp-graphql-labs' ),
 				];
 
 				register_graphql_field( 'Create' . $register_type_name . 'Input', 'grant', $config );
@@ -89,7 +89,7 @@ class Grant {
 
 		if ( ! in_array( $input['grant'], [ self::ALLOW, self::DENY, self::USE_DEFAULT ], true ) ) {
 			// Translators: The placeholder is the input allow/deny value
-			throw new RequestError( sprintf( __( 'Invalid value for allow/deny grant: "%s"', 'wp-graphql-persisted-queries' ), $input['grant'] ) );
+			throw new RequestError( sprintf( __( 'Invalid value for allow/deny grant: "%s"', 'wp-graphql-labs' ), $input['grant'] ) );
 		}
 
 		return $input;

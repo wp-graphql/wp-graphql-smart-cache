@@ -1,6 +1,6 @@
 {
-    "name": "wp-graphql/wp-graphql-persisted-queries",
-    "description": "Persisted Queries for wp-graphql",
+    "name": "wp-graphql/wp-graphql-labs",
+    "description": "Lab Work for wp-graphql",
     "type": "wordpress-plugin",
     "autoload": {
         "psr-4": {

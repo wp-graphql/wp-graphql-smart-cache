@@ -197,10 +197,10 @@ class Editor {
 		$post = get_post();
 		if ( $post && Document::TYPE_NAME === $post->post_type ) {
 			if ( 'Excerpt' === $string ) {
-				return __( 'Description', 'wp-graphql-persisted-queries' );
+				return __( 'Description', 'wp-graphql-labs' );
 			}
 			if ( 'Excerpts are optional hand-crafted summaries of your content that can be used in your theme. <a href="%s">Learn more about manual excerpts</a>.' === $string ) {
-				return __( 'Add the query description.', 'wp-graphql-persisted-queries' );
+				return __( 'Add the query description.', 'wp-graphql-labs' );
 			}
 		}
 		return $string;
@@ -211,7 +211,7 @@ class Editor {
 	 */
 	public function add_description_column_to_admin_cb( $columns ) {
 		// Use 'description' as the text the user sees
-		$columns['excerpt'] = __( 'Description', 'wp-graphql-persisted-queries' );
+		$columns['excerpt'] = __( 'Description', 'wp-graphql-labs' );
 		return $columns;
 	}
 
