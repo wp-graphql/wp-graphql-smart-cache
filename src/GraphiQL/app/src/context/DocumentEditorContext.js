@@ -1,185 +1,336 @@
-import { useContext, createContext, useState, useEffect } from '@wordpress/element';
-import { v4 as uuid } from 'uuid';
-import { useMutation, gql } from '@apollo/client';
-import { GET_DOCUMENTS } from '../components/DocumentFinder/DocumentFinder';
+import {
+	useContext,
+	createContext,
+	useState,
+	useEffect,
+	useReducer,
+} from "@wordpress/element";
+import { v4 as uuid } from "uuid";
+import { useMutation, gql } from "@apollo/client";
+import { GET_DOCUMENTS } from "../components/DocumentFinder/DocumentFinder";
+import { Modal, Button } from "antd";
+import { ExclamationCircleOutlined } from "@ant-design/icons";
 
 export const DocumentEditorContext = createContext();
 export const useDocumentEditorContext = () => useContext(DocumentEditorContext);
 
+const GraphQLDocumentFragment = `
+fragment GraphQLDocument on GraphQLDocument {
+    __typename
+    id
+    title
+    content
+    rawContent: content(format: RAW)
+    status
+}
+`;
 const CREATE_DOCUMENT_MUTATION = gql`
-mutation CREATE_GRAPHQL_DOCUMENT($input: CreateGraphqlDocumentInput!) {
-    createGraphqlDocument(input: $input) {
-      graphqlDocument {
-        __typename
-        id
-        title
-        content
-        rawContent: content(format: RAW)
-      }
-    }
-  }
+	mutation CREATE_GRAPHQL_DOCUMENT($input: CreateGraphqlDocumentInput!) {
+		createGraphqlDocument(input: $input) {
+			graphqlDocument {
+				...GraphQLDocument
+			}
+		}
+	}
+	${GraphQLDocumentFragment}
+`;
+
+const UPDATE_DOCUMENT_MUTATION = gql`
+	mutation UPDATE_GRAPHQL_DOCUMENT($input: UpdateGraphqlDocumentInput!) {
+		updateGraphqlDocument(input: $input) {
+			graphqlDocument {
+				...GraphQLDocument
+			}
+		}
+	}
+	${GraphQLDocumentFragment}
+`;
+
+const DELETE_DOCUMENT_MUTATION = gql`
+	mutation DELETE_GRAPHQL_DOCUMENT($input: DeleteGraphqlDocumentInput!) {
+		deleteGraphqlDocument(input: $input) {
+			graphqlDocument {
+				__typename
+				id
+			}
+		}
+	}
 `;
 
 export const DocumentEditorContextProvider = ({ children }) => {
+	const [openTabs, setOpenTabs] = useState([]);
+	const [activeTabId, setActiveTabId] = useState(0);
+	const [createDocumentOnServer, createDocumentMutationResponse] =
+		useMutation(CREATE_DOCUMENT_MUTATION);
+	const [deleteDocumentOnServer, deleteDocumentMutationResponse] =
+		useMutation(DELETE_DOCUMENT_MUTATION);
+	const [isModalVisible, setIsModalVisible] = useState(false);
 
-    const [ openTabs, setOpenTabs ] = useState([]);
-    const [ activeTabId, setActiveTabId ] = useState(0);
+	const [modalConfig, setModalConfig] = useReducer(
+		(state, newState) => ({ ...state, ...newState }),
+		{
+			title: null,
+			visible: false,
+			footer: null,
+			content: null,
+			centered: false,
+			closable: true,
+			onCancel: () => {
+				setModalConfig({ visible: false });
+			},
+		}
+	);
 
-    const [ createDocumentOnServer, { data, loading, error } ] = useMutation( CREATE_DOCUMENT_MUTATION );
+	/**
+	 * Create a new GraphQL Document
+	 */
+	const createDocument = () => {
+		const operationName = `GetPosts_` + new Date().valueOf();
+		const newDocument = {
+			id: uuid(),
+			__typename: "TemporaryGraphQLDocument",
+			title: `query ${operationName}`,
+			content: `query ${operationName}{posts{nodes{id,title,date}}}`,
+			isDirty: true,
+		};
+		const newOpenTabs = [...openTabs, newDocument];
+		console.log({ newOpenTabs });
+		setOpenTabs(newOpenTabs);
+		setActiveTabId(newDocument.id);
+	};
 
-    /**
-     * Create a new GraphQL Document
-     */
-    const createDocument = () => {
-        const newDocument = {
-            id: uuid(),
-            __typename: 'TemporaryGraphQLDocument',
-            title: 'New Document',
-            // whether the document has changes that need to be saved
-            isDirty: true,
-        }
-        const newOpenTabs = [ ...openTabs, newDocument ];
-        console.log( { newOpenTabs })
-        setOpenTabs(newOpenTabs);
-        setActiveTabId( newDocument.id );
-    }
+	const getDocumentByKey = (key) => {
+		return openTabs.find((tab) => tab.id === key);
+	};
 
-    const getDocumentByKey = (key) => {
-        return openTabs.find( (tab) => tab.id === key );
-    }
+	const _closeDocumentAndUpdateTabs = (documentId) => {
+		// get index of document to close
+		const indexToClose = openTabs.findIndex((tab) => tab.id === documentId);
 
-    const closeDocument = ( id = null ) => {
+		// if the document to close is the active tab, set the active tab to the next tab, or the previous tab if there is no next tab, or the first tab if its the only option
+		if (documentId === activeTabId) {
+			const newActiveTabId = openTabs[indexToClose + 1]?.id
+				? openTabs[indexToClose + 1]?.id
+				: openTabs[indexToClose - 1]?.id
+				? openTabs[indexToClose - 1]?.id
+				: 0;
+			setActiveTabId(newActiveTabId);
+		}
 
-        // If no id is provided, close the active tab
-        if ( id === null ) {
-            id = activeTabId;
-        }
+		const newOpenTabs = openTabs.filter((tab) => tab.id !== documentId);
+		console.log({ newOpenTabs });
+		setOpenTabs(newOpenTabs);
+	};
 
-        const documentToClose = getDocumentByKey( id );
-        let confirmed = true;
-        
-        if ( documentToClose?.isDirty === true ) {
-            confirmed = confirm( 'You have unsaved changes. Please save before closing.' );
-        }
+	const saveDocument = async (documentId = null) => {
+		let documentToSave;
 
-        if ( false === confirmed ) {
-            reuturn;
-        }
+		if (!documentId) {
+			documentToSave = getCurrentDocument();
+		} else {
+			documentToSave = getDocumentByKey(documentId);
+		}
 
-        // get index of document to close
-        const indexToClose = openTabs.findIndex( (tab) => tab.id === id );
+		if (!documentToSave) {
+			console.error("No document to save");
+			return false;
+		}
 
-        // if the document to close is the active tab, set the active tab to the next tab, or the previous tab if there is no next tab, or the first tab if its the only option
-        if ( id === activeTabId ) {
-            const newActiveTabId = openTabs[ indexToClose + 1 ]?.id ? openTabs[ indexToClose + 1 ]?.id : ( openTabs[ indexToClose - 1 ]?.id ? openTabs[ indexToClose - 1 ]?.id : 0 );
-            setActiveTabId( newActiveTabId );
-        }
+		if (!documentToSave.isDirty) {
+			console.error("Document has no changes to save");
+			return false;
+		}
 
-        const newOpenTabs = openTabs.filter( (tab) => tab.id !== id );
-        console.log( { newOpenTabs })
-        setOpenTabs(newOpenTabs);
-        
-    }
+		// If the document is in memory only, we need to create the document on the server
+		if ("TemporaryGraphQLDocument" === documentToSave.__typename) {
+			const created = await createDocumentOnServer({
+				variables: {
+					input: {
+						title: documentToSave.title,
+						content: documentToSave.content,
+					},
+				},
+				refetchQueries: [GET_DOCUMENTS],
+				// onCompleted: (response) => {
+				//     console.log(response);
 
-    const openDocument = document => {
+				//     // Replace active document with the one that was just created
+				//     const currentDocument = getCurrentDocument();
+				//     const newDocument = { ...response.data.createGraphqlDocument.graphqlDocument, isDirty: false };
 
-        if ( ! document ) {
-            console.error( 'No document provided to openDocument' );
-            return;
-        }
+				//     // Find index of current tab
+				//     const currentTabIndex = openTabs.findIndex( (tab) => tab.id === currentDocument.id );
 
-        if ( ! document.id ) {
-            console.error( 'No document id provided to openDocument' );
-            return;
-        }
+				//     console.log( { currentTabIndex });
 
-        // check if the document is already open
-        const isOpen = openTabs.find( (tab) => tab.id === document.id );
-        if ( isOpen ) {
-            setActiveTabId( document.id );
-            return;
-        }
+				//     const newTabs = [ ...openTabs ];
 
-        const newDocument = {...document, isDirty: false};
-        const newOpenTabs = [ ...openTabs, newDocument ];
-        setOpenTabs(newOpenTabs);
-        setActiveTabId( newDocument.id );
-    }
-    
-    const getCurrentDocument = () => {
-        return openTabs.find( (tab) => tab.id === activeTabId );
-    }
+				//     console.log( { newTabs });
 
-    const documentEditorContext = {
-        createDocument,
-        closeDocument,
-        openDocument,
-        saveDocument: () => { 
-            const documentToSave = getCurrentDocument();
-            
-            if ( ! documentToSave ) {
-                console.error( 'No document to save' );
-            }
-            
-            if ( ! documentToSave.isDirty ) {
-                console.error( 'Document has no changes to save' );
-            }
+				//     newTabs[currentTabIndex] = newDocument;
+				//     setOpenTabs(newTabs);
 
-            // If the document is in memory only, we need to create the document on the server
-            if ( 'TemporaryGraphQLDocument' === documentToSave.__typename ) {
+				//     // if the document to close is the active tab, set the active tab to the next tab, or the previous tab if there is no next tab, or the first tab if its the only option
+				//     if ( documentId === activeTabId ) {
+				//         const newActiveTabId = openTabs[ indexToClose + 1 ]?.id ? openTabs[ indexToClose + 1 ]?.id : ( openTabs[ indexToClose - 1 ]?.id ? openTabs[ indexToClose - 1 ]?.id : 0 );
+				//         setActiveTabId( newActiveTabId );
+				//     }
 
-                createDocumentOnServer({
-                    variables: {
-                        input: {
-                            title: documentToSave.title,
-                            content: documentToSave.content,
-                        }
-                    },
-                    refetchQueries: [
-                        GET_DOCUMENTS,
-                    ]
-                }).then((response) => {
-                    console.log(response);
+				//     return true;
+				// },
+				// onError: (error) => {
+				//     // alert( `Error creating document: ${error.message}` );
+				//     return false;
+				// }
+			})
+				.then((res) => {
+					return true;
+				})
+				.catch((error) => {
+					console.error(error);
+					return false;
+				});
 
-                    // Replace active document with the one that was just created
-                    const currentDocument = getCurrentDocument();
-                    const newDocument = { ...response.data.createGraphqlDocument.graphqlDocument, isDirty: false };
-                    
-                    // Find index of current tab
-                    const currentTabIndex = openTabs.findIndex( (tab) => tab.id === currentDocument.id );
+			return created;
 
-                    console.log( { currentTabIndex });
+			// else, we need to update the document on the server
+		} else {
+		}
 
-                    const newTabs = [ ...openTabs ];
+		return false;
+	};
 
-                    console.log( { newTabs });
+	const closeDocument = (id = null) => {
+		// If no id is provided, close the active tab
+		if (id === null) {
+			id = activeTabId;
+		}
 
-                    newTabs[currentTabIndex] = newDocument;
-                    setOpenTabs(newTabs);
-                    setActiveTabId( newDocument.id );
+		const documentToClose = getDocumentByKey(id);
 
-                }).catch((error) => {
-                    console.error(error);
-                });
+		if (documentToClose?.isDirty === true) {
+			// show modal
+			setModalConfig({
+				visible: true,
+				title: "Close GraphQL Document",
+				content: "Do you want to save your changes before closing?",
+				footer: [
+					<Button
+						key="submit"
+						type="primary"
+						onClick={() => {
+							_closeDocumentAndUpdateTabs(id);
+							setModalConfig({ visible: false });
+						}}
+					>
+						Close without Saving
+					</Button>,
+					<Button
+						key="submit"
+						type="primary"
+						onClick={() => {
+							setModalConfig({ visible: false });
+						}}
+					>
+						Continue Editing
+					</Button>,
+					<Button
+						key="submit"
+						type="primary"
+						onClick={async () => {
+							const saved = await saveDocument(id);
+							console.log({ saved });
+							if (saved) {
+								_closeDocumentAndUpdateTabs(id);
+								setModalConfig({ visible: false });
+							} else {
+								alert("Error saving document!");
+							}
+						}}
+					>
+						Save and Close
+					</Button>,
+				],
+			});
 
-            // else, we need to update the document on the server
-            } else {
+			// confirm( {
+			//     title: 'You have unsaved changes. Would you like to save before closing?',
+			//     icon: <ExclamationCircleOutlined />,
+			//     content: 'If you close this document, you will lose any unsaved changes.',
+			//     okText: 'Close Without Saving',
+			//     cancelText: 'Continue Editing',
+			//     footer: null,
+			//     onOk: async () => {
+			//         _closeDocumentAndUpdateTabs( id );
+			//     },
+			//     onCancel:() =>{
+			//         return;
+			//         // _closeDocumentAndUpdateTabs( id );
+			//     }
+			// });
+		} else {
+			_closeDocumentAndUpdateTabs(id);
+		}
+	};
 
+	const openDocument = (document) => {
+		if (!document) {
+			console.error("No document provided to openDocument");
+			return;
+		}
 
+		if (!document.id) {
+			console.error("No document id provided to openDocument");
+			return;
+		}
 
-            }
+		// check if the document is already open
+		const isOpen = openTabs.find((tab) => tab.id === document.id);
+		if (isOpen) {
+			setActiveTabId(document.id);
+			return;
+		}
 
-            alert( `saveDocument ${activeTabId}` ); 
-        },
-        deleteDocument: () => { alert( 'deleteDocument' ); },
-        activeTabId,
-        setActiveTabId,
-        openTabs,
-    }
+		const newDocument = { ...document, isDirty: false };
+		const newOpenTabs = [...openTabs, newDocument];
+		setOpenTabs(newOpenTabs);
+		setActiveTabId(newDocument.id);
+	};
 
-    return (
-        <DocumentEditorContext.Provider value={documentEditorContext}>
-            {children}
-        </DocumentEditorContext.Provider>
-    )
-}
+	const getCurrentDocument = () => {
+		return openTabs.find((tab) => tab.id === activeTabId);
+	};
+
+	const deleteDocument = async (id = null) => {
+		alert("deleteDocument");
+
+		if (id === null) {
+			id = activeTabId;
+		}
+
+		const documentToDelete = getDocumentByKey(id);
+
+		if (!documentToDelete) {
+			console.error("No document to delete");
+			return false;
+		}
+	};
+
+	const documentEditorContext = {
+		createDocument,
+		closeDocument,
+		openDocument,
+		saveDocument,
+		deleteDocument,
+		activeTabId,
+		setActiveTabId,
+		openTabs,
+	};
+
+	return (
+		<DocumentEditorContext.Provider value={documentEditorContext}>
+			{children}
+			<Modal {...modalConfig}>{modalConfig?.content ?? null}</Modal>
+		</DocumentEditorContext.Provider>
+	);
+};
