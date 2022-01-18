@@ -36,10 +36,10 @@ class Document {
 		register_post_type(
 			self::TYPE_NAME,
 			[
-				'description'         => __( 'Saved GraphQL queries', 'wp-graphql-persisted-queries' ),
+				'description'         => __( 'Saved GraphQL queries', 'wp-graphql-labs' ),
 				'labels'              => [
-					'name'          => __( 'GraphQLQueries', 'wp-graphql-persisted-queries' ),
-					'singular_name' => __( 'GraphQLQuery', 'wp-graphql-persisted-queries' ),
+					'name'          => __( 'GraphQLQueries', 'wp-graphql-labs' ),
+					'singular_name' => __( 'GraphQLQuery', 'wp-graphql-labs' ),
 				],
 				'public'              => true,
 				'show_ui'             => Settings::show_in_admin(),
@@ -56,11 +56,11 @@ class Document {
 			self::TAXONOMY_NAME,
 			self::TYPE_NAME,
 			[
-				'description'        => __( 'Alias names for saved GraphQL queries', 'wp-graphql-persisted-queries' ),
+				'description'        => __( 'Alias names for saved GraphQL queries', 'wp-graphql-labs' ),
 				'hierarchical'       => false,
 				'labels'             => [
-					'name'          => __( 'Alias Names', 'wp-graphql-persisted-queries' ),
-					'singular_name' => __( 'Alias Name', 'wp-graphql-persisted-queries' ),
+					'name'          => __( 'Alias Names', 'wp-graphql-labs' ),
+					'singular_name' => __( 'Alias Name', 'wp-graphql-labs' ),
 				],
 				'show_admin_column'  => true,
 				'show_in_menu'       => Settings::show_in_admin(),
@@ -75,7 +75,7 @@ class Document {
 				$register_type_name = ucfirst( self::GRAPHQL_NAME );
 				$config             = [
 					'type'        => [ 'list_of' => [ 'non_null' => 'String' ] ],
-					'description' => __( 'Alias names for saved GraphQL query documents', 'wp-graphql-persisted-queries' ),
+					'description' => __( 'Alias names for saved GraphQL query documents', 'wp-graphql-labs' ),
 				];
 
 				register_graphql_field( 'Create' . $register_type_name . 'Input', 'alias', $config );
@@ -123,7 +123,7 @@ class Document {
 		$existing_post = Utils::getPostByTermName( $input['alias'], self::TYPE_NAME, self::TAXONOMY_NAME );
 		if ( $existing_post ) {
 			// Translators: The placeholders are the input aliases and the existing post containing a matching alias
-			throw new RequestError( sprintf( __( 'Alias "%1$s" already in use by another query "%2$s"', 'wp-graphql-persisted-queries' ), join( ', ', $input['alias'] ), $existing_post->post_title ) );
+			throw new RequestError( sprintf( __( 'Alias "%1$s" already in use by another query "%2$s"', 'wp-graphql-labs' ), join( ', ', $input['alias'] ), $existing_post->post_title ) );
 		}
 
 		// Make sure the normalized hash for the query string isset.
@@ -193,14 +193,14 @@ class Document {
 				$existing_post = Utils::getPostByTermName( $normalized_hash, self::TYPE_NAME, self::TAXONOMY_NAME );
 				if ( $existing_post && $existing_post->ID !== $post['ID'] ) {
 					// Translators: The placeholder is the existing saved query with matching hash/query-id
-					throw new RequestError( sprintf( __( 'This query has already been associated with another query "%s"', 'wp-graphql-persisted-queries' ), $existing_post->post_title ) );
+					throw new RequestError( sprintf( __( 'This query has already been associated with another query "%s"', 'wp-graphql-labs' ), $existing_post->post_title ) );
 				}
 
 				// Format the query string and save that
 				$data['post_content'] = \GraphQL\Language\Printer::doPrint( $ast );
 			} catch ( SyntaxError $e ) {
 				// Translators: The placeholder is the query string content
-				throw new RequestError( sprintf( __( 'Did not save invalid graphql query string "%s"', 'wp-graphql-persisted-queries' ), $post['post_content'] ) );
+				throw new RequestError( sprintf( __( 'Did not save invalid graphql query string "%s"', 'wp-graphql-labs' ), $post['post_content'] ) );
 			}
 		}
 		return $data;
@@ -288,7 +288,7 @@ class Document {
 		$post = Utils::getPostByTermName( $query_id, self::TYPE_NAME, self::TAXONOMY_NAME );
 		if ( $post && $post->post_name !== $normalized_hash ) {
 			// translators: existing query title
-			throw new RequestError( sprintf( __( 'This queryId has already been associated with another query "%s"', 'wp-graphql-persisted-queries' ), $post->post_title ) );
+			throw new RequestError( sprintf( __( 'This queryId has already been associated with another query "%s"', 'wp-graphql-labs' ), $post->post_title ) );
 		}
 
 		// If the normalized query is associated with a saved document
@@ -301,7 +301,7 @@ class Document {
 			$definition_count = $ast->definitions->count();
 			for ( $i = 0; $i < $definition_count; $i++ ) {
 				$node              = $ast->definitions->offsetGet( $i );
-				$operation_names[] = isset( $node->name->value ) ? $node->name->value : __( 'A Persisted Query', 'wp-graphql-persisted-queries' );
+				$operation_names[] = isset( $node->name->value ) ? $node->name->value : __( 'A Persisted Query', 'wp-graphql-labs' );
 			}
 			$data = [
 				'post_content' => \GraphQL\Language\Printer::doPrint( $ast ),
@@ -321,7 +321,7 @@ class Document {
 			// If the hash for the query string loads a post with a different query string,
 			// This means this hash was previously used as an alias for a query
 			// translators: existing query title
-			throw new RequestError( sprintf( __( 'This query has already been associated with another query "%s"', 'wp-graphql-persisted-queries' ), $post->post_title ) );
+			throw new RequestError( sprintf( __( 'This query has already been associated with another query "%s"', 'wp-graphql-labs' ), $post->post_title ) );
 		} else {
 			$post_id = $post->ID;
 		}

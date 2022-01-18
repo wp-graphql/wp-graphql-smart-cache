@@ -1,4 +1,4 @@
-The wp-graphql-persisted-queries plugin.
+The wp-graphql-labs plugin.
 
 Local development with docker to build the app and a local running WordPress. As well as run the test suites.
 
@@ -42,7 +42,7 @@ Build using wp-graphql image from docker hub registry, instead of building your 
 
 Use this command if you want to build a specific image. If you ran the docker-compose command above, this is not necessary.
 
-    docker build -f docker/Dockerfile -t wp-graphql-persisted-queries:latest-wp5.6-php7.4 --build-arg WP_VERSION=5.6 --build-arg PHP_VERSION=7.4
+    docker build -f docker/Dockerfile -t wp-graphql-labs:latest-wp5.6-php7.4 --build-arg WP_VERSION=5.6 --build-arg PHP_VERSION=7.4
 
 ## Run
 
@@ -88,9 +88,9 @@ If you ran the docker-compose build command, above, this step is not necessary a
 
 ### docker
 
-    WP_VERSION=5.7.2 PHP_VERSION=7.4 docker build -f docker/Dockerfile.testing -t wp-graphql-persisted-queries-testing:latest-wp5.7.2-php7.4 --build-arg WP_VERSION=5.7.2 --build-arg PHP_VERSION=7.4 --build-arg DOCKER_REGISTRY=ghcr.io/wp-graphql/ .
+    WP_VERSION=5.7.2 PHP_VERSION=7.4 docker build -f docker/Dockerfile.testing -t wp-graphql-labs-testing:latest-wp5.7.2-php7.4 --build-arg WP_VERSION=5.7.2 --build-arg PHP_VERSION=7.4 --build-arg DOCKER_REGISTRY=ghcr.io/wp-graphql/ .
 
-    docker build -f docker/Dockerfile.testing -t wp-graphql-persisted-queries-testing:latest-wp5.7.2-php7.4 --build-arg WP_VERSION=5.7.2 --build-arg PHP_VERSION=7.4 --build-arg DOCKER_REGISTRY=ghcr.io/wp-graphql/ .
+    docker build -f docker/Dockerfile.testing -t wp-graphql-labs-testing:latest-wp5.7.2-php7.4 --build-arg WP_VERSION=5.7.2 --build-arg PHP_VERSION=7.4 --build-arg DOCKER_REGISTRY=ghcr.io/wp-graphql/ .
 
 ## Run
 

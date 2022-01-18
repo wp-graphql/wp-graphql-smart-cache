@@ -12,9 +12,9 @@ use SebastianBergmann\Timer\Duration;
 class CacheIsFasterTest extends \Codeception\TestCase\WPTestCase {
 	public $timer;
 
-    public function _before() {
+	public function _before() {
 		$this->timer = new Timer;
-    }
+	}
 
 	public function _after() {
 	}
@@ -33,6 +33,6 @@ class CacheIsFasterTest extends \Codeception\TestCase\WPTestCase {
 			codecept_debug( sprintf("\nDuration time %f seconds\n", $duration2->asSeconds() ) );
 
 			// Intentionally make it bigger for this example.
-            $this->assertLessThan( $duration1->asSeconds()+10, $duration2->asSeconds() );
+			$this->assertLessThan( $duration1->asSeconds()+10, $duration2->asSeconds() );
 		}
 }

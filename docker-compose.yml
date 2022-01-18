@@ -7,9 +7,9 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
-    image: wp-graphql-persisted-queries:latest-wp${WP_VERSION}-php${PHP_VERSION}
+    image: wp-graphql-labs:latest-wp${WP_VERSION}-php${PHP_VERSION}
     volumes:
-      - '.:/var/www/html/wp-content/plugins/wp-graphql-persisted-queries'
+      - '.:/var/www/html/wp-content/plugins/wp-graphql-labs'
     env_file:
       - .env.dist
     environment:
@@ -34,9 +34,9 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.testing
-    image: wp-graphql-persisted-queries-testing:latest-wp${WP_VERSION}-php${PHP_VERSION}
+    image: wp-graphql-labs-testing:latest-wp${WP_VERSION}-php${PHP_VERSION}
     volumes:
-      - '.:/var/www/html/wp-content/plugins/wp-graphql-persisted-queries'
+      - '.:/var/www/html/wp-content/plugins/wp-graphql-labs'
     env_file:
       - .env.testing
     environment:

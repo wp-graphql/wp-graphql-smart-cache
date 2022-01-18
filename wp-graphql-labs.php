@@ -1,16 +1,20 @@
 <?php
 /**
- * Plugin Name:     WP GraphQL Persisted Queries
+ * Plugin Name:     WP GraphQL Labs
  * Plugin URI:      PLUGIN SITE HERE
- * Description:     Persisted Queries and Caching for WP Graphql for WordPress
+ * Description:     Development projects for WP Graphql for WordPress
  * Author:          WPGraphQL
  * Author URI:      http://www.wpgraphql.com
  * Domain Path:     /languages
  * Version:         0.1.0-alpha
+ *
+ * Persisted Queries and Caching
  */
 
-namespace WPGraphQL\PersistedQueries;
+namespace WPGraphQL\Labs;
 
+use WPGraphQL\PersistedQueries\AdminErrors;
+use WPGraphQL\PersistedQueries\Document;
 use WPGraphQL\PersistedQueries\Admin\Editor;
 use WPGraphQL\PersistedQueries\Admin\Settings;
 use WPGraphQL\PersistedQueries\Document\Description;
@@ -32,7 +36,7 @@ add_action(
 	'graphql_server_config',
 	function ( \GraphQL\Server\ServerConfig $config ) {
 		$config->setPersistentQueryLoader(
-			[ __NAMESPACE__ . '\Document\Loader', 'by_query_id' ]
+			[ '\WPGraphQL\PersistedQueries\Document\Loader', 'by_query_id' ]
 		);
 	},
 	10,
