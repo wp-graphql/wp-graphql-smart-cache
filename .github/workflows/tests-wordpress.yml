@@ -49,8 +49,8 @@ jobs:
           key: php-${{ matrix.php }}-${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: php-${{ matrix.php }}-${{ runner.os }}-composer-
 
-      - name: Install dependencies
-        run: composer install
+      - name: Composer update dependencies
+        run: composer update
 
       - name: Run acceptance, functional tests
         run: docker-compose run -e DEBUG=1 testing
