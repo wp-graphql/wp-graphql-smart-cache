@@ -17,6 +17,12 @@ class Settings {
 		return ( 'on' === $display_admin );
 	}
 
+	// Settings checkbox set to on to enable caching
+	public static function caching_enabled() {
+		$option = \get_graphql_setting( 'cache_toggle', false, 'graphql_cache_section' );
+		return ( 'on' === $option );
+	}
+
 	public function init() {
 		// Add to the wp-graphql admin settings page
 		add_action(
@@ -68,6 +74,25 @@ class Settings {
 						'name'    => 'editor_display',
 						'label'   => __( 'Display queries in admin editor', 'wp-graphql-labs' ),
 						'desc'    => __( 'Toggle to show queries in wp-admin left side menu', 'wp-graphql-labs' ),
+						'type'    => 'checkbox',
+						'default' => 'off',
+					]
+				);
+
+				// Add a tab section to the graphql admin settings page
+				register_graphql_settings_section(
+					'graphql_cache_section',
+					[
+						'title' => __( 'Cache', 'wp-graphql-labs' ),
+					]
+				);
+
+				register_graphql_settings_field(
+					'graphql_cache_section',
+					[
+						'name'    => 'cache_toggle',
+						'label'   => __( 'Enable results caching for improved speed', 'wp-graphql-labs' ),
+						'desc'    => __( 'Toggle to enable caching of graphql query results', 'wp-graphql-labs' ),
 						'type'    => 'checkbox',
 						'default' => 'off',
 					]
