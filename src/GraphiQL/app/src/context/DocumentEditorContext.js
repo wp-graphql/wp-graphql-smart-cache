@@ -15,7 +15,7 @@ export const DocumentEditorContext = createContext();
 export const useDocumentEditorContext = () => useContext(DocumentEditorContext);
 
 const GraphQLDocumentFragment = `
-fragment GraphQLDocument on GraphQLDocument {
+fragment GraphQLDocument on GraphqlDocument {
     __typename
     id
     title
@@ -47,9 +47,9 @@ const UPDATE_DOCUMENT_MUTATION = gql`
 `;
 
 const DELETE_DOCUMENT_MUTATION = gql`
-	mutation DELETE_GRAPHQL_DOCUMENT($input: DeleteGraphqlDocumentInput!) {
+	mutation DELETE_GRAPHQL_DOCUMENT($input: DeleteGraphQLDocumentInput!) {
 		deleteGraphqlDocument(input: $input) {
-			graphqlDocument {
+			graphQLDocument {
 				__typename
 				id
 			}

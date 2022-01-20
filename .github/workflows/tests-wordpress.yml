@@ -16,7 +16,7 @@ jobs:
     name: WordPress ${{ matrix.wordpress }} Integration Tests on PHP ${{ matrix.php }}
     strategy:
       matrix:
-        php: [ '7.4' ]
+        php: [ '8.0', '7.4' ]
         wordpress: [ '5.7.2' ]
     steps:
       - name: Checkout
