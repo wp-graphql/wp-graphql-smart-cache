@@ -19,7 +19,7 @@ class Description {
 				$register_type_name = ucfirst( Document::GRAPHQL_NAME );
 				$config             = [
 					'type'        => 'String',
-					'description' => __( 'Description for the saved GraphQL document', 'wp-graphql-persisted-queries' ),
+					'description' => __( 'Description for the saved GraphQL document', 'wp-graphql-labs' ),
 				];
 
 				register_graphql_field( 'Create' . $register_type_name . 'Input', 'description', $config );

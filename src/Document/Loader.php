@@ -28,7 +28,7 @@ class Loader {
 
 		if ( ! isset( $query ) ) {
 			// Translators: The placeholder is the persisted query id hash
-			throw new RequestError( sprintf( __( 'Query Not Found %s', 'wp-graphql-persisted-queries' ), $query_id ) );
+			throw new RequestError( sprintf( __( 'Query Not Found %s', 'wp-graphql-labs' ), $query_id ) );
 		}
 
 		return $query;
