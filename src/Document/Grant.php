@@ -5,11 +5,11 @@
  * @package Wp_Graphql_Persisted_Queries
  */
 
-namespace WPGraphQL\PersistedQueries\Document;
+namespace WPGraphQL\Labs\Document;
 
-use WPGraphQL\PersistedQueries\Admin\Settings;
-use WPGraphQL\PersistedQueries\Document;
-use WPGraphQL\PersistedQueries\ValidationRules\AllowDenyQueryDocument;
+use WPGraphQL\Labs\Admin\Settings;
+use WPGraphQL\Labs\Document;
+use WPGraphQL\Labs\ValidationRules\AllowDenyQueryDocument;
 use GraphQL\Server\RequestError;
 
 class Grant {

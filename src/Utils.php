@@ -5,7 +5,7 @@
  * @package Wp_Graphql_Persisted_Queries
  */
 
-namespace WPGraphQL\PersistedQueries;
+namespace WPGraphQL\Labs;
 
 class Utils {
 

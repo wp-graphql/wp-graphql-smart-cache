@@ -5,9 +5,9 @@
  * @package Wp_Graphql_Persisted_Queries
  */
 
-namespace WPGraphQL\PersistedQueries\Document;
+namespace WPGraphQL\Labs\Document;
 
-use WPGraphQL\PersistedQueries\Document;
+use WPGraphQL\Labs\Document;
 
 class Description {
 

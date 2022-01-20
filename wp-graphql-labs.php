@@ -11,16 +11,14 @@
  * Persisted Queries and Caching
  */
 
-namespace WPGraphQL\Labs;
-
-use WPGraphQL\PersistedQueries\AdminErrors;
-use WPGraphQL\PersistedQueries\Document;
-use WPGraphQL\PersistedQueries\Admin\Editor;
-use WPGraphQL\PersistedQueries\Admin\Settings;
-use WPGraphQL\PersistedQueries\Document\Description;
-use WPGraphQL\PersistedQueries\Document\Grant;
-use WPGraphQL\PersistedQueries\Document\MaxAge;
-use WPGraphQL\PersistedQueries\GraphiQL\GraphiQL;
+use WPGraphQL\Labs\AdminErrors;
+use WPGraphQL\Labs\Document;
+use WPGraphQL\Labs\Admin\Editor;
+use WPGraphQL\Labs\Admin\Settings;
+use WPGraphQL\Labs\Document\Description;
+use WPGraphQL\Labs\Document\Grant;
+use WPGraphQL\Labs\Document\MaxAge;
+use WPGraphQL\Labs\GraphiQL\GraphiQL;
 
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
@@ -37,7 +35,7 @@ add_action(
 	'graphql_server_config',
 	function ( \GraphQL\Server\ServerConfig $config ) {
 		$config->setPersistentQueryLoader(
-			[ '\WPGraphQL\PersistedQueries\Document\Loader', 'by_query_id' ]
+			[ '\WPGraphQL\Labs\Document\Loader', 'by_query_id' ]
 		);
 	},
 	10,

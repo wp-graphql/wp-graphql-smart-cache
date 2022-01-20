@@ -9,16 +9,16 @@
     "packages-dev": [
         {
             "name": "antecedent/patchwork",
-            "version": "2.1.18",
+            "version": "2.1.19",
             "source": {
                 "type": "git",
                 "url": "https://github.com/antecedent/patchwork.git",
-                "reference": "c4077e223d6da058a840a325bc4b48631892e3d0"
+                "reference": "94fe587cb0a6c1695b1ddc650e877231be80b8bc"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/antecedent/patchwork/zipball/c4077e223d6da058a840a325bc4b48631892e3d0",
-                "reference": "c4077e223d6da058a840a325bc4b48631892e3d0",
+                "url": "https://api.github.com/repos/antecedent/patchwork/zipball/94fe587cb0a6c1695b1ddc650e877231be80b8bc",
+                "reference": "94fe587cb0a6c1695b1ddc650e877231be80b8bc",
                 "shasum": ""
             },
             "require": {
@@ -51,9 +51,9 @@
             ],
             "support": {
                 "issues": "https://github.com/antecedent/patchwork/issues",
-                "source": "https://github.com/antecedent/patchwork/tree/2.1.18"
+                "source": "https://github.com/antecedent/patchwork/tree/2.1.19"
             },
-            "time": "2022-01-19T11:06:53+00:00"
+            "time": "2022-01-20T04:47:04+00:00"
         },
         {
             "name": "behat/gherkin",
@@ -1937,6 +1937,9 @@
                 "illuminate/support": ">=4.0.0",
                 "php": ">=5.3.0"
             },
+            "replace": {
+                "mikemclin/laravel-wp-password": "self.version"
+            },
             "require-dev": {
                 "mockery/mockery": "~0.9",
                 "phpunit/phpunit": "~4.0",
@@ -2049,6 +2052,9 @@
             },
             "require": {
                 "php": "^7.1 || ^8.0"
+            },
+            "replace": {
+                "myclabs/deep-copy": "self.version"
             },
             "require-dev": {
                 "doctrine/collections": "^1.0",
@@ -6834,5 +6840,5 @@
     "prefer-lowest": false,
     "platform": [],
     "platform-dev": [],
-    "plugin-api-version": "2.2.0"
+    "plugin-api-version": "2.0.0"
 }

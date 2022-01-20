@@ -5,9 +5,9 @@
  * @package Wp_Graphql_Persisted_Queries
  */
 
-namespace WPGraphQL\PersistedQueries\Admin;
+namespace WPGraphQL\Labs\Admin;
 
-use WPGraphQL\PersistedQueries\Document\Grant;
+use WPGraphQL\Labs\Document\Grant;
 
 class Settings {
 

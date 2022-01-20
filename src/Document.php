@@ -5,11 +5,11 @@
  * @package Wp_Graphql_Persisted_Queries
  */
 
-namespace WPGraphQL\PersistedQueries;
+namespace WPGraphQL\Labs;
 
-use WPGraphQL\PersistedQueries\Admin\Settings;
-use WPGraphQL\PersistedQueries\AdminErrors;
-use WPGraphQL\PersistedQueries\Utils;
+use WPGraphQL\Labs\Admin\Settings;
+use WPGraphQL\Labs\AdminErrors;
+use WPGraphQL\Labs\Utils;
 use GraphQL\Error\SyntaxError;
 use GraphQL\Server\RequestError;
 

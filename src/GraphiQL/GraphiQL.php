@@ -1,6 +1,6 @@
 <?php
 
-namespace WPGraphQL\PersistedQueries\GraphiQL;
+namespace WPGraphQL\Labs\GraphiQL;
 
 class GraphiQL {
 	public function init() {
