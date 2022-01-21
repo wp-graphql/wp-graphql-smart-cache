@@ -1,11 +1,7 @@
 <?php
 
-class QueryCest
+class QueryIdCest
 {
-    public function _before(AcceptanceTester $I)
-    {
-    }
-
     public function queryIdThatDoesNotExistTest(AcceptanceTester $I)
     {
         $I->sendGet('graphql', [ 'queryId' => '1234' ] );
@@ -42,6 +38,6 @@ class QueryCest
                 '__typename' => 'RootQuery'
             ]
         ]);
-}
+    }
  
 }

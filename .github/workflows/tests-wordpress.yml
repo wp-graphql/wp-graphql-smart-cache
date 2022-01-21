@@ -16,7 +16,7 @@ jobs:
     name: WordPress ${{ matrix.wordpress }} Integration Tests on PHP ${{ matrix.php }}
     strategy:
       matrix:
-        php: [ '7.4' ]
+        php: [ '8.0', '7.4' ]
         wordpress: [ '5.7.2' ]
     steps:
       - name: Checkout
@@ -46,14 +46,14 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ steps.composercache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: ${{ runner.os }}-composer-
+          key: php-${{ matrix.php }}-${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: php-${{ matrix.php }}-${{ runner.os }}-composer-
 
-      - name: Install dependencies
-        run: composer install
+      - name: Composer update dependencies
+        run: composer update
 
       - name: Run acceptance, functional tests
-        run: docker-compose run testing
+        run: docker-compose run -e DEBUG=1 testing
         env:
           WP_VERSION: ${{ matrix.wordpress }}
           PHP_VERSION: ${{ matrix.php }}

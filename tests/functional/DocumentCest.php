@@ -1,24 +1,27 @@
 <?php
 
-class SaveQueryCest {
+class DocumentCest {
 	public function _before( FunctionalTester $I ) {
 		// Make sure that is gone.
 		$I->dontHavePostInDatabase(['post_title' => 'Hello world!']);
 
 		// clean up and persisted queries terms in the taxonomy
-		$I->dontHavePostInDatabase( [ 'post_type' => 'graphql_query' ] );
-		$I->dontHaveTermInDatabase( ['taxonomy' => 'graphql_query_label'] );
+		$I->dontHavePostInDatabase( [ 'post_type' => 'graphql_document' ] );
+		$I->dontHaveTermInDatabase( ['taxonomy' => 'graphql_query_alias'] );
+
+		$I->dontHaveOptionInDatabase( 'graphql_persisted_queries_section'  );
 	}
 
-	public function saveQueryWithSpecificNameTest( FunctionalTester $I ) {
+	public function saveMultipleOperationQueryWithQueryTitleTest( FunctionalTester $I ) {
 		$I->wantTo( 'Save a named graphql query' );
 
-		$query = "query my_yoyo_query {\n  __typename\n}\n";
+		$query = "query my_query_1 {\n  __typename\n}\n\nquery my_query_2 {\n  __typename\n}\n";
 		$query_hash = hash( 'sha256', $query );
 
 		$I->sendPost('graphql', [
-			'query' => $query,
-			'queryId' => $query_hash
+			'query'         => $query,
+			'queryId'       => $query_hash,
+			'operationName' => 'my_query_1',
 		] );
 		$I->seeResponseContainsJson([
 			'data' => [
@@ -26,16 +29,17 @@ class SaveQueryCest {
 			]
 		]);
 		$I->seePostInDatabase( [
-			'post_type'    => 'graphql_query',
+			'post_type'    => 'graphql_document',
 			'post_status'  => 'publish',
 			'post_name'    => $query_hash,
 			'post_content' => $query,
-			'post_title'    => 'my_yoyo_query',
+			'post_title'    => 'my_query_1, my_query_2',
 		] );
 
 		$I->sendPost('graphql', [
-			'query' => $query,
-			'queryId' => $query_hash
+			'query'         => $query,
+			'queryId'       => $query_hash,
+			'operationName' => 'my_query_2',
 		] );
 		$I->seeResponseContainsJson([
 			'data' => [
@@ -53,7 +57,7 @@ class SaveQueryCest {
 		$query_hash = hash( 'sha256', $query );
 		$query_alias = 'test-save-query-creates-alias';
 
-		$I->dontSeeTermInDatabase( [ 'name' => 'graphql_query_label' ] );
+		$I->dontSeeTermInDatabase( [ 'name' => 'graphql_query_alias' ] );
 		$I->sendPost('graphql', [
 			'query' => $query,
 			'queryId' => $query_alias
@@ -86,7 +90,7 @@ class SaveQueryCest {
 			]
 		]);
 		$I->dontSeePostInDatabase( [
-			'post_type'    => 'graphql_query',
+			'post_type'    => 'graphql_document',
 			'post_name'    => $query_hash,
 			'post_content' => $query,
 		] );
@@ -121,7 +125,7 @@ class SaveQueryCest {
 		]);
 		$I->seeTermInDatabase( [ 'name' => $query_hash ] );
 
-		// Query with this persisted hash works, but not with the query we want, yet.
+		// Query with this persisted hash works, but not with the query hash we expected.
 		$I->sendGet( 'graphql', [ 'queryId' => $query_hash ] );
 		$I->seeResponseContainsJson( [
 			'data' => [
@@ -136,14 +140,16 @@ class SaveQueryCest {
 			'queryId' => $query_hash
 		] );
 		$I->seeResponseContainsJson([
-			'data' => [
-				'__typename' => 'RootQuery'
+			'errors' => [
+				0 => [
+					'message' => 'This queryId has already been associated with another query "A Persisted Query"',
+				],
 			]
 		]);
 	}
 
 	public function saveQueryUsingExistingAliasTest( FunctionalTester $I ) {
-		$I->wantTo( 'Save a graphql query using existing query alias' );
+		$I->wantTo( 'Error when save a graphql query using existing query alias' );
 
 		// Set up some content
 		$I->havePostInDatabase( [
@@ -181,14 +187,11 @@ class SaveQueryCest {
 			'query' => $query,
 			'queryId' => $query_alias
 		] );
-		$I->seeResponseContainsJson( [
-			'data' => [
-				'posts' => [
-					'nodes' => [
-							'__typename' => 'Post',
-							'content' => "<p>foo bar. biz bang.</p>\n",
-					]
-				]
+		$I->seeResponseContainsJson([
+			'errors' => [
+				0 => [
+					'message' => 'This queryId has already been associated with another query "A Persisted Query"',
+				],
 			]
 		]);
 

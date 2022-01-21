@@ -20,4 +20,4 @@ if [ ! -f "${PLUGINS_DIR}/wp-graphql/wp-graphql.php" ]; then
 fi
 
 # Activate the plugin
-wp plugin activate wp-graphql-persisted-queries --allow-root
+wp plugin activate wp-graphql-labs --allow-root

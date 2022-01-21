@@ -4,6 +4,8 @@ class LookupCest {
 	public function _before( FunctionalTester $I ) {
 		// Make sure that is gone.
 		$I->dontHavePostInDatabase( ['post_title' => 'Hello world!'] );
+
+		$I->dontHaveOptionInDatabase( 'graphql_persisted_queries_section'  );
 	}
 
 	// no id/hash. expect an error that it doesn't exist
@@ -26,14 +28,14 @@ class LookupCest {
 		$I->wantTo( 'Query with a hash that exists but has empty query in the database' );
 
 		$query_hash = '1234';
-		$I->haveTermInDatabase( $query_hash, 'graphql_query_label' );
+		$I->haveTermInDatabase( $query_hash, 'graphql_query_alias' );
 		$I->havePostInDatabase( [
-			'post_type'    => 'graphql_query',
+			'post_type'    => 'graphql_document',
 			'post_status'  => 'publish',
 			'post_name'    => $query_hash,
 			'post_content' => '',
 			'tax_input' => [
-				'graphql_query_label' => [ $query_hash ]
+				'graphql_query_alias' => [ $query_hash ]
 			]
 		] );
 
@@ -61,14 +63,14 @@ class LookupCest {
 
 		// Make sure query hash we use doesn't match
 		$query_hash = 'my-foo-query';
-		$I->haveTermInDatabase( $query_hash, 'graphql_query_label' );
+		$I->haveTermInDatabase( $query_hash, 'graphql_query_alias' );
 		$I->havePostInDatabase( [
-			'post_type'    => 'graphql_query',
+			'post_type'    => 'graphql_document',
 			'post_status'  => 'publish',
 			'post_name'    => $query_hash,
 			'post_content' => $query,
 			'tax_input' => [
-				'graphql_query_label' => [ $query_hash ]
+				'graphql_query_alias' => [ $query_hash ]
 			]
 		] );
 
@@ -93,14 +95,14 @@ class LookupCest {
 		$query = "{\n  posts {\n    nodes {\n      title";
 		$query_hash = hash( 'sha256', $query );
 
-		$I->haveTermInDatabase( $query_hash, 'graphql_query_label' );
+		$I->haveTermInDatabase( $query_hash, 'graphql_query_alias' );
 		$I->havePostInDatabase( [
-			'post_type'    => 'graphql_query',
+			'post_type'    => 'graphql_document',
 			'post_status'  => 'publish',
 			'post_name'    => $query_hash,
 			'post_content' => $query,
 			'tax_input' => [
-				'graphql_query_label' => [ $query_hash ]
+				'graphql_query_alias' => [ $query_hash ]
 			]
 		] );
 
@@ -125,14 +127,14 @@ class LookupCest {
 		$query = "{\n  posts {\n    nodes {\n      title\n    }\n  }\n}\n";
 		$query_hash = hash( 'sha256', $query );
 
-		$I->haveTermInDatabase( $query_hash, 'graphql_query_label' );
+		$I->haveTermInDatabase( $query_hash, 'graphql_query_alias' );
 		$I->havePostInDatabase( [
-			'post_type'    => 'graphql_query',
+			'post_type'    => 'graphql_document',
 			'post_status'  => 'publish',
 			'post_name'    => $query_hash,
 			'post_content' => $query,
 			'tax_input' => [
-				'graphql_query_label' => [ $query_hash ]
+				'graphql_query_alias' => [ $query_hash ]
 			]
 		] );
 		
@@ -156,14 +158,14 @@ class LookupCest {
 		$query = "{\n  posts {\n    nodes {\n      title\n    }\n  }\n}\n";
 		$query_hash = hash( 'sha256', $query );
 
-		$I->haveTermInDatabase( $query_hash, 'graphql_query_label' );
+		$I->haveTermInDatabase( $query_hash, 'graphql_query_alias' );
 		$I->havePostInDatabase( [
-			'post_type'    => 'graphql_query',
+			'post_type'    => 'graphql_document',
 			'post_status'  => 'publish',
 			'post_name'    => $query_hash,
 			'post_content' => $query,
 			'tax_input' => [
-				'graphql_query_label' => [ $query_hash, 'test-query-using-alias-name' ]
+				'graphql_query_alias' => [ $query_hash, 'test-query-using-alias-name' ]
 			]
 		] );
 

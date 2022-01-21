@@ -13,7 +13,7 @@ class Utils {
 	 * @param  string $query_id Query ID
 	 * @return WP_Post
 	 */
-	public static function getPostByTermId( $query_id, $type, $taxonomy ) {
+	public static function getPostByTermName( $query_id, $type, $taxonomy ) {
 		$wp_query = new \WP_Query(
 			[
 				'post_type'      => $type,
@@ -45,46 +45,29 @@ class Utils {
 	/**
 	 * Generate query hash for graphql query string
 	 *
-	 * @param  string Query
+	 * @param  string | \GraphQL\Language\AST\DocumentNode query string or document node
 	 * @return string $query_id Query string str256 hash
 	 *
 	 * @throws \GraphQL\Error\SyntaxError
 	 */
 	public static function generateHash( $query ) {
-		$ast     = \GraphQL\Language\Parser::parse( $query );
-		$printed = \GraphQL\Language\Printer::doPrint( $ast );
-		return hash( 'sha256', $printed );
+		if ( is_string( $query ) ) {
+			$query = \GraphQL\Language\Parser::parse( $query );
+		}
+		$printed = \GraphQL\Language\Printer::doPrint( $query );
+		return self::getHashFromFormattedString( $printed );
 	}
 
 	/**
-	 * Verify the query_id matches the query hash
-	 *
-	 * @param  string $query_id Query string str256 hash
-	 * @param  string Query
-	 * @return boolean
+	 * Generate query hash for graphql query string
+
+	 * @param  string Formatted, normalized query string
+	 * @return string $query_id Query string str256 hash
 	 *
 	 * @throws \GraphQL\Error\SyntaxError
 	 */
-	public static function verifyHash( $query_id, $query ) {
-		return self::generateHash( $query ) === $query_id;
-	}
-
-	/**
-	 * Query taxonomy terms for existance of provided name/alias.
-	 *
-	 * @param  string   Query name/alias
-	 * @return boolean  If term for the taxonomy already exists
-	 */
-	public static function termExists( $name, $taxonomy ) {
-		$query = new \WP_Term_Query(
-			[
-				'taxonomy' => $taxonomy,
-				'fields'   => 'names',
-				'get'      => 'all',
-			]
-		);
-		$terms = $query->get_terms();
-		return in_array( $name, $terms, true );
+	public static function getHashFromFormattedString( $query ) {
+		return hash( 'sha256', $query );
 	}
 
 }
