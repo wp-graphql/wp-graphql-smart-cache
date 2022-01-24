@@ -44,10 +44,14 @@ class Query {
 			return;
 		}
 
+		// WP_User
+		$user = wp_get_current_user();
+
 		$parts     = [
 			'query'     => $query,
 			'variables' => $variables,
 			'operation' => $operation,
+			'user'      => $user->ID,
 		];
 		$unique_id = hash( 'sha256', wp_json_encode( $parts ) );
 

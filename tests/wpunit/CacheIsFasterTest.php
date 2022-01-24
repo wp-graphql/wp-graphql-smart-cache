@@ -46,7 +46,7 @@ class CacheIsFasterTest extends \Codeception\TestCase\WPTestCase {
 			}
 		}";
 
-		$number = 30;
+		$magic_number = 30;
 
 		// Create a post
 		// Make a bunch of requests
@@ -59,13 +59,13 @@ class CacheIsFasterTest extends \Codeception\TestCase\WPTestCase {
 		);
 		// First query not included in average results. First query of a new post is heavy.
 		$response = graphql([ 'query' => $query ]);
-		for( $i=0; $i<$number; $i++ ) {
+		for( $i=0; $i<$magic_number; $i++ ) {
 			$this->timer->start();
 			$response = graphql([ 'query' => $query ]);
 			$duration = $this->timer->stop();
 			$duration_cached[] = $duration->asSeconds();
 		}
-		$avg_cached = array_sum( $duration_cached ) / $number;
+		$avg_cached = array_sum( $duration_cached ) / $magic_number;
 		\wp_delete_post( $post_id );
 
 		delete_option( 'graphql_cache_section' );
@@ -76,16 +76,16 @@ class CacheIsFasterTest extends \Codeception\TestCase\WPTestCase {
 		);
 		// First query not included in average results. First query of a new post is heavy.
 		$response = graphql([ 'query' => $query ]);
-		for( $i=0; $i<$number; $i++ ) {
+		for( $i=0; $i<$magic_number; $i++ ) {
 			$this->timer->start();
 			$response = graphql([ 'query' => $query ]);
 			$duration = $this->timer->stop();
 			$duration_not[] = $duration->asSeconds();
 		}
-		$avg_not = array_sum( $duration_not ) / $number;
+		$avg_not = array_sum( $duration_not ) / $magic_number;
 		\wp_delete_post( $post_id );
 
-		codecept_debug( sprintf("\nDuration time %d requests. Cached %f vs not cached %f\n", $number, $avg_cached, $avg_not ) );
+		codecept_debug( sprintf("\nDuration time %d requests. Cached %f vs not cached %f\n", $magic_number, $avg_cached, $avg_not ) );
 		$this->assertLessThan( $avg_not, $avg_cached );
 	}
 }
