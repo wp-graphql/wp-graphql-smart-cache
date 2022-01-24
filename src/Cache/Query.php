@@ -6,7 +6,7 @@
 
 namespace WPGraphQL\Cache;
 
-use WPGraphQL\PersistedQueries\Admin\Settings;
+use WPGraphQL\Labs\Admin\Settings;
 use WPGraphQL\PersistedQueries\Document;
 
 class Query {

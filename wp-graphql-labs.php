@@ -17,7 +17,7 @@ use WPGraphQL\Cache\Query as CachedQuery;
 use WPGraphQL\PersistedQueries\AdminErrors;
 use WPGraphQL\PersistedQueries\Document;
 use WPGraphQL\PersistedQueries\Admin\Editor;
-use WPGraphQL\PersistedQueries\Admin\Settings;
+use WPGraphQL\Labs\Admin\Settings;
 use WPGraphQL\PersistedQueries\Document\Description;
 use WPGraphQL\PersistedQueries\Document\Grant;
 use WPGraphQL\PersistedQueries\Document\MaxAge;

@@ -5,7 +5,8 @@
     "autoload": {
         "psr-4": {
             "WPGraphQL\\PersistedQueries\\": "src/",
-            "WPGraphQL\\Cache\\": "src/Cache"
+            "WPGraphQL\\Cache\\": "src/Cache",
+            "WPGraphQL\\Labs\\": "src"
         }
     },
     "require-dev": {
