@@ -4,15 +4,18 @@
  * If not cached, when return results to client, save results to transient cache for future requests.
  */
 
-namespace WPGraphQL\PersistedQueries;
+namespace WPGraphQL\Cache;
 
-class CachedResponse {
+use WPGraphQL\PersistedQueries\Admin\Settings;
+use WPGraphQL\PersistedQueries\Document;
+
+class Query {
 
 	const TYPE_NAME = 'graphql_response_cache';
 
 	public function init() {
-		add_filter( 'pre_graphql_execute_request', [ $this, 'filter_get_query_results_from_cache' ], 10, 2 );
-		add_action( 'graphql_return_response', [ $this, 'action_save_query_results_to_cache' ], 10, 7 );
+		add_filter( 'pre_graphql_execute_request', [ $this, 'get_query_results_from_cache_cb' ], 10, 2 );
+		add_action( 'graphql_return_response', [ $this, 'save_query_results_to_cache_cb' ], 10, 7 );
 	}
 
 	/**
@@ -29,7 +32,7 @@ class CachedResponse {
 		// Unique identifier for this request is normalized query string, operation and variables
 		// If request is by queryId, get the saved query string, which is already normalized
 		if ( $query_id ) {
-			$saved_query = new SavedQuery();
+			$saved_query = new Document();
 			$query       = $saved_query->get( $query_id );
 		} elseif ( $query ) {
 			// Query string provided, normalize it
@@ -57,16 +60,19 @@ class CachedResponse {
 	 *
 	 * @param WPGraphql/Request
 	 */
-	public function filter_get_query_results_from_cache(
+	public function get_query_results_from_cache_cb(
 		$result,
 		$request
 	) {
+		if ( ! Settings::caching_enabled() ) {
+			return $result;
+		}
 		$key = $this->get_cache_key( $request->params->queryId, $request->params->query, $request->params->variables, $request->params->operation );
 		if ( ! $key ) {
 			return null;
 		}
 
-		$cached_result = get_transient( $key );
+		$cached_result = $this->get( $key );
 		return ( false === $cached_result ) ? null : $cached_result;
 	}
 
@@ -78,7 +84,7 @@ class CachedResponse {
 	 * @param $response GraphQL\Executor\ExecutionResult
 	 * @param $request WPGraphQL\Request
 	 */
-	public function action_save_query_results_to_cache(
+	public function save_query_results_to_cache_cb(
 		$filtered_response,
 		$response,
 		$schema,
@@ -87,22 +93,32 @@ class CachedResponse {
 		$variables,
 		$request
 	) {
+		if ( ! Settings::caching_enabled() ) {
+			return;
+		}
 		$key = $this->get_cache_key( $request->params->queryId, $request->params->query, $request->params->variables, $request->params->operation );
 		if ( ! $key ) {
 			return;
 		}
 
 		// If do not have a cached version, or it expired, save the results again with new expiration
-		$cached_result = get_transient( $key );
+		$cached_result = $this->get( $key );
 
 		if ( false === $cached_result ) {
-			// Converts GraphQL query result to spec-compliant serializable array using provided
-			set_transient(
-				$key,
-				is_array( $response ) ? $response : $response->toArray(),
-				DAY_IN_SECONDS
-			);
+			$this->save( $key, $response );
 		}
 	}
 
+	public function get( $key ) {
+		return get_transient( $key );
+	}
+
+	// Converts GraphQL query result to spec-compliant serializable array using provided
+	public function save( $key, $data, $expire = DAY_IN_SECONDS ) {
+		set_transient(
+			$key,
+			is_array( $data ) ? $data : $data->toArray(),
+			$expire
+		);
+	}
 }

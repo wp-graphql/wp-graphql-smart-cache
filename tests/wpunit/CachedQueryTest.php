@@ -1,21 +1,32 @@
 <?php
 
-namespace WPGraphQL\PersistedQueries;
+namespace WPGraphQL\Cache;
 
+use WPGraphQL\Cache\Query;
+use WPGraphQL\PersistedQueries\Document;
 use WPGraphQL\PersistedQueries\Utils;
 
 /**
  * Test the content class
  */
-class CachedResponseTest extends \Codeception\TestCase\WPTestCase {
+class CachedQueryTest extends \Codeception\TestCase\WPTestCase {
+
+	public function _before() {
+		delete_option( 'graphql_cache_section' );
+	}
+
+	public function _after() {
+		delete_option( 'graphql_cache_section' );
+	}
 
 	/**
 	 * Put content in the cache.
 	 * Make graphql request.
 	 * Very we see the results from cache.
-	 * Check the number of filters run.
 	 */
 	public function testGetResultsFromCache() {
+		add_option( 'graphql_cache_section', [ 'cache_toggle' => 'on' ] );
+
 		$query = "query GetPosts {
 			posts {
 				nodes {
@@ -24,7 +35,7 @@ class CachedResponseTest extends \Codeception\TestCase\WPTestCase {
 			}
 		}";
 
-		$cache_object = new CachedResponse();
+		$cache_object = new Query();
 		$key = $cache_object->get_cache_key( null, $query );
 
 		// Put something in the cache for the query key that proves it came from cache.
@@ -33,7 +44,7 @@ class CachedResponseTest extends \Codeception\TestCase\WPTestCase {
 				'__typename' => 'Foo Bar'
 			]
 		];
-		set_transient( $key, $expected );
+		$cache_object->save( $key, $expected );
 
 		// Verify the response contains what we put in cache
 		$response = graphql([ 'query' => $query ]);
@@ -41,6 +52,8 @@ class CachedResponseTest extends \Codeception\TestCase\WPTestCase {
 	}
 
 	public function testOperationNameAndVariablesGetResultsFromCache() {
+		add_option( 'graphql_cache_section', [ 'cache_toggle' => 'on' ] );
+
 		$query = "query GetPosts(\$count:Int){
 			posts(first:\$count){
 			 nodes{
@@ -60,7 +73,7 @@ class CachedResponseTest extends \Codeception\TestCase\WPTestCase {
 		  }
 		";
 
-		$cache_object = new CachedResponse();
+		$cache_object = new Query();
 
 		// Cache for one operation and variables
 		$key = $cache_object->get_cache_key( null, $query, [ "count" => 1 ], "GetPosts" );
@@ -69,7 +82,7 @@ class CachedResponseTest extends \Codeception\TestCase\WPTestCase {
 				'foo' => 'Response for GetPosts. Count 1'
 			]
 		];
-		set_transient( $key, $value );
+		$cache_object->save( $key, $value );
 
 		// Cache for one operation and variables
 		$key = $cache_object->get_cache_key( null, $query, [ "count" => 2 ], "GetPosts" );
@@ -78,7 +91,7 @@ class CachedResponseTest extends \Codeception\TestCase\WPTestCase {
 				'foo' => 'Response for GetPosts. Count 2'
 			]
 		];
-		set_transient( $key, $value );
+		$cache_object->save( $key, $value );
 
 		// Cache for one operation and variables
 		$key = $cache_object->get_cache_key( null, $query, [ "count" => 2 ], "GetPostsWithSlug" );
@@ -87,7 +100,7 @@ class CachedResponseTest extends \Codeception\TestCase\WPTestCase {
 				'foo' => 'Response for GetPostsWithSlug. Count 2'
 			]
 		];
-		set_transient( $key, $value );
+		$cache_object->save( $key, $value );
 
 		// Verify the response contains what we put in cache
 		$response = graphql([
@@ -114,6 +127,8 @@ class CachedResponseTest extends \Codeception\TestCase\WPTestCase {
 	}
 
 	public function testQueryIdGetResultsFromCache() {
+		add_option( 'graphql_cache_section', [ 'cache_toggle' => 'on' ] );
+
 		$query = "query GetPosts {
 			posts {
 				nodes {
@@ -124,10 +139,10 @@ class CachedResponseTest extends \Codeception\TestCase\WPTestCase {
 		$query_id = "foo-bar-query";
 
 		// Create/save persisted query for the query and query id
-		$saved_query = new SavedQuery();
+		$saved_query = new Document();
 		$saved_query->save( $query_id, $query );
 
-		$cache_object = new CachedResponse();
+		$cache_object = new Query();
 		$key = $cache_object->get_cache_key( $query_id, null );
 
 		// Put something in the cache for the query key that proves it came from cache.
@@ -136,11 +151,10 @@ class CachedResponseTest extends \Codeception\TestCase\WPTestCase {
 				'__typename' => 'Foo Bar'
 			]
 		];
-		set_transient( $key, $expected );
+		$cache_object->save( $key, $expected );
 
 		// Verify the response contains what we put in cache
 		$response = graphql([ 'queryId' => $query_id ]);
 		$this->assertEquals($expected['data'], $response['data']);
 	}
-
 }

@@ -13,6 +13,7 @@
 
 namespace WPGraphQL\Labs;
 
+use WPGraphQL\Cache\Query as CachedQuery;
 use WPGraphQL\PersistedQueries\AdminErrors;
 use WPGraphQL\PersistedQueries\Document;
 use WPGraphQL\PersistedQueries\Admin\Editor;
@@ -71,5 +72,13 @@ add_action(
 	function () {
 		$editor = new Editor();
 		$editor->admin_init();
+	}
+);
+
+add_action(
+	'wp_loaded',
+	function () {
+		$cache = new CachedQuery();
+		$cache->init();
 	}
 );

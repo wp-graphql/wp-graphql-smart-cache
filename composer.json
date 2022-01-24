@@ -4,7 +4,8 @@
     "type": "wordpress-plugin",
     "autoload": {
         "psr-4": {
-            "WPGraphQL\\PersistedQueries\\": "src/"
+            "WPGraphQL\\PersistedQueries\\": "src/",
+            "WPGraphQL\\Cache\\": "src/Cache"
         }
     },
     "require-dev": {
