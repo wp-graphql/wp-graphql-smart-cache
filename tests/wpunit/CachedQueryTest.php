@@ -157,4 +157,59 @@ class CachedQueryTest extends \Codeception\TestCase\WPTestCase {
 		$response = graphql([ 'queryId' => $query_id ]);
 		$this->assertEquals($expected['data'], $response['data']);
 	}
+
+	public function testPurgeCacheWhenNotEnabled() {
+		add_option( 'graphql_cache_section', [ 'cache_toggle' => 'off' ] );
+
+		$cache_object = new Query();
+		$response = $cache_object->purge();
+		$this->assertFalse( $response );
+	}
+
+	public function testPurgeCacheWhenNothingCached() {
+		add_option( 'graphql_cache_section', [ 'cache_toggle' => 'on' ] );
+
+		$cache_object = new Query();
+		$response = $cache_object->purge();
+		$this->assertFalse( $response );
+	}
+
+	public function testPurgeCache() {
+		add_option( 'graphql_cache_section', [ 'cache_toggle' => 'on' ] );
+
+		$cache_object = new Query();
+
+		// Put something in the cache for the query key that proves it came from cache.
+		$query = "query GetPosts {
+			posts {
+				nodes {
+					title
+				}
+			}
+		}";
+		$key = $cache_object->get_cache_key( null, $query );
+		$expected = [
+			'data' => [
+				'__typename' => 'Foo Bar'
+			]
+		];
+		$cache_object->save( $key, $expected );
+
+		// Query that we got from cache
+		$response = graphql([ 'query' => $query ]);
+		$this->assertEquals($expected['data'], $response['data']);
+
+		// Clear the cache
+		$this->assertEquals( $cache_object->purge(), 1 );
+
+		$real = [
+			'data' => [
+				'posts' => [
+					'nodes' => []
+				]
+			]
+		];
+		$response = graphql([ 'query' => $query ]);
+		$this->assertEquals($real['data'], $response['data']);
+	}
 }
