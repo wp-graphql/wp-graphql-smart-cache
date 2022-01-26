@@ -2,7 +2,7 @@
 
 namespace WPGraphQL\PersistedQueries;
 
-use WPGraphQL\PersistedQueries\Admin\Settings;
+use WPGraphQL\Labs\Admin\Settings;
 
 /**
  * Test the wp-graphql request to cached query is faster
