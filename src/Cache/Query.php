@@ -23,10 +23,10 @@ class Query {
 	 *
 	 * @param string $query_id queryId from the graphql query request
 	 * @param string $query query string
-	 * @param array $variables Variables send with request or null
+	 * @param array $variables Variables sent with request or null
 	 * @param string $operation Name of operation if specified on the request or null
 	 *
-	 * @return string unique id for this request
+	 * @return string|false unique id for this request or false if query not provided
 	 */
 	public function get_cache_key( $query_id, $query, $variables = null, $operation = null ) {
 		// Unique identifier for this request is normalized query string, operation and variables
@@ -41,7 +41,7 @@ class Query {
 		}
 
 		if ( ! $query ) {
-			return;
+			return false;
 		}
 
 		// WP_User
@@ -62,12 +62,13 @@ class Query {
 	/**
 	 * Look for a 'cached' response for this exact query, variables and operation name
 	 *
-	 * @param WPGraphql/Request
+	 * @param mixed|array|object $result The response from execution. Array for batch requests,
+	 *                                     single object for individual requests
+	 * @param WPGraphql/Request $request The Request object
+	 *
+	 * @return mixed|array|object|null  The response or null if not found in cache
 	 */
-	public function get_query_results_from_cache_cb(
-		$result,
-		$request
-	) {
+	public function get_query_results_from_cache_cb( $result, $request ) {
 		if ( ! Settings::caching_enabled() ) {
 			return $result;
 		}
@@ -87,6 +88,8 @@ class Query {
 	 * @param $filtered_response GraphQL\Executor\ExecutionResult
 	 * @param $response GraphQL\Executor\ExecutionResult
 	 * @param $request WPGraphQL\Request
+	 *
+	 * @return void
 	 */
 	public function save_query_results_to_cache_cb(
 		$filtered_response,
@@ -113,11 +116,23 @@ class Query {
 		}
 	}
 
+	/**
+	 * Get the data from cache/transient based on the provided key
+	 *
+	 * @param string unique id for this request
+	 * @return mixed|array|object|null  The graphql response or null if not found
+	 */
 	public function get( $key ) {
 		return get_transient( $key );
 	}
 
-	// Converts GraphQL query result to spec-compliant serializable array using provided
+	/**
+	 * Converts GraphQL query result to spec-compliant serializable array using provided function
+	 *
+	 * @param string unique id for this request
+	 * @param mixed|array|object|null  The graphql response
+	 * @param int Time in seconds for the data to persist in cache. Zero means no expiration.
+	 */
 	public function save( $key, $data, $expire = DAY_IN_SECONDS ) {
 		set_transient(
 			$key,
