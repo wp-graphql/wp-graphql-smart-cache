@@ -23,7 +23,7 @@ class Query {
 	 *
 	 * @param string $query_id queryId from the graphql query request
 	 * @param string $query query string
-	 * @param array $variables Variables send with request or null
+	 * @param array $variables Variables sent with request or null
 	 * @param string $operation Name of operation if specified on the request or null
 	 *
 	 * @return string|false unique id for this request or false if query not provided
