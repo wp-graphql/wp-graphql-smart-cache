@@ -14,6 +14,7 @@ const DocumentEditor = () => {
 			<FileMenu />
 			<Layout style={{ height: `100%` }}>
 				<Sider
+					id="document-finder-sider"
 					width={300}
 					style={{ background: `#fff`, overflowY: `scroll` }}
 				>
@@ -21,7 +22,7 @@ const DocumentEditor = () => {
 						<DocumentFinder />
 					</div>
 				</Sider>
-				<Layout style={{ padding: "24px", overflowY: `scroll` }}>
+				<Layout style={{ padding: "10px", overflowY: `scroll` }}>
 					<Content>
 						<ActiveDocumentTabs />
 					</Content>

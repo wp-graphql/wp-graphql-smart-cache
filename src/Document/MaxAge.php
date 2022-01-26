@@ -2,7 +2,7 @@
 /**
  * The max age admin and filter for individual query documents.
  *
- * @package Wp_Graphql_Persisted_Queries
+ * @package Wp_Graphql_Labs
  */
 
 namespace WPGraphQL\Labs\Document;

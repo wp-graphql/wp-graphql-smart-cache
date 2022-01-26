@@ -2,7 +2,7 @@
 /**
  * Class SampleTest
  *
- * @package Wp_Graphql_Persisted_Queries
+ * @package Wp_Graphql_Labs
  */
 
 namespace WPGraphQL\Labs;

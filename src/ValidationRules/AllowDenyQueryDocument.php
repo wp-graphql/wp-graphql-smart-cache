@@ -15,7 +15,7 @@ use WPGraphQL\Labs\Utils;
 /**
  * Class AllowOrDenyQuery
  *
- * @package WPGraphQL\PersistedQueries\Rules
+ * @package WPGraphQL\Labs\Rules
  */
 class AllowDenyQueryDocument extends ValidationRule {
 
@@ -63,6 +63,10 @@ class AllowDenyQueryDocument extends ValidationRule {
 					}
 				} elseif ( Grant::GLOBAL_ALLOWED === $this->access_setting ) {
 					// When the allow/deny setting only allows certain queries, verify this query is allowed
+
+					// if ( current_user_can( 'manage_options' ) ) {
+					// 	return;
+					// }
 
 					// If this query is not persisted do not allow.
 					if ( ! $post ) {

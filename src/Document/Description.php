@@ -2,7 +2,7 @@
 /**
  * Save the persisted query description text in the post type excpert field.
  *
- * @package Wp_Graphql_Persisted_Queries
+ * @package Wp_Graphql_Labs
  */
 
 namespace WPGraphQL\Labs\Document;
