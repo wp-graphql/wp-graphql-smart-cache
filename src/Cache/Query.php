@@ -144,7 +144,7 @@ class Query {
 	/**
 	 * Searches the database for all graphql transients matching our prefix
 	 *
-	 * @return int  Count of the number deleted. False if error, nothing to delete or caching not enabled.
+	 * @return int|false  Count of the number deleted. False if error, nothing to delete or caching not enabled.
 	 */
 	public function purge() {
 		global $wpdb;
