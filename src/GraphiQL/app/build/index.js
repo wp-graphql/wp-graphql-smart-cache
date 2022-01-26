@@ -48504,12 +48504,10 @@
 								i.size &&
 									i.forEach(function (e) {
 										var r = Ec("legacyOneTimeQuery"),
-											i = t
-												.getQuery(r)
-												.init({
-													document: e.query,
-													variables: e.variables,
-												}),
+											i = t.getQuery(r).init({
+												document: e.query,
+												variables: e.variables,
+											}),
 											o = new jc({
 												queryManager: t,
 												queryInfo: i,
