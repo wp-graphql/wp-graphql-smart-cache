@@ -2,15 +2,14 @@
 /**
  * Content
  *
- * @package Wp_Graphql_Persisted_Queries
+ * @package Wp_Graphql_Labs
  */
 
-namespace WPGraphQL\PersistedQueries\Document;
+namespace WPGraphQL\Labs\Document;
 
-use WPGraphQL\PersistedQueries\Admin\Editor;
 use WPGraphQL\Labs\Admin\Settings;
-use WPGraphQL\PersistedQueries\Document;
-use WPGraphQL\PersistedQueries\ValidationRules\AllowDenyQueryDocument;
+use WPGraphQL\Labs\Document;
+use WPGraphQL\Labs\ValidationRules\AllowDenyQueryDocument;
 use GraphQL\Server\RequestError;
 
 class Grant {
@@ -44,8 +43,12 @@ class Grant {
 				'show_admin_column'  => true,
 				'show_in_menu'       => Settings::show_in_admin(),
 				'show_in_quick_edit' => false,
-				'meta_box_cb'        => [ 'WPGraphQL\PersistedQueries\Admin\Editor', 'grant_input_box_cb' ],
-				'show_in_graphql'    => false, // false because we register a field with different name
+				'meta_box_cb'        => [
+					'WPGraphQL\PersistedQueries\Admin\Editor',
+					'grant_input_box_cb',
+				],
+				'show_in_graphql'    => false,
+				// false because we register a field with different name
 			]
 		);
 
@@ -79,7 +82,14 @@ class Grant {
 	// This runs on post create/update
 	// Check the grant allow/deny value is within limits
 	public function graphql_mutation_filter( $input, $context, $info, $mutation_name ) {
-		if ( ! in_array( $mutation_name, [ 'createGraphqlDocument', 'updateGraphqlDocument' ], true ) ) {
+		if ( ! in_array(
+			$mutation_name,
+			[
+				'createGraphqlDocument',
+				'updateGraphqlDocument',
+			],
+			true
+		) ) {
 			return $input;
 		}
 
@@ -98,7 +108,14 @@ class Grant {
 	// This runs on post create/update
 	// Check the grant allow/deny value is within limits
 	public function graphql_mutation_insert( $post_object, $filtered_input, $input, $context, $info, $mutation_name ) {
-		if ( ! in_array( $mutation_name, [ 'createGraphqlDocument', 'updateGraphqlDocument' ], true ) ) {
+		if ( ! in_array(
+			$mutation_name,
+			[
+				'createGraphqlDocument',
+				'updateGraphqlDocument',
+			],
+			true
+		) ) {
 			return;
 		}
 
@@ -116,6 +133,7 @@ class Grant {
 	 */
 	public static function getQueryGrantSetting( $post_id ) {
 		$item = get_the_terms( $post_id, self::TAXONOMY_NAME );
+
 		return ! is_wp_error( $item ) && isset( $item[0]->name ) ? $item[0]->name : self::NOT_SELECTED_DEFAULT;
 	}
 
@@ -124,6 +142,7 @@ class Grant {
 	 * And return value of the taxonomy.
 	 *
 	 * @param string The input form value
+	 *
 	 * @return string The string value used to save as the taxonomy value
 	 */
 	public function the_selection( $value ) {
@@ -148,7 +167,8 @@ class Grant {
 
 	/**
 	 * Use graphql-php built in validation rules when a query is being requested.
-	 * This allows the query to check access grant rules (allow/deny) and return correct error if needed.
+	 * This allows the query to check access grant rules (allow/deny) and return correct error if
+	 * needed.
 	 */
 	public function add_validation_rules_cb( $validation_rules, $request ) {
 		// Check the grant mode. If public for all, don't add this rule.

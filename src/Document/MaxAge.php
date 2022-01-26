@@ -2,18 +2,17 @@
 /**
  * The max age admin and filter for individual query documents.
  *
- * @package Wp_Graphql_Persisted_Queries
+ * @package Wp_Graphql_Labs
  */
 
-namespace WPGraphQL\PersistedQueries\Document;
+namespace WPGraphQL\Labs\Document;
 
 use WPGraphQL\Labs\Admin\Settings;
-use WPGraphQL\PersistedQueries\Document;
-use WPGraphQL\PersistedQueries\Utils;
+use WPGraphQL\Labs\Document;
+use WPGraphQL\Labs\Utils;
 use GraphQL\Server\RequestError;
 
 class MaxAge {
-
 	const TAXONOMY_NAME = 'graphql_document_http_maxage';
 
 	// The in-progress query
@@ -32,8 +31,12 @@ class MaxAge {
 				'show_admin_column'  => true,
 				'show_in_menu'       => Settings::show_in_admin(),
 				'show_in_quick_edit' => false,
-				'meta_box_cb'        => [ 'WPGraphQL\PersistedQueries\Admin\Editor', 'maxage_input_box_cb' ],
-				'show_in_graphql'    => false, // false because we register a field with different name
+				'meta_box_cb'        => [
+					'WPGraphQL\PersistedQueries\Admin\Editor',
+					'maxage_input_box_cb',
+				],
+				'show_in_graphql'    => false,
+				// false because we register a field with different name
 			]
 		);
 
@@ -51,6 +54,7 @@ class MaxAge {
 
 				$config['resolve'] = function ( \WPGraphQL\Model\Post $post, $args, $context, $info ) {
 					$term = get_the_terms( $post->ID, self::TAXONOMY_NAME );
+
 					return isset( $term[0]->name ) ? $term[0]->name : null;
 				};
 				register_graphql_field( $register_type_name, 'max_age_header', $config );
@@ -68,7 +72,14 @@ class MaxAge {
 	// This runs on post create/update
 	// Check the max age value is within limits
 	public function graphql_mutation_filter( $input, $context, $info, $mutation_name ) {
-		if ( ! in_array( $mutation_name, [ 'createGraphqlDocument', 'updateGraphqlDocument' ], true ) ) {
+		if ( ! in_array(
+			$mutation_name,
+			[
+				'createGraphqlDocument',
+				'updateGraphqlDocument',
+			],
+			true
+		) ) {
 			return $input;
 		}
 
@@ -82,7 +93,14 @@ class MaxAge {
 	// This runs on post create/update
 	// Check the grant allow/deny value is within limits
 	public function graphql_mutation_insert( $post_object, $filtered_input, $input, $context, $info, $mutation_name ) {
-		if ( ! in_array( $mutation_name, [ 'createGraphqlDocument', 'updateGraphqlDocument' ], true ) ) {
+		if ( ! in_array(
+			$mutation_name,
+			[
+				'createGraphqlDocument',
+				'updateGraphqlDocument',
+			],
+			true
+		) ) {
 			return;
 		}
 
@@ -101,6 +119,7 @@ class MaxAge {
 		if ( is_wp_error( $item ) ) {
 			return $item;
 		}
+
 		return isset( $item[0]->name ) ? $item[0]->name : null;
 	}
 
@@ -117,6 +136,7 @@ class MaxAge {
 			// Translators: The placeholder is the max-age-header input value
 			throw new RequestError( sprintf( __( 'Invalid max age header value "%s". Must be greater than or equal to zero', 'wp-graphql-labs' ), $value ) );
 		}
+
 		return wp_set_post_terms( $post_id, $value, self::TAXONOMY_NAME );
 	}
 
@@ -126,6 +146,7 @@ class MaxAge {
 		} elseif ( $request->params->query ) {
 			$this->query_id = Utils::generateHash( $request->params->query );
 		}
+
 		return $result;
 	}
 
@@ -149,7 +170,7 @@ class MaxAge {
 		if ( $this->valid( $age ) ) {
 			$headers['Access-Control-Max-Age'] = intval( $age );
 		}
+
 		return $headers;
 	}
-
 }

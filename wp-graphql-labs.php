@@ -14,13 +14,14 @@
 namespace WPGraphQL\Labs;
 
 use WPGraphQL\Cache\Query as CachedQuery;
-use WPGraphQL\PersistedQueries\AdminErrors;
-use WPGraphQL\PersistedQueries\Document;
-use WPGraphQL\PersistedQueries\Admin\Editor;
+use WPGraphQL\Labs\AdminErrors;
+use WPGraphQL\Labs\Document;
+use WPGraphQL\Labs\GraphiQL\GraphiQL;
+use WPGraphQL\Labs\Admin\Editor;
 use WPGraphQL\Labs\Admin\Settings;
-use WPGraphQL\PersistedQueries\Document\Description;
-use WPGraphQL\PersistedQueries\Document\Grant;
-use WPGraphQL\PersistedQueries\Document\MaxAge;
+use WPGraphQL\Labs\Document\Description;
+use WPGraphQL\Labs\Document\Grant;
+use WPGraphQL\Labs\Document\MaxAge;
 
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
@@ -37,11 +38,22 @@ add_action(
 	'graphql_server_config',
 	function ( \GraphQL\Server\ServerConfig $config ) {
 		$config->setPersistentQueryLoader(
-			[ '\WPGraphQL\PersistedQueries\Document\Loader', 'by_query_id' ]
+			[ '\WPGraphQL\Labs\Document\Loader', 'by_query_id' ]
 		);
 	},
 	10,
 	1
+);
+
+/**
+ * Initialize the functionality for interacting with persisted queries using the GraphiQL IDE.
+ */
+add_action(
+	'admin_init',
+	function () {
+		$graphiql = new GraphiQL();
+		$graphiql->init();
+	}
 );
 
 add_action(
@@ -68,11 +80,24 @@ add_action(
 );
 
 add_action(
+	'graphql_register_settings',
+	function () {
+		register_graphql_settings_section(
+			'graphql_persisted_queries_section',
+			[
+				'title' => __( 'Persisted Queries', 'wp-graphql-persisted-queries' ),
+			]
+		);
+	}
+);
+
+add_action(
 	'admin_init',
 	function () {
 		$editor = new Editor();
 		$editor->admin_init();
-	}
+	},
+	10
 );
 
 add_action(

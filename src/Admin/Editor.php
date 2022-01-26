@@ -2,15 +2,15 @@
 /**
  * Content
  *
- * @package Wp_Graphql_Persisted_Queries
+ * @package Wp_Graphql_Labs
  */
 
-namespace WPGraphQL\PersistedQueries\Admin;
+namespace WPGraphQL\Labs\Admin;
 
-use WPGraphQL\PersistedQueries\AdminErrors;
-use WPGraphQL\PersistedQueries\Document;
-use WPGraphQL\PersistedQueries\Document\Grant;
-use WPGraphQL\PersistedQueries\Document\MaxAge;
+use WPGraphQL\Labs\AdminErrors;
+use WPGraphQL\Labs\Document;
+use WPGraphQL\Labs\Document\Grant;
+use WPGraphQL\Labs\Document\MaxAge;
 use GraphQL\Error\SyntaxError;
 use GraphQL\Server\RequestError;
 

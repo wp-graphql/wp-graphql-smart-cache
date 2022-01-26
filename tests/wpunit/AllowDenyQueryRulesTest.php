@@ -8,11 +8,11 @@
  *
  */
 
-namespace WPGraphQL\PersistedQueries;
+namespace WPGraphQL\Labs;
 
-use WPGraphQL\PersistedQueries\Document;
-use WPGraphQL\PersistedQueries\Document\Grant;
-use WPGraphQL\PersistedQueries\Utils;
+use WPGraphQL\Labs\Document;
+use WPGraphQL\Labs\Document\Grant;
+use WPGraphQL\Labs\Utils;
 
 class AllowDenyQueryRulesTest extends \Codeception\TestCase\WPTestCase {
 

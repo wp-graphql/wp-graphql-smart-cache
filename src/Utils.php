@@ -2,22 +2,23 @@
 /**
  * Content
  *
- * @package Wp_Graphql_Persisted_Queries
+ * @package Wp_Graphql_Labs
  */
 
-namespace WPGraphQL\PersistedQueries;
+namespace WPGraphQL\Labs;
 
 class Utils {
 
 	/**
-	 * @param  string $query_id Query ID
+	 * @param string $query_id Query ID
+	 *
 	 * @return WP_Post
 	 */
 	public static function getPostByTermName( $query_id, $type, $taxonomy ) {
 		$wp_query = new \WP_Query(
 			[
 				'post_type'      => $type,
-				'post_status'    => 'publish',
+				'post_status'    => 'any',
 				'posts_per_page' => 1,
 				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
 				'tax_query'      => [
@@ -45,7 +46,8 @@ class Utils {
 	/**
 	 * Generate query hash for graphql query string
 	 *
-	 * @param  string | \GraphQL\Language\AST\DocumentNode query string or document node
+	 * @param string | \GraphQL\Language\AST\DocumentNode query string or document node
+	 *
 	 * @return string $query_id Query string str256 hash
 	 *
 	 * @throws \GraphQL\Error\SyntaxError
@@ -55,13 +57,15 @@ class Utils {
 			$query = \GraphQL\Language\Parser::parse( $query );
 		}
 		$printed = \GraphQL\Language\Printer::doPrint( $query );
+
 		return self::getHashFromFormattedString( $printed );
 	}
 
 	/**
 	 * Generate query hash for graphql query string
-
-	 * @param  string Formatted, normalized query string
+	 *
+	 * @param string Formatted, normalized query string
+	 *
 	 * @return string $query_id Query string str256 hash
 	 *
 	 * @throws \GraphQL\Error\SyntaxError
@@ -69,5 +73,4 @@ class Utils {
 	public static function getHashFromFormattedString( $query ) {
 		return hash( 'sha256', $query );
 	}
-
 }

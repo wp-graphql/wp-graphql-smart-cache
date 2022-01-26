@@ -1,6 +1,10 @@
 <?php
 
+<<<<<<< HEAD
 namespace WPGraphQL\Cache;
+=======
+namespace WPGraphQL\Labs;
+>>>>>>> feature/scaffold-document-editor
 
 use SebastianBergmann\Timer\Timer;
 use SebastianBergmann\Timer\Duration;

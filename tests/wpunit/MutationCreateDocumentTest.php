@@ -1,6 +1,6 @@
 <?php
 
-namespace WPGraphQL\PersistedQueries;
+namespace WPGraphQL\Labs;
 
 class MutationCreateDocumentTest extends \Codeception\TestCase\WPTestCase {
 

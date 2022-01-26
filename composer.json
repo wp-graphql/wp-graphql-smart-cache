@@ -27,7 +27,18 @@
         "codeception/module-rest": "^1.3",
         "phpunit/php-timer": "^5.0"
     },
-    "archive": {
+  "scripts": {
+    "phpcs-i": [
+      "php ./vendor/bin/phpcs -i"
+    ],
+    "check-cs": [
+      "php ./vendor/bin/phpcs"
+    ],
+    "fix-cs": [
+      "php ./vendor/bin/phpcbf"
+    ]
+  },
+  "archive": {
         "exclude": [
           "*.yml",
           ".env*",
@@ -36,5 +47,10 @@
           "tests/",
           "!.wordpress-org/"
         ]
-      }
+      },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    }
 }

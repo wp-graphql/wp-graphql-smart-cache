@@ -1,6 +1,6 @@
 <?php
 
-namespace WPGraphQL\PersistedQueries;
+namespace WPGraphQL\Labs;
 
 use WPGraphQL\Labs\Admin\Settings;
 

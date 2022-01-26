@@ -2,14 +2,14 @@
 /**
  * Content
  *
- * @package Wp_Graphql_Persisted_Queries
+ * @package Wp_Graphql_Labs
  */
 
-namespace WPGraphQL\PersistedQueries;
+namespace WPGraphQL\Labs;
 
 use WPGraphQL\Labs\Admin\Settings;
-use WPGraphQL\PersistedQueries\AdminErrors;
-use WPGraphQL\PersistedQueries\Utils;
+use WPGraphQL\Labs\AdminErrors;
+use WPGraphQL\Labs\Utils;
 use GraphQL\Error\SyntaxError;
 use GraphQL\Server\RequestError;
 
@@ -181,7 +181,7 @@ class Document {
 		 * Before post is saved, check content for valid graphql.
 		 */
 		if ( array_key_exists( 'post_content', $data ) &&
-			! empty( $data['post_content'] ) ) {
+		     ! empty( $data['post_content'] ) ) {
 			try {
 				// Use graphql parser to check query string validity.
 				$ast = \GraphQL\Language\Parser::parse( $post['post_content'] );

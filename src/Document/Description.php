@@ -2,12 +2,12 @@
 /**
  * Save the persisted query description text in the post type excpert field.
  *
- * @package Wp_Graphql_Persisted_Queries
+ * @package Wp_Graphql_Labs
  */
 
-namespace WPGraphQL\PersistedQueries\Document;
+namespace WPGraphQL\Labs\Document;
 
-use WPGraphQL\PersistedQueries\Document;
+use WPGraphQL\Labs\Document;
 
 class Description {
 
@@ -32,19 +32,35 @@ class Description {
 			}
 		);
 
-		add_filter( 'graphql_post_object_insert_post_args', [ $this, 'mutation_filter_post_args' ], 10, 4 );
+		add_filter(
+			'graphql_post_object_insert_post_args',
+			[
+				$this,
+				'mutation_filter_post_args',
+			],
+			10,
+			4
+		);
 	}
 
 	/**
 	 * Run on mutation create/update.
 	 */
 	public function mutation_filter_post_args( $insert_post_args, $input, $post_type_object, $mutation_name ) {
-		if ( in_array( $mutation_name, [ 'createGraphqlDocument', 'updateGraphqlDocument' ], true ) ) {
+		if ( in_array(
+			$mutation_name,
+			[
+				'createGraphqlDocument',
+				'updateGraphqlDocument',
+			],
+			true
+		) ) {
 			// Save the description in excerpt
 			if ( isset( $input['description'] ) ) {
 				$insert_post_args['post_excerpt'] = $input['description'];
 			}
 		}
+
 		return $insert_post_args;
 	}
 }

@@ -2,7 +2,7 @@
 
 namespace WPGraphQL\Labs\Admin;
 
-use WPGraphQL\PersistedQueries\Document\Grant;
+use WPGraphQL\Labs\Document\Grant;
 
 class Settings {
 
