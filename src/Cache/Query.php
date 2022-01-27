@@ -11,7 +11,8 @@ use WPGraphQL\PersistedQueries\Document;
 
 class Query {
 
-	const TYPE_NAME = 'gql_cache';
+	const TYPE_NAME          = 'gql_cache';
+	const GLOBAL_DEFAULT_TTL = 600;
 
 	public function init() {
 		add_filter( 'pre_graphql_execute_request', [ $this, 'get_query_results_from_cache_cb' ], 10, 2 );
@@ -112,7 +113,9 @@ class Query {
 		$cached_result = $this->get( $key );
 
 		if ( false === $cached_result ) {
-			$this->save( $key, $response );
+			$expiration = \get_graphql_setting( 'global_ttl', self::GLOBAL_DEFAULT_TTL, 'graphql_cache_section' );
+
+			$this->save( $key, $response, $expiration );
 		}
 	}
 

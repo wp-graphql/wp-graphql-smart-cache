@@ -212,4 +212,39 @@ class CachedQueryTest extends \Codeception\TestCase\WPTestCase {
 		$response = graphql([ 'query' => $query ]);
 		$this->assertEquals($real['data'], $response['data']);
 	}
+
+	/**
+	 * Set the global ttl setting.
+	 * Make graphql request.
+	 * Verifyy we see the results from cache.
+	 * Verify we see transient expiration set.
+	 */
+	public function testExpirationTtlIsSetForCachedResults() {
+		add_option( 'graphql_cache_section', [ 'cache_toggle' => 'on', 'global_ttl' => '30' ] );
+
+
+		$query = "query GetPosts {
+			posts {
+				nodes {
+					title
+				}
+			}
+		}";
+
+		// Thought, capture a before and after time around the graphql query. Add the ttl seconds to each and make sure the 
+		// transient timeout is between the two inclusively.
+		$cache_object = new Query();
+		$key = $cache_object->get_cache_key( null, $query );
+		$time_before = time();
+		$response = graphql([ 'query' => $query ]);
+		$time_after = time();
+
+		$this->assertArrayHasKey( 'data', $response );
+		$transient_timeout_option = get_option( '_transient_timeout_' . $key );
+		$this->assertNotEmpty( $transient_timeout_option );
+
+		$this->assertGreaterThanOrEqual( $time_before + 30, $transient_timeout_option );
+		$this->assertLessThanOrEqual( $time_after + 30, $transient_timeout_option );
+	}
+
 }
