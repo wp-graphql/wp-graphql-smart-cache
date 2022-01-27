@@ -85,7 +85,7 @@ add_action(
 		register_graphql_settings_section(
 			'graphql_persisted_queries_section',
 			[
-				'title' => __( 'Persisted Queries', 'wp-graphql-persisted-queries' ),
+				'title' => __( 'Persisted Queries', 'wp-graphql-labs' ),
 			]
 		);
 	}
