@@ -4,10 +4,10 @@
  * If not cached, when return results to client, save results to transient cache for future requests.
  */
 
-namespace WPGraphQL\Cache;
+namespace WPGraphQL\Labs\Cache;
 
 use WPGraphQL\Labs\Admin\Settings;
-use WPGraphQL\PersistedQueries\Document;
+use WPGraphQL\Labs\Document;
 
 class Query {
 

@@ -32,7 +32,7 @@ class MaxAge {
 				'show_in_menu'       => Settings::show_in_admin(),
 				'show_in_quick_edit' => false,
 				'meta_box_cb'        => [
-					'WPGraphQL\PersistedQueries\Admin\Editor',
+					'WPGraphQL\Labs\Admin\Editor',
 					'maxage_input_box_cb',
 				],
 				'show_in_graphql'    => false,

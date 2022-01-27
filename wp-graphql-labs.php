@@ -13,7 +13,7 @@
 
 namespace WPGraphQL\Labs;
 
-use WPGraphQL\Cache\Query as CachedQuery;
+use WPGraphQL\Labs\Cache\Query as CachedQuery;
 use WPGraphQL\Labs\AdminErrors;
 use WPGraphQL\Labs\Document;
 use WPGraphQL\Labs\GraphiQL\GraphiQL;

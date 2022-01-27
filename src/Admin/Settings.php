@@ -8,13 +8,13 @@ class Settings {
 
 	// set this to true to see these in wp-admin
 	public static function show_in_admin() {
-		$display_admin = \get_graphql_setting( 'editor_display', false, 'graphql_persisted_queries_section' );
+		$display_admin = function_exists( 'get_graphql_setting' ) ? get_graphql_setting( 'editor_display', false, 'graphql_persisted_queries_section' ) : false;
 		return ( 'on' === $display_admin );
 	}
 
 	// Settings checkbox set to on to enable caching
 	public static function caching_enabled() {
-		$option = \get_graphql_setting( 'cache_toggle', false, 'graphql_cache_section' );
+		$option = function_exists( 'get_graphql_setting' ) ? get_graphql_setting( 'cache_toggle', false, 'graphql_cache_section' ) : false;
 		return ( 'on' === $option );
 	}
 
