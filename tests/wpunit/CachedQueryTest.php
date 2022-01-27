@@ -3,8 +3,8 @@
 namespace WPGraphQL\Cache;
 
 use WPGraphQL\Cache\Query;
-use WPGraphQL\PersistedQueries\Document;
-use WPGraphQL\PersistedQueries\Utils;
+use WPGraphQL\Labs\Document;
+use WPGraphQL\Labs\Utils;
 
 /**
  * Test the content class
