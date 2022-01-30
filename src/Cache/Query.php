@@ -149,7 +149,7 @@ class Query {
 	 *
 	 * @return int|false  Count of the number deleted. False if error, nothing to delete or caching not enabled.
 	 */
-	public function purge() {
+	public function purge_all() {
 		global $wpdb;
 
 		if ( ! Settings::caching_enabled() ) {

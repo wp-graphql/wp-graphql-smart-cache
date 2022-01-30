@@ -162,7 +162,7 @@ class CachedQueryTest extends \Codeception\TestCase\WPTestCase {
 		add_option( 'graphql_cache_section', [ 'cache_toggle' => 'off' ] );
 
 		$cache_object = new Query();
-		$response = $cache_object->purge();
+		$response = $cache_object->purge_all();
 		$this->assertFalse( $response );
 	}
 
@@ -170,7 +170,7 @@ class CachedQueryTest extends \Codeception\TestCase\WPTestCase {
 		add_option( 'graphql_cache_section', [ 'cache_toggle' => 'on' ] );
 
 		$cache_object = new Query();
-		$response = $cache_object->purge();
+		$response = $cache_object->purge_all();
 		$this->assertFalse( $response );
 	}
 
@@ -200,7 +200,7 @@ class CachedQueryTest extends \Codeception\TestCase\WPTestCase {
 		$this->assertEquals($expected['data'], $response['data']);
 
 		// Clear the cache
-		$this->assertEquals( $cache_object->purge(), 1 );
+		$this->assertEquals( $cache_object->purge_all(), 1 );
 
 		$real = [
 			'data' => [
