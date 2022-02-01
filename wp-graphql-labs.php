@@ -80,18 +80,6 @@ add_action(
 );
 
 add_action(
-	'graphql_register_settings',
-	function () {
-		register_graphql_settings_section(
-			'graphql_persisted_queries_section',
-			[
-				'title' => __( 'Persisted Queries', 'wp-graphql-labs' ),
-			]
-		);
-	}
-);
-
-add_action(
 	'admin_init',
 	function () {
 		$editor = new Editor();

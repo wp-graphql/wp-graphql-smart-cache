@@ -2,7 +2,6 @@ import {
 	useContext,
 	createContext,
 	useState,
-	useEffect,
 	useReducer,
 } from "@wordpress/element";
 import { v4 as uuid } from "uuid";
@@ -62,15 +61,15 @@ const DELETE_DOCUMENT_MUTATION = gql`
  * or an empty array if none are open.
  */
 const getDefualtOpenTabs = () => {
-	let defualtOpenTabs = [];
+	let defaultOpenTabs = [];
 	if (window && window.localStorage) {
 		const tabs = window.localStorage.getItem(
 			"graphiql:documentEditor:openDocuments"
 		);
-		defualtOpenTabs = tabs ? JSON.parse(tabs) : [];
+		defaultOpenTabs = tabs ? JSON.parse(tabs) : [];
 	}
 
-	return defualtOpenTabs;
+	return defaultOpenTabs;
 };
 
 /**
