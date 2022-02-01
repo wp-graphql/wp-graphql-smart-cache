@@ -1,6 +1,6 @@
 <?php
 
-namespace WPGraphQL\PersistedQueries\ValidationRules;
+namespace WPGraphQL\Labs\ValidationRules;
 
 use GraphQL\Error\Error;
 use GraphQL\Language\AST\NodeKind;
@@ -8,14 +8,14 @@ use GraphQL\Language\AST\DocumentNode;
 use GraphQL\Validator\Rules\ValidationRule;
 use GraphQL\Validator\ValidationContext;
 
-use WPGraphQL\PersistedQueries\Document;
-use WPGraphQL\PersistedQueries\Document\Grant;
-use WPGraphQL\PersistedQueries\Utils;
+use WPGraphQL\Labs\Document;
+use WPGraphQL\Labs\Document\Grant;
+use WPGraphQL\Labs\Utils;
 
 /**
  * Class AllowOrDenyQuery
  *
- * @package WPGraphQL\PersistedQueries\Rules
+ * @package WPGraphQL\Labs\Rules
  */
 class AllowDenyQueryDocument extends ValidationRule {
 
@@ -63,7 +63,6 @@ class AllowDenyQueryDocument extends ValidationRule {
 					}
 				} elseif ( Grant::GLOBAL_ALLOWED === $this->access_setting ) {
 					// When the allow/deny setting only allows certain queries, verify this query is allowed
-
 					// If this query is not persisted do not allow.
 					if ( ! $post ) {
 						$context->reportError(

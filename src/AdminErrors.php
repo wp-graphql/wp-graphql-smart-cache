@@ -2,12 +2,12 @@
 /**
  * Content
  *
- * @package Wp_Graphql_Persisted_Queries
+ * @package Wp_Graphql_Labs
  */
 
-namespace WPGraphQL\PersistedQueries;
+namespace WPGraphQL\Labs;
 
-use WPGraphQL\PersistedQueries\Document;
+use WPGraphQL\Labs\Document;
 
 class AdminErrors {
 

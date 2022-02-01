@@ -2,12 +2,12 @@
 /**
  * Class SampleTest
  *
- * @package Wp_Graphql_Persisted_Queries
+ * @package Wp_Graphql_Labs
  */
 
-namespace WPGraphQL\PersistedQueries;
+namespace WPGraphQL\Labs;
 
-use WPGraphQL\PersistedQueries\Utils;
+use WPGraphQL\Labs\Utils;
 
 /**
  * Test the content class

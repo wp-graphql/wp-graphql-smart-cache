@@ -2,21 +2,24 @@
 /**
  * Storage
  *
- * @package Wp_Graphql_Persisted_Queries
+ * @package Wp_Graphql_Labs
  */
 
-namespace WPGraphQL\PersistedQueries\Document;
+namespace WPGraphQL\Labs\Document;
 
-use WPGraphQL\PersistedQueries\Document;
+use WPGraphQL\Labs\Document;
 use GraphQL\Server\RequestError;
 
 class Loader {
 	/**
-	 * When a queryId is found on the request, this call back is invoked to look up the query string
+	 * When a queryId is found on the request, this call back is invoked to look up the query
+	 * string
 	 * Can be invoked on GET or POST params
 	 *
-	 * @param array $query_id An array containing the pieces of the data of the GraphQL request
+	 * @param array $query_id         An array containing the pieces of the data of the GraphQL
+	 *                                request
 	 * @param array $operation_params An array containing the method, body and query params
+	 *
 	 * @return string | GraphQL\Language\AST\DocumentNode
 	 */
 	public static function by_query_id( $query_id, $operation_params ) {
