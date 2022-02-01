@@ -157,4 +157,94 @@ class CachedQueryTest extends \Codeception\TestCase\WPTestCase {
 		$response = graphql([ 'queryId' => $query_id ]);
 		$this->assertEquals($expected['data'], $response['data']);
 	}
+
+	public function testPurgeCacheWhenNotEnabled() {
+		add_option( 'graphql_cache_section', [ 'cache_toggle' => 'off' ] );
+
+		$cache_object = new Query();
+		$response = $cache_object->purge_all();
+		$this->assertFalse( $response );
+	}
+
+	public function testPurgeCacheWhenNothingCached() {
+		add_option( 'graphql_cache_section', [ 'cache_toggle' => 'on' ] );
+
+		$cache_object = new Query();
+		$response = $cache_object->purge_all();
+		$this->assertFalse( $response );
+	}
+
+	public function testPurgeCache() {
+		add_option( 'graphql_cache_section', [ 'cache_toggle' => 'on' ] );
+
+		$cache_object = new Query();
+
+		// Put something in the cache for the query key that proves it came from cache.
+		$query = "query GetPosts {
+			posts {
+				nodes {
+					title
+				}
+			}
+		}";
+		$key = $cache_object->get_cache_key( null, $query );
+		$expected = [
+			'data' => [
+				'__typename' => 'Foo Bar'
+			]
+		];
+		$cache_object->save( $key, $expected );
+
+		// Query that we got from cache
+		$response = graphql([ 'query' => $query ]);
+		$this->assertEquals($expected['data'], $response['data']);
+
+		// Clear the cache
+		$this->assertEquals( $cache_object->purge_all(), 1 );
+
+		$real = [
+			'data' => [
+				'posts' => [
+					'nodes' => []
+				]
+			]
+		];
+		$response = graphql([ 'query' => $query ]);
+		$this->assertEquals($real['data'], $response['data']);
+	}
+
+	/**
+	 * Set the global ttl setting.
+	 * Make graphql request.
+	 * Verifyy we see the results from cache.
+	 * Verify we see transient expiration set.
+	 */
+	public function testExpirationTtlIsSetForCachedResults() {
+		add_option( 'graphql_cache_section', [ 'cache_toggle' => 'on', 'global_ttl' => '30' ] );
+
+
+		$query = "query GetPosts {
+			posts {
+				nodes {
+					title
+				}
+			}
+		}";
+
+		// Thought, capture a before and after time around the graphql query. Add the ttl seconds to each and make sure the 
+		// transient timeout is between the two inclusively.
+		$cache_object = new Query();
+		$key = $cache_object->get_cache_key( null, $query );
+		$time_before = time();
+		$response = graphql([ 'query' => $query ]);
+		$time_after = time();
+
+		$this->assertArrayHasKey( 'data', $response );
+		$transient_timeout_option = get_option( '_transient_timeout_' . $key );
+		$this->assertNotEmpty( $transient_timeout_option );
+
+		$this->assertGreaterThanOrEqual( $time_before + 30, $transient_timeout_option );
+		$this->assertLessThanOrEqual( $time_after + 30, $transient_timeout_option );
+	}
+
 }

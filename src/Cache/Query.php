@@ -11,7 +11,8 @@ use WPGraphQL\PersistedQueries\Document;
 
 class Query {
 
-	const TYPE_NAME = 'graphql_response_cache';
+	const TYPE_NAME          = 'gql_cache';
+	const GLOBAL_DEFAULT_TTL = 600;
 
 	public function init() {
 		add_filter( 'pre_graphql_execute_request', [ $this, 'get_query_results_from_cache_cb' ], 10, 2 );
@@ -112,7 +113,9 @@ class Query {
 		$cached_result = $this->get( $key );
 
 		if ( false === $cached_result ) {
-			$this->save( $key, $response );
+			$expiration = \get_graphql_setting( 'global_ttl', self::GLOBAL_DEFAULT_TTL, 'graphql_cache_section' );
+
+			$this->save( $key, $response, $expiration );
 		}
 	}
 
@@ -139,5 +142,41 @@ class Query {
 			is_array( $data ) ? $data : $data->toArray(),
 			$expire
 		);
+	}
+
+	/**
+	 * Searches the database for all graphql transients matching our prefix
+	 *
+	 * @return int|false  Count of the number deleted. False if error, nothing to delete or caching not enabled.
+	 */
+	public function purge_all() {
+		global $wpdb;
+
+		if ( ! Settings::caching_enabled() ) {
+			return false;
+		}
+
+		$prefix = self::TYPE_NAME;
+
+		// The transient string + our prefix as it is stored in the options database
+		$transient_option_name = $wpdb->esc_like( '_transient_' . $prefix . '_' ) . '%';
+
+		// Make database query to get out transients
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching
+		$transients = $wpdb->get_results( $wpdb->prepare( "SELECT `option_name` FROM $wpdb->options WHERE `option_name` LIKE %s", $transient_option_name ), ARRAY_A ); //db call ok
+
+		if ( ! $transients || is_wp_error( $transients ) || ! is_array( $transients ) ) {
+			return false;
+		}
+
+		// Loop through our transients
+		$count = 0;
+		foreach ( $transients as $transient ) {
+			// Remove this string from the option_name to get the name we will use on delete
+			$key = str_replace( '_transient_', '', $transient['option_name'] );
+			delete_transient( $key ) ? $count++ : null;
+		}
+
+		return $count;
 	}
 }
