@@ -2,6 +2,7 @@
 
 namespace WPGraphQL\Labs\Admin;
 
+use WPGraphQL\Labs\Cache\Query as CacheQuery;
 use WPGraphQL\Labs\Document\Grant;
 
 class Settings {
@@ -90,6 +91,23 @@ class Settings {
 						'desc'    => __( 'Toggle to enable caching of graphql query results', 'wp-graphql-labs' ),
 						'type'    => 'checkbox',
 						'default' => 'off',
+					]
+				);
+
+				register_graphql_settings_field(
+					'graphql_cache_section',
+					[
+						'name'              => 'global_ttl',
+						'label'             => __( 'Cache expiration time', 'wp-graphql-labs' ),
+						// translators: the global cache ttl default value
+						'desc'              => sprintf( __( 'Global GraphQL cache expiration time in seconds. Integer value, greater or equal to zero. Default %s.', 'wp-graphql-labs' ), CacheQuery::GLOBAL_DEFAULT_TTL ),
+						'type'              => 'number',
+						'sanitize_callback' => function ( $value ) {
+							if ( $value < 0 || ! is_numeric( $value ) ) {
+								return null;
+							}
+							return intval( $value );
+						},
 					]
 				);
 			}
