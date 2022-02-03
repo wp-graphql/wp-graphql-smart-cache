@@ -15,9 +15,19 @@ class Query {
 	const GROUP_NAME         = 'graphql_cache';
 	const GLOBAL_DEFAULT_TTL = 600;
 
+	// The storage object for the actual system of choice transient, database, object, memory, etc
+	public static $storage = null;
+
 	public function init() {
 		add_filter( 'pre_graphql_execute_request', [ $this, 'get_query_results_from_cache_cb' ], 10, 2 );
 		add_action( 'graphql_return_response', [ $this, 'save_query_results_to_cache_cb' ], 10, 7 );
+
+		if ( ! self::$storage ) {
+			self::$storage = apply_filters(
+				'graphql_cache_storage_object', //phpcs:ignore
+				wp_using_ext_object_cache() ? new WpCache() : new Transient()
+			);
+		}
 	}
 
 	/**
@@ -127,11 +137,7 @@ class Query {
 	 * @return mixed|array|object|null  The graphql response or null if not found
 	 */
 	public function get( $key ) {
-		if ( wp_using_ext_object_cache() ) {
-			return wp_cache_get( $key, self::GROUP_NAME );
-		} else {
-			return get_transient( $key );
-		}
+		return self::$storage->get( $key );
 	}
 
 	/**
@@ -144,15 +150,7 @@ class Query {
 	 * @return bool False if value was not set and true if value was set.
 	 */
 	public function save( $key, $data, $expire = DAY_IN_SECONDS ) {
-		if ( wp_using_ext_object_cache() ) {
-			return wp_cache_set( $key, $data, self::GROUP_NAME, $expire );
-		} else {
-			return set_transient(
-				$key,
-				is_array( $data ) ? $data : $data->toArray(),
-				$expire
-			);
-		}
+		return self::$storage->save( $key, $data, $expire );
 	}
 
 	/**
@@ -162,36 +160,10 @@ class Query {
 	 * @return bool True on success, false on failure.
 	 */
 	public function purge_all() {
-		global $wpdb;
-
 		if ( ! Settings::caching_enabled() ) {
 			return false;
 		}
 
-		if ( wp_using_ext_object_cache() ) {
-			return wp_cache_flush();
-		}
-
-		$prefix = self::KEY_PREFIX;
-
-		// The transient string + our prefix as it is stored in the options database
-		$transient_option_name = $wpdb->esc_like( '_transient_' . $prefix . '_' ) . '%';
-
-		// Make database query to get out transients
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching
-		$transients = $wpdb->get_results( $wpdb->prepare( "SELECT `option_name` FROM $wpdb->options WHERE `option_name` LIKE %s", $transient_option_name ), ARRAY_A ); //db call ok
-
-		if ( ! $transients || is_wp_error( $transients ) || ! is_array( $transients ) ) {
-			return false;
-		}
-
-		// Loop through our transients
-		foreach ( $transients as $transient ) {
-			// Remove this string from the option_name to get the name we will use on delete
-			$key = str_replace( '_transient_', '', $transient['option_name'] );
-			delete_transient( $key );
-		}
-
-		return true;
+		return self::$storage->purge_all();
 	}
 }
