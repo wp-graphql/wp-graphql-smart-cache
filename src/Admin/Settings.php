@@ -19,11 +19,17 @@ class Settings {
 		return ( 'on' === $option );
 	}
 
+	// Date/Time of the last time purge all happened through admin.
+	public static function caching_purge_timestamp() {
+		return function_exists( 'get_graphql_setting' ) ? \get_graphql_setting( 'purge_all_timestamp', false, 'graphql_cache_section' ) : false;
+	}
+
 	public function init() {
 		// Add to the wp-graphql admin settings page
 		add_action(
 			'graphql_register_settings',
 			function () {
+
 				// Add a tab section to the graphql admin settings page
 				register_graphql_settings_section(
 					'graphql_persisted_queries_section',
@@ -107,6 +113,48 @@ class Settings {
 								return null;
 							}
 							return intval( $value );
+						},
+					]
+				);
+
+				register_graphql_settings_field(
+					'graphql_cache_section',
+					[
+						'name'              => 'purge_all',
+						'label'             => __( 'Purge The Cache?', 'wp-graphql-labs' ),
+						'desc'              => __( 'Select this box and save to purge the cache.', 'wp-graphql-labs' ),
+						'type'              => 'checkbox',
+						'default'           => 'off',
+						'sanitize_callback' => function ( $value ) {
+							return false;
+						},
+					]
+				);
+
+				register_graphql_settings_field(
+					'graphql_cache_section',
+					[
+						'name'              => 'purge_all_timestamp',
+						'label'             => __( 'Last time it was purged', 'wp-graphql-labs' ),
+						'desc'              => __( 'This field displays the last time the purge all was invoked.', 'wp-graphql-labs' ),
+						'type'              => 'text',
+						'sanitize_callback' => function ( $value ) {
+							$existing_purge_all_time = self::caching_purge_timestamp();
+
+							if ( isset( $_POST['_wpnonce'] ) &&
+								wp_verify_nonce( $_POST['_wpnonce'] ) && //phpcs:ignore
+								! empty( $_POST ) &&
+								isset( $_POST['graphql_cache_section']['purge_all'] ) &&
+								'on' === $_POST['graphql_cache_section']['purge_all']
+							) {
+								// Purge the cache, then return/save a new purge time
+								$cache_object = new CacheQuery();
+								if ( true === $cache_object->purge_all() ) {
+									return gmdate( 'D, d M Y H:i:s T' );
+								}
+							}
+
+							return $existing_purge_all_time;
 						},
 					]
 				);

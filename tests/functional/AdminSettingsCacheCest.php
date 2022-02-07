@@ -44,4 +44,18 @@ class AdminSettingsCacheCest
 		$I->seeInField("//input[@type='number' and @name='graphql_cache_section[global_ttl]']", 0);
 	}
 
+	public function purgeCacheCheckboxAndTimeTest( FunctionalTester $I ) {
+		$I->haveOptionInDatabase( 'graphql_cache_section', [ 'cache_toggle' => 'on' ] );
+
+		$I->loginAsAdmin();
+		$I->amOnPage('/wp-admin/admin.php?page=graphql#graphql_cache_section');
+
+		$I->seeInField("//input[@type='text' and @name='graphql_cache_section[purge_all_timestamp]']", '');
+
+		$I->checkOption("//input[@type='checkbox' and @name='graphql_cache_section[purge_all]']");
+		$I->click('Save Changes');
+		$I->seeInField("//input[@type='text' and @name='graphql_cache_section[purge_all_timestamp]']", gmdate('D, d M Y H:i:s T' ) );
+		$I->dontSeeCheckboxIsChecked("//input[@type='checkbox' and @name='graphql_cache_section[purge_all]']");
+
+	}
 }

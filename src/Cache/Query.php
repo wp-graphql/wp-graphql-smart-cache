@@ -165,18 +165,21 @@ class Query {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching
 		$transients = $wpdb->get_results( $wpdb->prepare( "SELECT `option_name` FROM $wpdb->options WHERE `option_name` LIKE %s", $transient_option_name ), ARRAY_A ); //db call ok
 
-		if ( ! $transients || is_wp_error( $transients ) || ! is_array( $transients ) ) {
+		if ( is_wp_error( $transients ) ) {
 			return false;
 		}
 
+		if ( ! $transients || ! is_array( $transients ) ) {
+			return true;
+		}
+
 		// Loop through our transients
-		$count = 0;
 		foreach ( $transients as $transient ) {
 			// Remove this string from the option_name to get the name we will use on delete
 			$key = str_replace( '_transient_', '', $transient['option_name'] );
-			delete_transient( $key ) ? $count++ : null;
+			delete_transient( $key );
 		}
 
-		return $count;
+		return true;
 	}
 }
