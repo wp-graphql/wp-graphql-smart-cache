@@ -141,13 +141,15 @@ class Settings {
 						'sanitize_callback' => function ( $value ) {
 							$existing_purge_all_time = self::caching_purge_timestamp();
 
-							if ( isset( $_POST['_wpnonce'] ) &&
-								wp_verify_nonce( $_POST['_wpnonce'] ) && //phpcs:ignore
-								! empty( $_POST ) &&
-								isset( $_POST['graphql_cache_section']['purge_all'] ) &&
-								'on' === $_POST['graphql_cache_section']['purge_all']
+							if ( empty( $_POST ) || //phpcs:ignore
+								! isset( $_POST['graphql_cache_section']['purge_all'] )  //phpcs:ignore
 							) {
-								// Purge the cache, then return/save a new purge time
+								return $existing_purge_all_time;
+							}
+
+							// Purge the cache, then return/save a new purge time
+							 //phpcs:ignore
+							if ( 'on' === $_POST['graphql_cache_section']['purge_all'] ) {
 								$cache_object = new CacheQuery();
 								if ( true === $cache_object->purge_all() ) {
 									return gmdate( 'D, d M Y H:i:s T' );
