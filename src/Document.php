@@ -15,9 +15,9 @@ use GraphQL\Server\RequestError;
 
 class Document {
 
-	const TYPE_NAME     = 'graphql_document';
-	const TAXONOMY_NAME = 'graphql_query_alias';
-	const GRAPHQL_NAME  = 'graphqlDocument';
+	const TYPE_NAME           = 'graphql_document';
+	const ALIAS_TAXONOMY_NAME = 'graphql_query_alias';
+	const GRAPHQL_NAME        = 'graphqlDocument';
 
 	public function init() {
 		add_filter( 'graphql_request_data', [ $this, 'graphql_query_contains_queryid_cb' ], 10, 2 );
@@ -33,6 +33,9 @@ class Document {
 		add_filter( 'graphql_mutation_input', [ $this, 'graphql_mutation_filter' ], 10, 4 );
 		add_action( 'graphql_mutation_response', [ $this, 'graphql_mutation_insert' ], 10, 6 );
 
+		// on delete of terms when the post type is deleted
+		add_action( 'before_delete_post', [ $this, 'delete_post_cb' ], 10, 1 );
+
 		register_post_type(
 			self::TYPE_NAME,
 			[
@@ -44,7 +47,7 @@ class Document {
 				'public'              => true,
 				'show_ui'             => Settings::show_in_admin(),
 				'taxonomies'          => [
-					self::TAXONOMY_NAME,
+					self::ALIAS_TAXONOMY_NAME,
 				],
 				'show_in_graphql'     => true,
 				'graphql_single_name' => self::GRAPHQL_NAME,
@@ -53,7 +56,7 @@ class Document {
 		);
 
 		register_taxonomy(
-			self::TAXONOMY_NAME,
+			self::ALIAS_TAXONOMY_NAME,
 			self::TYPE_NAME,
 			[
 				'description'        => __( 'Alias names for saved GraphQL queries', 'wp-graphql-labs' ),
@@ -82,7 +85,7 @@ class Document {
 				register_graphql_field( 'Update' . $register_type_name . 'Input', 'alias', $config );
 
 				$config['resolve'] = function ( \WPGraphQL\Model\Post $post, $args, $context, $info ) {
-					$terms = get_the_terms( $post->ID, self::TAXONOMY_NAME );
+					$terms = get_the_terms( $post->ID, self::ALIAS_TAXONOMY_NAME );
 					if ( ! is_array( $terms ) ) {
 						return [];
 					}
@@ -120,7 +123,7 @@ class Document {
 		}
 
 		// If the create/update a document, see if any of these aliases already exist
-		$existing_post = Utils::getPostByTermName( $input['alias'], self::TYPE_NAME, self::TAXONOMY_NAME );
+		$existing_post = Utils::getPostByTermName( $input['alias'], self::TYPE_NAME, self::ALIAS_TAXONOMY_NAME );
 		if ( $existing_post ) {
 			// Translators: The placeholders are the input aliases and the existing post containing a matching alias
 			throw new RequestError( sprintf( __( 'Alias "%1$s" already in use by another query "%2$s"', 'wp-graphql-labs' ), join( ', ', $input['alias'] ), $existing_post->post_title ) );
@@ -141,13 +144,16 @@ class Document {
 			return;
 		}
 
-		// Remove the existing/old alias terms
-		$terms = wp_get_post_terms( $post_object['postObjectId'], self::TAXONOMY_NAME, [ 'fields' => 'names' ] );
+		// Remove the existing/old alias terms before update
+		$terms = wp_get_post_terms( $post_object['postObjectId'], self::ALIAS_TAXONOMY_NAME );
 		if ( $terms ) {
-			wp_remove_object_terms( $post_object['postObjectId'], $terms, self::TAXONOMY_NAME );
+			foreach ( $terms as $term ) {
+				wp_remove_object_terms( $post_object['postObjectId'], $term->term_id, self::ALIAS_TAXONOMY_NAME );
+				wp_delete_term( $term->term_id, self::ALIAS_TAXONOMY_NAME );
+			}
 		}
 
-		wp_set_post_terms( $post_object['postObjectId'], $filtered_input['alias'], self::TAXONOMY_NAME );
+		wp_set_post_terms( $post_object['postObjectId'], $filtered_input['alias'], self::ALIAS_TAXONOMY_NAME );
 	}
 
 	/**
@@ -190,7 +196,7 @@ class Document {
 				$normalized_hash = Utils::generateHash( $ast );
 
 				// If queryId alias name is already in the system and doesn't match the query hash
-				$existing_post = Utils::getPostByTermName( $normalized_hash, self::TYPE_NAME, self::TAXONOMY_NAME );
+				$existing_post = Utils::getPostByTermName( $normalized_hash, self::TYPE_NAME, self::ALIAS_TAXONOMY_NAME );
 				if ( $existing_post && $existing_post->ID !== $post['ID'] ) {
 					// Translators: The placeholder is the existing saved query with matching hash/query-id
 					throw new RequestError( sprintf( __( 'This query has already been associated with another query "%s"', 'wp-graphql-labs' ), $existing_post->post_title ) );
@@ -226,7 +232,7 @@ class Document {
 		$query_id = Utils::generateHash( $post->post_content );
 
 		// Set terms using wp_add_object_terms instead of wp_insert_post because the user my not have permissions to set terms
-		wp_add_object_terms( $post_ID, $query_id, self::TAXONOMY_NAME );
+		wp_add_object_terms( $post_ID, $query_id, self::ALIAS_TAXONOMY_NAME );
 	}
 
 	/**
@@ -251,10 +257,15 @@ class Document {
 			return;
 		}
 
-		// If the old query string hash is assigned to this post, don't delete it
-		$terms = wp_get_post_terms( $post_ID, self::TAXONOMY_NAME, [ 'fields' => 'names' ] );
-		if ( in_array( $old_query_id, $terms, true ) ) {
-			wp_remove_object_terms( $post_ID, $old_query_id, self::TAXONOMY_NAME );
+		// If the old query string hash is assigned to this post, delete it
+		$terms = wp_get_post_terms( $post_ID, self::ALIAS_TAXONOMY_NAME );
+		if ( $terms ) {
+			foreach ( $terms as $term ) {
+				if ( $old_query_id === $term->name ) {
+					wp_remove_object_terms( $post_ID, $term->term_id, self::ALIAS_TAXONOMY_NAME );
+					wp_delete_term( $term->term_id, self::ALIAS_TAXONOMY_NAME );
+				}
+			}
 		}
 	}
 
@@ -265,7 +276,7 @@ class Document {
 	 * @return string Query
 	 */
 	public function get( $query_id ) {
-		$post = Utils::getPostByTermName( $query_id, self::TYPE_NAME, self::TAXONOMY_NAME );
+		$post = Utils::getPostByTermName( $query_id, self::TYPE_NAME, self::ALIAS_TAXONOMY_NAME );
 		if ( false === $post || empty( $post->post_content ) ) {
 			return;
 		}
@@ -285,14 +296,14 @@ class Document {
 		$normalized_hash = Utils::getHashFromFormattedString( $query );
 
 		// If queryId alias name is already in the system and doesn't match the query hash
-		$post = Utils::getPostByTermName( $query_id, self::TYPE_NAME, self::TAXONOMY_NAME );
+		$post = Utils::getPostByTermName( $query_id, self::TYPE_NAME, self::ALIAS_TAXONOMY_NAME );
 		if ( $post && $post->post_name !== $normalized_hash ) {
 			// translators: existing query title
 			throw new RequestError( sprintf( __( 'This queryId has already been associated with another query "%s"', 'wp-graphql-labs' ), $post->post_title ) );
 		}
 
 		// If the normalized query is associated with a saved document
-		$post = Utils::getPostByTermName( $normalized_hash, self::TYPE_NAME, self::TAXONOMY_NAME );
+		$post = Utils::getPostByTermName( $normalized_hash, self::TYPE_NAME, self::ALIAS_TAXONOMY_NAME );
 		if ( empty( $post ) ) {
 			$query_operation = \GraphQL\Utils\AST::getOperationAST( $ast );
 
@@ -335,9 +346,30 @@ class Document {
 		}
 
 		// Set terms using wp_add_object_terms instead of wp_insert_post because the user my not have permissions to set terms
-		wp_add_object_terms( $post_id, $term_names, self::TAXONOMY_NAME );
+		wp_add_object_terms( $post_id, $term_names, self::ALIAS_TAXONOMY_NAME );
 
 		return $post_id;
 	}
 
+	/**
+	 * When a saved query post type is deleted, also delete the data for the other information.
+	 *
+	 * @param  Post_Id $post_id the Post Object Id
+	 * @param  Array $tt_ids TaxTerm ids
+	 * @param  Taxonomy $taxonomy
+	 */
+	public function delete_post_cb( $post_id ) {
+		if ( self::TYPE_NAME === get_post_type( $post_id ) ) {
+			$this->delete_term( $post_id );
+		}
+	}
+
+	public function delete_term( $post_id ) {
+		$terms = wp_get_object_terms( $post_id, self::ALIAS_TAXONOMY_NAME );
+		if ( $terms ) {
+			foreach ( $terms as $term ) {
+				wp_delete_term( $term->term_id, self::ALIAS_TAXONOMY_NAME );
+			}
+		}
+	}
 }
