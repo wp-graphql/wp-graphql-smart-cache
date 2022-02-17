@@ -171,7 +171,7 @@ class CachedQueryTest extends \Codeception\TestCase\WPTestCase {
 
 		$cache_object = new Query();
 		$response = $cache_object->purge_all();
-		$this->assertFalse( $response );
+		$this->assertTrue( $response );
 	}
 
 	public function testPurgeCache() {
