@@ -169,6 +169,7 @@ class MaxAge {
 		// Access-Control-Max-Age header should be zero or positive integer, no decimals.
 		if ( $this->valid( $age ) ) {
 			$headers['Access-Control-Max-Age'] = intval( $age );
+			$headers['Cache-Control']          = sprintf( 'max-age=%1$s, s-maxage=%1$s, must-revalidate', intval( $age ) );
 		}
 
 		return $headers;

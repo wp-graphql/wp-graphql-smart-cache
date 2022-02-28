@@ -41,6 +41,7 @@
   "archive": {
         "exclude": [
           "*.yml",
+          "*.zip",
           ".env*",
           "docker/",
           "!vendor/",

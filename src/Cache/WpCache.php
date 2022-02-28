@@ -31,4 +31,12 @@ class WpCache {
 	public function purge_all() {
 		return wp_cache_flush();
 	}
+
+	/**
+	 * @return bool True on successful removal, false on failure.
+	 */
+	public function delete( $key ) {
+		return wp_cache_delete( $key, Query::GROUP_NAME );
+	}
+
 }
