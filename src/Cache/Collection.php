@@ -13,9 +13,8 @@ class Collection extends Query {
 	const GLOBAL_DEFAULT_TTL = 600;
 
 	public function init() {
-		add_action( 'graphql_return_responseX', [ $this, 'save_query_results_to_cache_cb' ], 10, 7 );
-
-		add_action( 'wp_insert_postX', [ $this, 'on_post_insert' ], 10, 2 );
+		add_action( 'graphql_return_response', [ $this, 'save_query_mapping_cb' ], 10, 7 );
+		add_action( 'wp_insert_post', [ $this, 'on_post_insert' ], 10, 2 );
 
 		parent::init();
 	}
@@ -30,12 +29,12 @@ class Collection extends Query {
 	 *
 	 * @return string|false unique id for this request or false if query not provided
 	 */
-	public function the_node_key( $type ) {
+	public function nodes_key( $type ) {
 		return 'node:' . $type;
 	}
 
-	public function the_meta_key( $query_id, $query, $variables, $operation ) {
-		return 'meta:' . $this->build_key( $query_id, $query, $variables, $operation );
+	public function url_key( $request_key ) {
+		return 'urls:' . $request_key;
 	}
 
 	/**
@@ -48,7 +47,7 @@ class Collection extends Query {
 	 *
 	 * @return void
 	 */
-	public function save_query_results_to_cache_cb(
+	public function save_query_mapping_cb(
 		$filtered_response,
 		$response,
 		$schema,
@@ -61,18 +60,20 @@ class Collection extends Query {
 		$url = Settings::graphql_endpoint() . '?' . http_build_query( $request->app_context->request );
 
 		// Save the url this query request came in on, so we can purge it later when something changes
-		$meta_key            = $this->the_meta_key( $request->params->queryId, $request->params->query, $request->params->variables, $request->params->operation );
-		$meta_data           = $this->get( $query_key );
-		$meta_data['urls'][] = $url;
-		$meta_data['urls']   = array_unique( $meta_data['urls'] );
-		$this->save( $meta_key, $meta_data );
+		$request_key = $this->build_key( $request->params->queryId, $request->params->query, $request->params->variables, $request->params->operation );
+		$url_key     = $this->url_key( $request_key );
+		$urls        = $this->get( $url_key );
+		$urls[]      = $url;
+		$urls        = array_unique( $urls );
+		$this->save( $url_key, $urls );
 
 		// Also associate the node type 'post' with this query for look up later
-		$node_key    = $this->the_node_key( 'post' );
-		$node_data   = $this->get( $node_key );
-		$node_data[] = $meta_key;
-		$node_data[] = $this->the_results_key( $request->params->queryId, $request->params->query, $request->params->variables, $request->params->operation );
-		$this->save( $node_key, array_unique( $node_data ) );
+		$node_key = $this->nodes_key( 'post' );
+		$nodes    = $this->get( $node_key );
+		$nodes[]  = $request_key;
+		$nodes    = array_unique( $nodes );
+
+		$this->save( $node_key, $nodes );
 	}
 
 	/**
@@ -82,31 +83,22 @@ class Collection extends Query {
 	 *
 	 * @param int     $post_ID Post ID.
 	 * @param WP_Post $post    Post object.
-	 * @param bool    $update  Whether this is an existing post being updated or not.
 	 */
 	public function on_post_insert( $post_id, $post ) {
 		if ( 'post' !== $post->post_type ) {
 			return;
 		}
 
-		// TODO: Look up the specific post/node/resource to purge vs $response = $this->purge_all();
-
+		// Look up the specific post/node/resource to purge vs $response = $this->purge_all();
 		// When any post changes, look up graphql queries previously queried containing post resources and purge those
-		$key   = $this->the_node_key( 'post' );
+		$key   = $this->nodes_key( 'post' );
 		$nodes = $this->get( $key );
 
-		// Get the list of queries associated with this key
-		$paths = [];
+		// Delete the cached results associated with this post/key
 		if ( is_array( $nodes ) ) {
-			foreach ( $nodes as $node_key ) {
-				$query = $this->get( $node_key );
-				if ( $query && isset( $query['urls'] ) && is_array( $query['urls'] ) ) {
-					// Purge specific paths
-					array_push( $paths, $query['urls'] );
-				}
-				$this->delete( $node_key );
+			foreach ( $nodes as $request_key ) {
+				$this->delete( $request_key );
 			}
 		}
-		// tell varnish about the changes? $paths
 	}
 }
