@@ -25,7 +25,8 @@ class Settings {
 	}
 
 	public static function graphql_endpoint() {
-		return function_exists( 'get_graphql_setting' ) ? \get_graphql_setting( 'graphql_endpoint', '/graphql', 'graphql_general_settings' ) : '/graphql';
+		$path = function_exists( 'get_graphql_setting' ) ? \get_graphql_setting( 'graphql_endpoint', 'graphql', 'graphql_general_settings' ) : 'graphql';
+		return '/' . $path;
 	}
 
 	public function init() {

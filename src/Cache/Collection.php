@@ -56,16 +56,18 @@ class Collection extends Query {
 		$variables,
 		$request
 	) {
-		// The path this request came in on.
-		$url = Settings::graphql_endpoint() . '?' . http_build_query( $request->app_context->request );
-
-		// Save the url this query request came in on, so we can purge it later when something changes
 		$request_key = $this->build_key( $request->params->queryId, $request->params->query, $request->params->variables, $request->params->operation );
-		$url_key     = $this->url_key( $request_key );
-		$urls        = $this->get( $url_key );
-		$urls[]      = $url;
-		$urls        = array_unique( $urls );
-		$this->save( $url_key, $urls );
+		if ( $request->app_context->request ) {
+			// The path this request came in on.
+			$url = Settings::graphql_endpoint() . '?' . http_build_query( $request->app_context->request );
+
+			// Save the url this query request came in on, so we can purge it later when something changes
+			$url_key = $this->url_key( $request_key );
+			$urls    = $this->get( $url_key );
+			$urls[]  = $url;
+			$urls    = array_unique( $urls );
+			$this->save( $url_key, $urls );
+		}
 
 		// Also associate the node type 'post' with this query for look up later
 		$node_key = $this->nodes_key( 'post' );
@@ -78,6 +80,7 @@ class Collection extends Query {
 
 	/**
 	 * Fires once a post has been saved.
+	 * Purge our saved/cached results data.
 	 *
 	 * @since 1.5.0
 	 *
@@ -85,6 +88,10 @@ class Collection extends Query {
 	 * @param WP_Post $post    Post object.
 	 */
 	public function on_post_insert( $post_id, $post ) {
+		if ( ! Settings::caching_enabled() ) {
+			return;
+		}
+
 		if ( 'post' !== $post->post_type ) {
 			return;
 		}
