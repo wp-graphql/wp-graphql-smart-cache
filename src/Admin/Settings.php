@@ -157,7 +157,7 @@ class Settings {
 							if ( 'on' === $_POST['graphql_cache_section']['purge_all'] ) {
 								$cache_object = new Results();
 								if ( true === $cache_object->purge_all() ) {
-									return gmdate( 'D, d M Y H:i:s T' );
+									return gmdate( 'D, d M Y H:i T' );
 								}
 							}
 

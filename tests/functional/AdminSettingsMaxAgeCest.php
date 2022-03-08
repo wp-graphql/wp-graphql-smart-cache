@@ -13,7 +13,7 @@ class AdminSettingsMaxAgeCest
 	public function saveMaxAgeSettingsTest( FunctionalTester $I ) {
 			$I->loginAsAdmin();
 
-			$I->amOnPage('/wp-admin/admin.php?page=graphql#graphql_persisted_queries_section');
+			$I->amOnPage('/wp-admin/admin.php?page=graphql-settings#graphql_persisted_queries_section');
 			$I->seeInField(['name' => 'graphql_persisted_queries_section[global_max_age]'], null);
 			$I->fillField(['name' => 'graphql_persisted_queries_section[global_max_age]'], '30');
 

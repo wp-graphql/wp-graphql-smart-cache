@@ -21,7 +21,7 @@ class WpCache {
 	 *
 	 * @return bool False if value was not set and true if value was set.
 	 */
-	public function save( $key, $data, $expire ) {
+	public function set( $key, $data, $expire ) {
 		return wp_cache_set( $key, $data, Query::GROUP_NAME, $expire );
 	}
 

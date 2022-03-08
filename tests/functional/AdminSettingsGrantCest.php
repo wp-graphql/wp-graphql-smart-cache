@@ -13,7 +13,7 @@ class AdminSettingsGrantCest
 	public function saveAllowOnlySettingsTest( FunctionalTester $I ) {
 			$I->loginAsAdmin();
 
-			$I->amOnPage('/wp-admin/admin.php?page=graphql#graphql_persisted_queries_section');
+			$I->amOnPage('/wp-admin/admin.php?page=graphql-settings#graphql_persisted_queries_section');
 			$I->selectOption("form input[type=radio]", 'only_allowed');
 
 			// Save and see the selection after form submit

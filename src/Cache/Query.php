@@ -82,7 +82,7 @@ class Query {
 	 * @return bool False if value was not set and true if value was set.
 	 */
 	public function save( $key, $data, $expire = DAY_IN_SECONDS ) {
-		return self::$storage->save( $key, $data, $expire );
+		return self::$storage->set( $key, $data, $expire );
 	}
 
 	/**
