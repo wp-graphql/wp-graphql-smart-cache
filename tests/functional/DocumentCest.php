@@ -12,6 +12,27 @@ class DocumentCest {
 		$I->dontHaveOptionInDatabase( 'graphql_persisted_queries_section'  );
 	}
 
+	public function saveQueryWithWhereClauseTest( FunctionalTester $I ) {
+		$I->wantTo( 'Save a graphql query containing a where clause and double quotes' );
+
+		$query = "{ posts(where: {tag: \"bees\"}) { nodes { id title uri content } } }";
+		$query_alias = 'test-save-query-alias';
+
+		$I->dontSeeTermInDatabase( [ 'name' => 'graphql_query_alias' ] );
+		$I->sendPost('graphql', [
+			'query' => $query,
+			'queryId' => $query_alias
+		] );
+		$I->seeResponseContainsJson([
+			'data' => [
+				'posts' => [
+					'nodes' => []
+				]
+			]
+		]);
+		$I->seeTermInDatabase( [ 'name' => $query_alias ] );
+	}
+
 	public function saveMultipleOperationQueryWithQueryTitleTest( FunctionalTester $I ) {
 		$I->wantTo( 'Save a named graphql query' );
 
