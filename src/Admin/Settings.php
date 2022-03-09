@@ -155,6 +155,10 @@ class Settings {
 							// Purge the cache, then return/save a new purge time
 							 //phpcs:ignore
 							if ( 'on' === $_POST['graphql_cache_section']['purge_all'] ) {
+
+								// Trigger action when cache pure_all is invoked
+								do_action( 'wpgraphql_cache_purge_all' );
+
 								$cache_object = new Results();
 								if ( true === $cache_object->purge_all() ) {
 									return gmdate( 'D, d M Y H:i T' );
