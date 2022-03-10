@@ -2,7 +2,7 @@
 
 namespace WPGraphQL\Labs\Admin;
 
-use WPGraphQL\Labs\Cache\Query as CacheQuery;
+use WPGraphQL\Labs\Cache\Results;
 use WPGraphQL\Labs\Document\Grant;
 
 class Settings {
@@ -22,6 +22,11 @@ class Settings {
 	// Date/Time of the last time purge all happened through admin.
 	public static function caching_purge_timestamp() {
 		return function_exists( 'get_graphql_setting' ) ? \get_graphql_setting( 'purge_all_timestamp', false, 'graphql_cache_section' ) : false;
+	}
+
+	public static function graphql_endpoint() {
+		$path = function_exists( 'get_graphql_setting' ) ? \get_graphql_setting( 'graphql_endpoint', 'graphql', 'graphql_general_settings' ) : 'graphql';
+		return '/' . $path;
 	}
 
 	public function init() {
@@ -106,7 +111,7 @@ class Settings {
 						'name'              => 'global_ttl',
 						'label'             => __( 'Cache expiration time', 'wp-graphql-labs' ),
 						// translators: the global cache ttl default value
-						'desc'              => sprintf( __( 'Global GraphQL cache expiration time in seconds. Integer value, greater or equal to zero. Default %s.', 'wp-graphql-labs' ), CacheQuery::GLOBAL_DEFAULT_TTL ),
+						'desc'              => sprintf( __( 'Global GraphQL cache expiration time in seconds. Integer value, greater or equal to zero. Default %s.', 'wp-graphql-labs' ), Results::GLOBAL_DEFAULT_TTL ),
 						'type'              => 'number',
 						'sanitize_callback' => function ( $value ) {
 							if ( $value < 0 || ! is_numeric( $value ) ) {
@@ -150,9 +155,13 @@ class Settings {
 							// Purge the cache, then return/save a new purge time
 							 //phpcs:ignore
 							if ( 'on' === $_POST['graphql_cache_section']['purge_all'] ) {
-								$cache_object = new CacheQuery();
+
+								// Trigger action when cache pure_all is invoked
+								do_action( 'wpgraphql_cache_purge_all' );
+
+								$cache_object = new Results();
 								if ( true === $cache_object->purge_all() ) {
-									return gmdate( 'D, d M Y H:i:s T' );
+									return gmdate( 'D, d M Y H:i T' );
 								}
 							}
 

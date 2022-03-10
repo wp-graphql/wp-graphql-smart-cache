@@ -11,7 +11,7 @@ class Transient {
 	 * @return mixed|array|object|null  The graphql response or null if not found
 	 */
 	public function get( $key ) {
-		return get_transient( $key );
+		return get_transient( Query::GROUP_NAME . '_' . $key );
 	}
 
 	/**
@@ -21,9 +21,9 @@ class Transient {
 	 *
 	 * @return bool False if value was not set and true if value was set.
 	 */
-	public function save( $key, $data, $expire ) {
+	public function set( $key, $data, $expire ) {
 		return set_transient(
-			$key,
+			Query::GROUP_NAME . '_' . $key,
 			is_array( $data ) ? $data : $data->toArray(),
 			$expire
 		);
@@ -37,7 +37,7 @@ class Transient {
 	public function purge_all() {
 		global $wpdb;
 
-		$prefix = Query::KEY_PREFIX;
+		$prefix = Query::GROUP_NAME;
 
 		// The transient string + our prefix as it is stored in the options database
 		$transient_option_name = $wpdb->esc_like( '_transient_' . $prefix . '_' ) . '%';
@@ -61,4 +61,12 @@ class Transient {
 
 		return true;
 	}
+
+	/**
+	 * @return bool True on successful removal, false on failure.
+	 */
+	public function delete( $key ) {
+		return delete_transient( Query::GROUP_NAME . '_' . $key );
+	}
+
 }

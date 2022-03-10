@@ -13,7 +13,8 @@
 
 namespace WPGraphQL\Labs;
 
-use WPGraphQL\Labs\Cache\Query as CachedQuery;
+use WPGraphQL\Labs\Cache\Collection;
+use WPGraphQL\Labs\Cache\Results;
 use WPGraphQL\Labs\AdminErrors;
 use WPGraphQL\Labs\Document;
 use WPGraphQL\Labs\GraphiQL\GraphiQL;
@@ -91,7 +92,10 @@ add_action(
 add_action(
 	'wp_loaded',
 	function () {
-		$cache = new CachedQuery();
-		$cache->init();
+		$results = new Results();
+		$results->init();
+
+		$collection = new Collection();
+		$collection->init();
 	}
 );

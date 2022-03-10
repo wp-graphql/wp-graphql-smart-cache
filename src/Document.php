@@ -167,6 +167,7 @@ class Document {
 	public function graphql_query_contains_queryid_cb( $parsed_body_params, $request_context ) {
 		if ( isset( $parsed_body_params['query'] ) && isset( $parsed_body_params['queryId'] ) ) {
 			// save the query
+			// The query string already coming from 'graphql_request_data' already has the query string unslashed.
 			$this->save( $parsed_body_params['queryId'], $parsed_body_params['query'] );
 
 			// remove it from process body params so graphql-php operation proceeds without conflict.
@@ -177,6 +178,9 @@ class Document {
 
 	/**
 	 * If existing post is edited, verify query string in content is valid graphql
+	 *
+	 * @param array $data             An array of slashed, sanitized, and processed post data.
+	 * @param array $post             An array of sanitized (and slashed) but otherwise unmodified post data.
 	 */
 	public function validate_before_save_cb( $data, $post ) {
 		if ( self::TYPE_NAME !== $post['post_type'] ) {
@@ -190,7 +194,8 @@ class Document {
 			! empty( $data['post_content'] ) ) {
 			try {
 				// Use graphql parser to check query string validity.
-				$ast = \GraphQL\Language\Parser::parse( $post['post_content'] );
+				// Because the data comes from form submission, comes with PHP characters escaped/slashed.
+				$ast = \GraphQL\Language\Parser::parse( wp_unslash( $post['post_content'] ) );
 
 				// Get post using the normalized hash of the query string. If not valid graphql, throws syntax error
 				$normalized_hash = Utils::generateHash( $ast );
@@ -223,12 +228,10 @@ class Document {
 			return;
 		}
 
-		// Use graphql parser to check query string validity.
-		// @throws on syntax error
-		\GraphQL\Language\Parser::parse( $post->post_content );
-
 		// Get the query id for the new query and save as a term
 		// Verify the post content is valid graphql query document
+		// Use graphql parser to check query string validity.
+		// @throws on syntax error
 		$query_id = Utils::generateHash( $post->post_content );
 
 		// Set terms using wp_add_object_terms instead of wp_insert_post because the user my not have permissions to set terms
@@ -237,6 +240,10 @@ class Document {
 
 	/**
 	 * If existing post is edited in the wp admin editor, use previous content to remove query term ids
+	 *
+	 * @param int     $post_ID      Post ID.
+	 * @param WP_Post $post_after   Post object following the update.
+	 * @param WP_Post $post_before  Post object before the update.
 	 */
 	public function after_updated_cb( $post_ID, $post_after, $post_before ) {
 		if ( self::TYPE_NAME !== $post_before->post_type ) {
@@ -251,6 +258,7 @@ class Document {
 		// Use graphql parser to check query string validity.
 		try {
 			// Get the existing normalized hash for this post and remove it before build a new on, only if the query has changed.
+			// Because content is from WP_Post object, does not require explicit unslash here.
 			$old_query_id = Utils::generateHash( $post_before->post_content );
 		} catch ( SyntaxError $e ) {
 			// syntax error in the old query, nothing to do here.
