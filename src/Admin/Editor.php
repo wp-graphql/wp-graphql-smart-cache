@@ -117,7 +117,7 @@ class Editor {
 			$data    = sanitize_text_field( wp_unslash( $_POST['graphql_query_maxage'] ) );
 			$max_age->save( $post_id, $data );
 		} catch ( SyntaxError $e ) {
-			AdminErrors::add_message( 'Did not save invalid graphql query string. ' . $post['post_content'] );
+			AdminErrors::add_message( 'The document could not be saved. Invalid Document' . $post['post_content'] );
 		} catch ( RequestError $e ) {
 			AdminErrors::add_message( $e->getMessage() );
 		}

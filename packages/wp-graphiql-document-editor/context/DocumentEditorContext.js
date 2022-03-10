@@ -98,6 +98,8 @@ export const DocumentEditorContextProvider = ({ children }) => {
 	const [activeDocumentId, _setActiveDocumentId] = useState(
 		getDefaultactiveDocumentId()
 	);
+	const [updateDocumentOnServer, updateDocumentMutationResponse] =
+		useMutation(UPDATE_DOCUMENT_MUTATION);
 	const [createDocumentOnServer, createDocumentMutationResponse] =
 		useMutation(CREATE_DOCUMENT_MUTATION);
 	const [deleteDocumentOnServer, deleteDocumentMutationResponse] =
@@ -144,53 +146,15 @@ export const DocumentEditorContextProvider = ({ children }) => {
 	 * Create a new GraphQL Document
 	 */
 	const createDocument = () => {
-		const operationName = `GetPosts_` + new Date().valueOf();
-
-		const operations = [
-			`query ${operationName}{posts{nodes{id,title,date}}}`,
-			`mutation ${operationName} ($input:CreatePostInput!){
-				createPost(input:$input){
-				  post {
-					id
-					title
-				  }
-				}
-			  }`,
-			`subscription ${operationName} { postPublished { post { id, title, date } } }`,
-			`query ${operationName}{posts{nodes{id,title,date}}}
-			mutation ${operationName}_1 ($input:CreatePostInput!){
-				createPost(input:$input){
-				  post {
-					id
-					title
-				  }
-				}
-			  }`,
-			`query ${operationName}{posts{nodes{id,title,date}}}
-			  mutation ${operationName}_1 ($input:CreatePostInput!){
-				createPost(input:$input){
-				  post {
-					id
-					title
-				  }
-				}
-			  }
-			  query ${operationName}_2{posts{nodes{id,title,date}}}
-			  mutation ${operationName}_3 ($input:CreatePostInput!){
-				createPost(input:$input){
-				  post {
-					id
-					title
-				  }
-				}
-			  }`,
-		];
+		const NEW_QUERY_DOCUMENT = `# Welcome to the WPGraphiQL Document Editor.
+# Enter your graphQL query here.
+{posts{nodes{id}}}`;
 
 		const newDocument = {
 			id: uuid(),
 			__typename: "TemporaryGraphQLDocument",
-			title: `${operationName}`,
-			query: operations[Math.floor(Math.random() * operations.length)], // get a random operation
+			title: `New Query`,
+			query: NEW_QUERY_DOCUMENT, // get a random operation
 			isDirty: true,
 		};
 		const newOpenTabs = [...openTabs, newDocument];
@@ -220,6 +184,34 @@ export const DocumentEditorContextProvider = ({ children }) => {
 		const newOpenTabs = openTabs.filter((tab) => tab.id !== documentId);
 		console.log({ newOpenTabs });
 		setOpenTabs(newOpenTabs);
+	};
+
+	const editCurrentDocument = (changes) => {
+		const currentDocument = getCurrentDocument();
+
+		const updates = { ...changes, isDirty: true };
+		const newDocument = {
+			...currentDocument,
+			...updates,
+		};
+
+		console.log({
+			markDocumentDirty: {
+				currentDocument,
+				newDocument,
+			},
+		});
+
+		const newTabs = [...openTabs];
+
+		console.log({ newTabs });
+
+		const currentTabIndex = openTabs.findIndex(
+			(tab) => tab.id === currentDocument.id
+		);
+
+		newTabs[currentTabIndex] = newDocument;
+		setOpenTabs(newTabs);
 	};
 
 	const saveDocument = async (documentId = null) => {
@@ -309,6 +301,61 @@ export const DocumentEditorContextProvider = ({ children }) => {
 
 			// else, we need to update the document on the server
 		} else {
+			const updated = await updateDocumentOnServer({
+				variables: {
+					input: {
+						id: documentToSave.id,
+						title: documentToSave.title,
+						content: documentToSave.query,
+					},
+				},
+				refetchQueries: [
+					GET_DOCUMENTS,
+					{ variables: { first: 20, after: null } },
+				],
+				onCompleted: (response) => {
+					console.log({ onCompleted: response });
+
+					// Replace active document with the one that was just created
+					const currentDocument = getCurrentDocument();
+					const newDocument = {
+						...response.updateGraphqlDocument.graphqlDocument,
+						isDirty: false,
+					};
+
+					// Find index of current tab
+					const currentTabIndex = openTabs.findIndex(
+						(tab) => tab.id === currentDocument.id
+					);
+
+					console.log({ currentTabIndex });
+
+					const newTabs = [...openTabs];
+
+					console.log({ newTabs });
+
+					newTabs[currentTabIndex] = newDocument;
+					setOpenTabs(newTabs);
+
+					// if the document to close is the active tab, set the active tab to the next tab, or the previous tab if there is no next tab, or the first tab if its the only option
+					if (documentId === activeDocumentId) {
+						const newactiveDocumentId = openTabs[indexToClose + 1]
+							?.id
+							? openTabs[indexToClose + 1]?.id
+							: openTabs[indexToClose - 1]?.id
+							? openTabs[indexToClose - 1]?.id
+							: 0;
+						setActiveDocumentId(newactiveDocumentId);
+					}
+
+					return true;
+				},
+				onError: (error) => {
+					// alert( `Error creating document: ${error.message}` );
+					console.error(error);
+					return false;
+				},
+			});
 		}
 
 		return false;
@@ -505,6 +552,7 @@ export const DocumentEditorContextProvider = ({ children }) => {
 		activeDocumentId,
 		setActiveDocumentId,
 		openTabs,
+		editCurrentDocument,
 	};
 
 	return (

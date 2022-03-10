@@ -1,5 +1,4 @@
 .DS_Store
-.env
 .log
 .vscode
 c3.php
@@ -13,3 +12,12 @@ vendor
 *.tar.gz
 *.zip
 .idea
+
+# Used for setting local environment variables when testing
+.env
+
+# the built files for the JavaScript portions of the plugin (GraphiQL, etc)
+build
+
+# output from e2e tests
+artifacts

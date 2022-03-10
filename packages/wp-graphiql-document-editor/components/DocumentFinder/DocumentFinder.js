@@ -169,11 +169,11 @@ const DocumentFinder = (props) => {
 																backgroundColor:
 																	operationType ===
 																	"subscription"
-																		? "#87d068"
+																		? "#1890ff"
 																		: operationType ===
 																		  "mutation"
 																		? "#f56a00"
-																		: "#1890ff",
+																		: "#87d068",
 															}}
 															shape="circle"
 														>

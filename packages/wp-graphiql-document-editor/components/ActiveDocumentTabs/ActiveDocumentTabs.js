@@ -1,9 +1,14 @@
-import { Tabs, Empty, Button } from "antd";
-import { FileAddOutlined } from "@ant-design/icons";
+import { Tabs, Empty, Button, Space, Input, PageHeader } from "antd";
+import {
+	FileAddOutlined,
+	SaveOutlined,
+	EditOutlined,
+	CheckOutlined,
+} from "@ant-design/icons";
 import { useDocumentEditorContext } from "../../context/DocumentEditorContext";
 import TabPaneTitle from "./components/TabPaneTitle/TabPaneTitle";
 import styled from "styled-components";
-import { QueryEditor } from "graphiql/dist/components/QueryEditor";
+import DocumentTabPane from "./components/DocumentTabPane/DocumentTabPane";
 
 const { useAppContext } = window.wpGraphiQL;
 
@@ -87,43 +92,11 @@ const ActiveDocumentTabs = () => {
 				{openTabs.map((tab, index) => {
 					return (
 						<TabPane
-							tab={<TabPaneTitle document={tab} />}
+							tab={<TabPaneTitle graphqlDocument={tab} />}
 							key={tab?.id ?? index}
 							closable={true}
 						>
-							<div
-								style={{
-									width: `100%`,
-									padding: `10px`,
-									background: `#f7f7f7`,
-								}}
-							>
-								<QueryEditor
-									schema={schema}
-									// validationRules={this.props.validationRules}
-									value={tab.query ?? null}
-									// onEdit={this.handleEditQuery}
-									// onHintInformationRender={this.handleHintInformationRender}
-									// onClickReference={this.handleClickReference}
-									// onCopyQuery={this.handleCopyQuery}
-									// onPrettifyQuery={this.handlePrettifyQuery}
-									// onMergeQuery={this.handleMergeQuery}
-									// onRunQuery={this.handleEditorRunQuery}
-									// editorTheme={this.props.editorTheme}
-									readOnly={true}
-									// externalFragments={this.props.externalFragments}
-								/>
-								{/* <pre>{JSON.stringify(tab, null, 2)}</pre> */}
-								{/* <Tabs type="card">
-									<TabPane
-										tab={<h4>Headers</h4>}
-										key={'headers'}
-										closable={false}
-									>
-										<h2>Goo</h2>
-									</TabPane>
-								</Tabs> */}
-							</div>
+							<DocumentTabPane graphqlDocument={tab} />
 						</TabPane>
 					);
 				})}

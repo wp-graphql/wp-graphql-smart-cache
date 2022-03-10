@@ -31,8 +31,8 @@ import { MoreOutlined } from "@ant-design/icons";
 //     )
 // }
 
-const TabPaneTitle = ({ document }) => {
-	const { isDirty } = document;
+const TabPaneTitle = ({ graphqlDocument }) => {
+	const { isDirty } = graphqlDocument;
 
 	return (
 		<>
@@ -40,7 +40,7 @@ const TabPaneTitle = ({ document }) => {
 				status={isDirty ? "warning" : "success"}
 				text={
 					<Space>
-						<span>{document.title}</span>
+						<span>{graphqlDocument.title}</span>
 					</Space>
 				}
 			/>

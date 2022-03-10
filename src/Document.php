@@ -199,14 +199,14 @@ class Document {
 				$existing_post = Utils::getPostByTermName( $normalized_hash, self::TYPE_NAME, self::ALIAS_TAXONOMY_NAME );
 				if ( $existing_post && $existing_post->ID !== $post['ID'] ) {
 					// Translators: The placeholder is the existing saved query with matching hash/query-id
-					throw new RequestError( sprintf( __( 'This query has already been associated with another query "%s"', 'wp-graphql-labs' ), $existing_post->post_title ) );
+					throw new RequestError( sprintf( __( 'Duplicate Document. In order to save a GraphQL Document, the document must be unique. Consider updating the Operation Name or using an Alias. This is a Duplicate of Document titled "%s"', 'wp-graphql-labs' ), $existing_post->post_title ) );
 				}
 
 				// Format the query string and save that
 				$data['post_content'] = \GraphQL\Language\Printer::doPrint( $ast );
 			} catch ( SyntaxError $e ) {
 				// Translators: The placeholder is the query string content
-				throw new RequestError( sprintf( __( 'Did not save invalid graphql query string "%s"', 'wp-graphql-labs' ), $post['post_content'] ) );
+				throw new RequestError( sprintf( __( 'The document could not be saved. Invalid Document: "%s"', 'wp-graphql-labs' ), $post['post_content'] ) );
 			}
 		}
 		return $data;
@@ -299,7 +299,7 @@ class Document {
 		$post = Utils::getPostByTermName( $query_id, self::TYPE_NAME, self::ALIAS_TAXONOMY_NAME );
 		if ( $post && $post->post_name !== $normalized_hash ) {
 			// translators: existing query title
-			throw new RequestError( sprintf( __( 'This queryId has already been associated with another query "%s"', 'wp-graphql-labs' ), $post->post_title ) );
+			throw new RequestError( sprintf( __( 'Duplicate Document. In order to save a GraphQL Document, the document must be unique. Consider updating the Operation Name or using an Alias. This is a Duplicate of Document titled "%s"', 'wp-graphql-labs' ), $post->post_title ) );
 		}
 
 		// If the normalized query is associated with a saved document
@@ -332,7 +332,7 @@ class Document {
 			// If the hash for the query string loads a post with a different query string,
 			// This means this hash was previously used as an alias for a query
 			// translators: existing query title
-			throw new RequestError( sprintf( __( 'This query has already been associated with another query "%s"', 'wp-graphql-labs' ), $post->post_title ) );
+			throw new RequestError( sprintf( __( 'Duplicate Document. In order to save a GraphQL Document, the document must be unique. Consider updating the Operation Name or using an Alias. This is a Duplicate of Document titled "%s"', 'wp-graphql-labs' ), $post->post_title ) );
 		} else {
 			$post_id = $post->ID;
 		}

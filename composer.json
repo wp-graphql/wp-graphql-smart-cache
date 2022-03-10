@@ -36,6 +36,9 @@
     ],
     "fix-cs": [
       "php ./vendor/bin/phpcbf"
+    ],
+    "post-install-cmd": [
+      "npm ci && npm run build"
     ]
   },
   "archive": {
