@@ -84,10 +84,13 @@ class Collection extends Query {
 		$request_key = $this->build_key( $request->params->queryId, $request->params->query, $request->params->variables, $request->params->operation );
 
 		// Only store mappings of data parts when it's a GET request, queryId or query string.
+		if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'GET' === $_SERVER['REQUEST_METHOD'] ) {
+			return;
+		}
 		// We don't want POSTs during mutations or nothing on the url. cause it'll purge /graphql*
 		$url = null;
-		if ( 'GET' === $_SERVER['REQUEST_METHOD'] && $_SERVER['REQUEST_URI'] ) {
-			$url = esc_url_raw( $_SERVER['REQUEST_URI'] );
+		if ( ! empty( $_SERVER['REQUEST_URI'] ) ) {
+			$url = esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) );
 		} elseif ( ( $request->params->queryId || $request->params->query ) && $request->app_context->request ) {
 			$url = Settings::graphql_endpoint() . '?' . http_build_query( $request->app_context->request );
 		}
