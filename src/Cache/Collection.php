@@ -82,11 +82,17 @@ class Collection extends Query {
 		$request
 	) {
 		$request_key = $this->build_key( $request->params->queryId, $request->params->query, $request->params->variables, $request->params->operation );
-		// If this is a query and we have a url
-		if ( ( $request->params->queryId || $request->params->query ) && $request->app_context->request ) {
-			// The path this request came in on.
-			$url = Settings::graphql_endpoint() . '?' . http_build_query( $request->app_context->request );
 
+		// Only store mappings of data parts when it's a GET request, queryId or query string.
+		// We don't want POSTs during mutations or nothing on the url. cause it'll purge /graphql*
+		$url = null;
+		if ( 'GET' === $_SERVER['REQUEST_METHOD'] && $_SERVER['REQUEST_URI'] ) {
+			$url = esc_url_raw( $_SERVER['REQUEST_URI'] );
+		} elseif ( ( $request->params->queryId || $request->params->query ) && $request->app_context->request ) {
+			$url = Settings::graphql_endpoint() . '?' . http_build_query( $request->app_context->request );
+		}
+
+		if ( $url ) {
 			// Save the url this query request came in on, so we can purge it later when something changes
 			$url_key = $this->url_key( $request_key );
 			$urls    = $this->get( $url_key );
@@ -118,8 +124,6 @@ class Collection extends Query {
 	/**
 	 * Fires once a post has been saved.
 	 * Purge our saved/cached results data.
-	 *
-	 * @since 1.5.0
 	 *
 	 * @param int     $post_ID Post ID.
 	 * @param WP_Post $post    Post object.
