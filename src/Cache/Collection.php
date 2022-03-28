@@ -83,23 +83,20 @@ class Collection extends Query {
 	) {
 		$request_key = $this->build_key( $request->params->queryId, $request->params->query, $request->params->variables, $request->params->operation );
 
-		// Only store mappings of data parts when it's a GET request, queryId or query string.
-		if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'GET' === $_SERVER['REQUEST_METHOD'] ) {
+		// Only store mappings of data parts when it's a GET request
+		if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'GET' !== $_SERVER['REQUEST_METHOD'] ) {
 			return;
 		}
-		// We don't want POSTs during mutations or nothing on the url. cause it'll purge /graphql*
-		$url = null;
-		if ( ! empty( $_SERVER['REQUEST_URI'] ) ) {
-			$url = esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) );
-		} elseif ( ( $request->params->queryId || $request->params->query ) && $request->app_context->request ) {
-			$url = Settings::graphql_endpoint() . '?' . http_build_query( $request->app_context->request );
-		}
 
-		if ( $url ) {
+		// We don't want POSTs during mutations or nothing on the url. cause it'll purge /graphql*
+		if ( ! empty( $_SERVER['REQUEST_URI'] ) ) {
+			//phpcs:ignore
+			$url_to_save = wp_unslash( $_SERVER['REQUEST_URI'] );
+
 			// Save the url this query request came in on, so we can purge it later when something changes
 			$url_key = $this->url_key( $request_key );
 			$urls    = $this->get( $url_key );
-			$urls[]  = $url;
+			$urls[]  = $url_to_save;
 			$urls    = array_unique( $urls );
 			//phpcs:ignore
 			error_log( "Graphql Save Urls: $request_key " . print_r( $urls, 1 ) );

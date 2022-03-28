@@ -78,6 +78,12 @@ class Results extends Query {
 			return;
 		}
 
+		// Store mappings of data parts when it's a GET request
+		// TODO: all results from POST requests, but only queries.
+		if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'GET' !== $_SERVER['REQUEST_METHOD'] ) {
+			return;
+		}
+
 		$key = $this->the_results_key( $request->params->queryId, $request->params->query, $request->params->variables, $request->params->operation );
 		if ( ! $key ) {
 			return;
