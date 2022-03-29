@@ -83,13 +83,14 @@ class Collection extends Query {
 	) {
 		$request_key = $this->build_key( $request->params->queryId, $request->params->query, $request->params->variables, $request->params->operation );
 
-		// Only store mappings of data parts when it's a GET request
-		if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'GET' !== $_SERVER['REQUEST_METHOD'] ) {
-			return;
+		// Only store mappings of urls when it's a GET request
+		$map_the_url = false;
+		if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'GET' === $_SERVER['REQUEST_METHOD'] ) {
+			$map_the_url = true;
 		}
 
 		// We don't want POSTs during mutations or nothing on the url. cause it'll purge /graphql*
-		if ( ! empty( $_SERVER['REQUEST_URI'] ) ) {
+		if ( $map_the_url && ! empty( $_SERVER['REQUEST_URI'] ) ) {
 			//phpcs:ignore
 			$url_to_save = wp_unslash( $_SERVER['REQUEST_URI'] );
 
