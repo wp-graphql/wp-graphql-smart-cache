@@ -14,7 +14,7 @@ class Transient {
 	 * Get the data from cache/transient based on the provided key
 	 *
 	 * @param string unique id for this request
-	 * @return mixed|array|object|null  The graphql response or null if not found
+	 * @return mixed|array|object|null  The graphql response or false if not found
 	 */
 	public function get( $key ) {
 		return get_transient( $this->group_name . '_' . $key );

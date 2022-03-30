@@ -1,7 +1,7 @@
 <?php
 /**
- * For a GraphQL query, look for the results in the WP transient cache and return that.
- * If not cached, when return results to client, save results to transient cache for future requests.
+ * When processing a GraphQL query, collect nodes based on the query and url they are part of.
+ * When content changes for nodes, invalidate and trigger actions that allow caches to be invalidated for nodes, queries, urls.
  */
 
 namespace WPGraphQL\Labs\Cache;
@@ -19,7 +19,7 @@ class Collection extends Query {
 	public function init() {
 		add_action( 'graphql_return_response', [ $this, 'save_query_mapping_cb' ], 10, 7 );
 		add_filter( 'pre_graphql_execute_request', [ $this, 'before_executing_query_cb' ], 10, 2 );
-		add_filter( 'graphql_dataloader_get_model', [ $this, 'data_loaded_process_cb' ], 10, 4 );
+		add_filter( 'graphql_dataloader_get_model', [ $this, 'data_loaded_process_cb' ], 10, 1 );
 
 		add_action( 'graphql_after_resolve_field', [ $this, 'during_query_resolve_field' ], 10, 6 );
 
@@ -43,7 +43,7 @@ class Collection extends Query {
 	 * @param mixed              $key   The Key that was used to load the entry
 	 * @param AbstractDataLoader $this  The AbstractDataLoader Instance
 	 */
-	public function data_loaded_process_cb( $model, $entry, $key, $data_loader ) {
+	public function data_loaded_process_cb( $model ) {
 		if ( $model->id ) {
 			$this->runtime_nodes[] = $model->id;
 		}
@@ -51,7 +51,7 @@ class Collection extends Query {
 	}
 
 	/**
-	 * Fire an action AFTER the field resolves
+	 * An action after the field resolves
 	 *
 	 * @param mixed           $source    The source passed down the Resolve Tree
 	 * @param array           $args      The args for the field
