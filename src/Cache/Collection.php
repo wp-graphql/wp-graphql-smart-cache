@@ -14,11 +14,17 @@ class Collection extends Query {
 	// Nodes that are part of the current/in-progress/excuting query
 	public $nodes = [];
 
+	public $is_query;
+
 	public function init() {
 		add_action( 'graphql_return_response', [ $this, 'save_query_mapping_cb' ], 10, 7 );
-		add_action( 'wp_insert_post', [ $this, 'on_post_insert' ], 10, 2 );
 		add_filter( 'pre_graphql_execute_request', [ $this, 'before_executing_query_cb' ], 10, 2 );
 		add_filter( 'graphql_dataloader_get_model', [ $this, 'data_loaded_process_cb' ], 10, 4 );
+
+		add_action( 'graphql_after_resolve_field', [ $this, 'during_query_resolve_field' ], 10, 6 );
+
+		add_action( 'wp_insert_post', [ $this, 'on_post_insert' ], 10, 2 );
+		add_action( 'insert_user_meta', [ $this, 'on_user_insert' ], 10, 2 );
 
 		parent::init();
 	}
@@ -45,21 +51,54 @@ class Collection extends Query {
 	}
 
 	/**
-	 * Unique identifier for this request is normalized query string, operation and variables
+	 * Fire an action AFTER the field resolves
 	 *
-	 * @param string $query_id queryId from the graphql query request
-	 * @param string $query query string
-	 * @param array $variables Variables sent with request or null
-	 * @param string $operation Name of operation if specified on the request or null
-	 *
-	 * @return string|false unique id for this request or false if query not provided
+	 * @param mixed           $source    The source passed down the Resolve Tree
+	 * @param array           $args      The args for the field
+	 * @param AppContext      $context   The AppContext passed down the ResolveTree
+	 * @param ResolveInfo     $info      The ResolveInfo passed down the ResolveTree
+	 * @param string          $type_name The name of the type the fields belong to
 	 */
-	public function node_key( $type ) {
-		return 'node:' . $type;
+	public function during_query_resolve_field( $source, $args, $context, $info, $field_resolver, $type_name ) {
+		// If at any point while processing fields and it shows this request is a query, track that.
+		if ( 'RootQuery' === $type_name ) {
+			$this->is_query = true;
+		}
 	}
 
+	/**
+	 * Unique identifier for this request for use in the collection map
+	 *
+	 * @param string $request_key Id for the node
+	 *
+	 * @return string unique id for this request
+	 */
+	public function node_key( $request_key ) {
+		return 'node:' . $request_key;
+	}
+
+	/**
+	 * Unique identifier for this request for use in the collection map
+	 *
+	 * @param string $request_key Id for the node
+	 *
+	 * @return string unique id for this request
+	 */
 	public function url_key( $request_key ) {
-		return 'urls:' . $request_key;
+		return 'url:' . $request_key;
+	}
+
+	/**
+	 * @param string $key The unique identfier of the data we store
+	 * @param mixed $content to add
+	 * @return array The unique list of content stored
+	 */
+	public function store_content( $key, $content ) {
+		$data   = $this->get( $key );
+		$data[] = $content;
+		$data   = array_unique( $data );
+		$this->save( $key, $data );
+		return $data;
 	}
 
 	/**
@@ -95,25 +134,15 @@ class Collection extends Query {
 			$url_to_save = wp_unslash( $_SERVER['REQUEST_URI'] );
 
 			// Save the url this query request came in on, so we can purge it later when something changes
-			$url_key = $this->url_key( $request_key );
-			$urls    = $this->get( $url_key );
-			$urls[]  = $url_to_save;
-			$urls    = array_unique( $urls );
+			$urls = $this->store_content( $this->url_key( $request_key ), $url_to_save );
+
 			//phpcs:ignore
 			error_log( "Graphql Save Urls: $request_key " . print_r( $urls, 1 ) );
-			$this->save( $url_key, $urls );
 		}
 
-		// Associate the node type 'post' with this query for look up later
-		//$node_key = $this->node_key( 'post' );
-
-		// Save the node ids for this query.  When one of these change in the future, we can purge the query
-		foreach ( $this->runtime_nodes as $id ) {
-			$key    = $this->node_key( $id );
-			$data   = $this->get( $key );
-			$data[] = $request_key;
-			$data   = array_unique( $data );
-			$this->save( $key, $data );
+		// Save/add the node ids for this query.  When one of these change in the future, we can purge the query
+		foreach ( $this->runtime_nodes as $node_id ) {
+			$this->store_content( $this->node_key( $node_id ), $request_key );
 		}
 
 		if ( is_array( $this->runtime_nodes ) ) {
@@ -142,9 +171,25 @@ class Collection extends Query {
 
 		// Delete the cached results associated with this post/key
 		if ( is_array( $nodes ) ) {
+			do_action( 'wpgraphql_cache_purge_nodes', 'post', $key, $nodes );
+
 			foreach ( $nodes as $request_key ) {
 				$this->delete( $request_key );
 			}
+			//phpcs:ignore
+			error_log( 'Graphql delete nodes ' . print_r( $nodes,1 ) );
 		}
+	}
+
+	/**
+	 *
+	 * @param array $meta
+	 * @param WP_User $user   User object.
+	 */
+	public function on_user_insert( $meta, $user ) {
+		$id = Relay::toGlobalId( 'user', (string) $user->ID );
+
+		// Look up user nodes in the mapping
+		return $meta;
 	}
 }

@@ -7,6 +7,8 @@
 namespace WPGraphQL\Labs\Cache;
 
 use WPGraphQL\Labs\Document;
+use WPGraphQL\Labs\Storage\Transient;
+use WPGraphQL\Labs\Storage\WpCache;
 
 class Query {
 
@@ -19,7 +21,7 @@ class Query {
 		if ( ! self::$storage ) {
 			self::$storage = apply_filters(
 				'graphql_cache_storage_object', //phpcs:ignore
-				wp_using_ext_object_cache() ? new WpCache() : new Transient()
+				wp_using_ext_object_cache() ? new WpCache( self::GROUP_NAME ) : new Transient( self::GROUP_NAME )
 			);
 		}
 	}
