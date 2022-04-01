@@ -24,7 +24,7 @@ class Collection extends Query {
 		add_action( 'graphql_after_resolve_field', [ $this, 'during_query_resolve_field' ], 10, 6 );
 
 		add_action( 'wp_insert_post', [ $this, 'on_post_insert' ], 10, 2 );
-		add_action( 'insert_user_meta', [ $this, 'on_user_insert' ], 10, 2 );
+		add_filter( 'insert_user_meta', [ $this, 'on_user_insert' ], 10, 2 );
 
 		parent::init();
 	}
@@ -89,8 +89,8 @@ class Collection extends Query {
 	}
 
 	/**
-	 * @param string $key The unique identfier of the data we store
-	 * @param mixed $content to add
+	 * @param string $key The identifier to the list
+	 * @param string $content to add
 	 * @return array The unique list of content stored
 	 */
 	public function store_content( $key, $content ) {
@@ -99,6 +99,15 @@ class Collection extends Query {
 		$data   = array_unique( $data );
 		$this->save( $key, $data );
 		return $data;
+	}
+
+	/**
+	 * @param $id The content node identifier
+	 * @return array The unique list of content stored
+	 */
+	public function retrieve_nodes( $id ) {
+		$key = $this->node_key( $id );
+		return $this->get( $key );
 	}
 
 	/**
@@ -136,8 +145,8 @@ class Collection extends Query {
 			// Save the url this query request came in on, so we can purge it later when something changes
 			$urls = $this->store_content( $this->url_key( $request_key ), $url_to_save );
 
-			//phpcs:ignore
-			error_log( "Graphql Save Urls: $request_key " . print_r( $urls, 1 ) );
+			//phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
+			graphql_debug( "Graphql Save Urls: $request_key " . print_r( $urls, 1 ) );
 		}
 
 		// Save/add the node ids for this query.  When one of these change in the future, we can purge the query
@@ -146,8 +155,8 @@ class Collection extends Query {
 		}
 
 		if ( is_array( $this->runtime_nodes ) ) {
-			//phpcs:ignore
-			error_log( 'Graphql Save Nodes: ' . print_r( $this->runtime_nodes, 1 ) );
+			//phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
+			graphql_debug( 'Graphql Save Nodes: ' . print_r( $this->runtime_nodes, 1 ) );
 		}
 	}
 
@@ -166,18 +175,11 @@ class Collection extends Query {
 		// When any post changes, look up graphql queries previously queried containing post resources and purge those
 		// Look up the specific post/node/resource to purge vs $this->purge_all();
 		$id    = Relay::toGlobalId( 'post', $post_id );
-		$key   = $this->node_key( $id );
-		$nodes = $this->get( $key );
+		$nodes = $this->retrieve_nodes( $id );
 
 		// Delete the cached results associated with this post/key
 		if ( is_array( $nodes ) ) {
-			do_action( 'wpgraphql_cache_purge_nodes', 'post', $key, $nodes );
-
-			foreach ( $nodes as $request_key ) {
-				$this->delete( $request_key );
-			}
-			//phpcs:ignore
-			error_log( 'Graphql delete nodes ' . print_r( $nodes,1 ) );
+			do_action( 'wpgraphql_cache_purge_nodes', 'post', $this->node_key( $id ), $nodes );
 		}
 	}
 
@@ -187,9 +189,13 @@ class Collection extends Query {
 	 * @param WP_User $user   User object.
 	 */
 	public function on_user_insert( $meta, $user ) {
-		$id = Relay::toGlobalId( 'user', (string) $user->ID );
+		$id    = Relay::toGlobalId( 'user', (string) $user->ID );
+		$nodes = $this->retrieve_nodes( $id );
 
-		// Look up user nodes in the mapping
+		// Delete the cached results associated with this key
+		if ( is_array( $nodes ) ) {
+			do_action( 'wpgraphql_cache_purge_nodes', 'user', $this->node_key( $id ), $nodes );
+		}
 		return $meta;
 	}
 }
