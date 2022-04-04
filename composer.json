@@ -39,19 +39,20 @@
     ]
   },
   "archive": {
-        "exclude": [
-          "*.yml",
-          "*.zip",
-          ".env*",
-          "docker/",
-          "!vendor/",
-          "tests/",
-          "!.wordpress-org/"
-        ]
-      },
-    "config": {
-        "allow-plugins": {
-            "dealerdirect/phpcodesniffer-composer-installer": true
-        }
-    }
+    "exclude": [
+      "*.yml",
+      "*.zip",
+      ".env*",
+      "docker/",
+      "!vendor/",
+      "tests/",
+      "!.wordpress-org/",
+      "wp-content/"
+    ]
+  },
+  "config": {
+      "allow-plugins": {
+          "dealerdirect/phpcodesniffer-composer-installer": true
+      }
+  }
 }
