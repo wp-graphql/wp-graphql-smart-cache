@@ -73,7 +73,7 @@ class Collection extends Query {
 	 *
 	 * @return string unique id for this request
 	 */
-	public function node_key( $request_key ) {
+	public function nodes_key( $request_key ) {
 		return 'node:' . $request_key;
 	}
 
@@ -84,7 +84,7 @@ class Collection extends Query {
 	 *
 	 * @return string unique id for this request
 	 */
-	public function url_key( $request_key ) {
+	public function urls_key( $request_key ) {
 		return 'url:' . $request_key;
 	}
 
@@ -106,7 +106,7 @@ class Collection extends Query {
 	 * @return array The unique list of content stored
 	 */
 	public function retrieve_nodes( $id ) {
-		$key = $this->node_key( $id );
+		$key = $this->nodes_key( $id );
 		return $this->get( $key );
 	}
 
@@ -143,7 +143,7 @@ class Collection extends Query {
 			$url_to_save = wp_unslash( $_SERVER['REQUEST_URI'] );
 
 			// Save the url this query request came in on, so we can purge it later when something changes
-			$urls = $this->store_content( $this->url_key( $request_key ), $url_to_save );
+			$urls = $this->store_content( $this->urls_key( $request_key ), $url_to_save );
 
 			//phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
 			graphql_debug( "Graphql Save Urls: $request_key " . print_r( $urls, 1 ) );
@@ -151,7 +151,7 @@ class Collection extends Query {
 
 		// Save/add the node ids for this query.  When one of these change in the future, we can purge the query
 		foreach ( $this->runtime_nodes as $node_id ) {
-			$this->store_content( $this->node_key( $node_id ), $request_key );
+			$this->store_content( $this->nodes_key( $node_id ), $request_key );
 		}
 
 		if ( is_array( $this->runtime_nodes ) ) {
@@ -179,7 +179,7 @@ class Collection extends Query {
 
 		// Delete the cached results associated with this post/key
 		if ( is_array( $nodes ) ) {
-			do_action( 'wpgraphql_cache_purge_nodes', 'post', $this->node_key( $id ), $nodes );
+			do_action( 'wpgraphql_cache_purge_nodes', 'post', $this->nodes_key( $id ), $nodes );
 		}
 	}
 
@@ -194,7 +194,7 @@ class Collection extends Query {
 
 		// Delete the cached results associated with this key
 		if ( is_array( $nodes ) ) {
-			do_action( 'wpgraphql_cache_purge_nodes', 'user', $this->node_key( $id ), $nodes );
+			do_action( 'wpgraphql_cache_purge_nodes', 'user', $this->nodes_key( $id ), $nodes );
 		}
 		return $meta;
 	}

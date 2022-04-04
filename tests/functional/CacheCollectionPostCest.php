@@ -63,7 +63,7 @@ class CacheCollectionPostCest {
 
 	}
 
-	public function queryAuthorChangeTest( FunctionalTester $I ) {
+	public function queryContentAuthorTest( FunctionalTester $I ) {
 		$I->wantTo( 'Execute a graphql query and verify author nodes are in memory for my url' );
 
 		$userId = $I->haveUserInDatabase(
@@ -87,9 +87,7 @@ class CacheCollectionPostCest {
 		] );
 
 		$I->sendGet( 'graphql', [ 'query' => '{ posts { nodes { id title authorId author { node { firstName lastName } } } } }' ] );
-		codecept_debug( $I->grabResponse() );
-		$author = $I->grabDataFromResponseByJsonPath("$.data.posts.nodes[*].author");
-		codecept_debug( $author );
+
 		$I->seeResponseContainsJson( [
 			'data' => [
 				'posts' => [
@@ -119,7 +117,6 @@ class CacheCollectionPostCest {
 		// Example '_transient_gql_cache_url:10756d547c7be4686f65c2980cf4b3be4936c2b0c95eb6bdcf0a4668fc5ce5b3';
 		$transient_name = "_transient_gql_cache_url:$query_key";
 		$urls = unserialize( $I->grabFromDatabase( 'wp_options', 'option_value', [ 'option_name' => $transient_name ] ) );
-		codecept_debug( $urls );
 		$url = $urls[0];
 		codecept_debug( $url );
 
@@ -129,5 +126,6 @@ class CacheCollectionPostCest {
 
 		// clean up
 		$I->dontHavePostInDatabase( ['post_name' => 'foo-slug'] );
+		$I->dontHaveUserInDatabase( 'tester' );
 	}
 }
