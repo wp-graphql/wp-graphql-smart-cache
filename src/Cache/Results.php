@@ -15,6 +15,7 @@ class Results extends Query {
 	public function init() {
 		add_filter( 'pre_graphql_execute_request', [ $this, 'get_query_results_from_cache_cb' ], 10, 2 );
 		add_action( 'graphql_return_response', [ $this, 'save_query_results_to_cache_cb' ], 10, 7 );
+		add_action( 'wpgraphql_cache_purge_nodes', [ $this, 'purge_nodes_cb' ], 10, 3 );
 
 		parent::init();
 	}
@@ -105,5 +106,18 @@ class Results extends Query {
 		}
 
 		return parent::purge_all();
+	}
+
+	/**
+	 * When an item changed and this callback is triggered to delete results we have cached for that list of nodes
+	 * Related to the data type that changed.
+	 */
+	public function purge_nodes_cb( $type, $id, $nodes ) {
+		foreach ( $nodes as $request_key ) {
+			$this->delete( $request_key );
+		}
+
+		//phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
+		graphql_debug( 'Graphql delete nodes ' . print_r( $nodes, 1 ) );
 	}
 }

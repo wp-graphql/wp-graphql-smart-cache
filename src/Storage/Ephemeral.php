@@ -1,17 +1,26 @@
 <?php
+/**
+ * Nothing fancy here. Use in memory array to 'store' some data.
+ * Makes a good test class.
+ */
+namespace WPGraphQL\Labs\Storage;
 
-namespace WPGraphQL\Labs\Cache;
+class Ephemeral {
 
-class WpCache {
+	public $data;
+
+	public function __construct( $group_name ) {
+		$this->data = [];
+	}
 
 	/**
 	 * Get the data from cache/transient based on the provided key
 	 *
 	 * @param string unique id for this request
-	 * @return mixed|array|object|null  The graphql response or null if not found
+	 * @return mixed|array|object|null  The graphql response or false if not found
 	 */
 	public function get( $key ) {
-		return wp_cache_get( $key, Query::GROUP_NAME );
+		return array_key_exists( $key, $this->data ) ? $this->data[ $key ] : false;
 	}
 
 	/**
@@ -22,21 +31,27 @@ class WpCache {
 	 * @return bool False if value was not set and true if value was set.
 	 */
 	public function set( $key, $data, $expire ) {
-		return wp_cache_set( $key, $data, Query::GROUP_NAME, $expire );
+		$this->data[ $key ] = is_array( $data ) ? $data : $data->toArray();
+		return true;
 	}
 
 	/**
+	 * Searches the database for all graphql transients matching our prefix
+	 *
 	 * @return bool True on success, false on failure.
 	 */
 	public function purge_all() {
-		return wp_cache_flush();
+		$this->data = [];
+		return true;
 	}
 
 	/**
 	 * @return bool True on successful removal, false on failure.
 	 */
 	public function delete( $key ) {
-		return wp_cache_delete( $key, Query::GROUP_NAME );
+		$ret = isset( $this->data[ $key ] );
+		unset( $this->data[ $key ] );
+		return $ret;
 	}
 
 }
