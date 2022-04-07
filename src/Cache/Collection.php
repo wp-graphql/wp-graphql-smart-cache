@@ -23,8 +23,12 @@ class Collection extends Query {
 
 		add_action( 'graphql_after_resolve_field', [ $this, 'during_query_resolve_field' ], 10, 6 );
 
-		add_action( 'wp_insert_post', [ $this, 'on_post_insert' ], 10, 2 );
-		add_filter( 'insert_user_meta', [ $this, 'on_user_insert' ], 10, 2 );
+		// post
+		add_action( 'wp_insert_post', [ $this, 'on_post_change_cb' ], 10, 2 );
+		// user/author
+		add_filter( 'insert_user_meta', [ $this, 'on_user_change_cb' ], 10, 3 );
+		// meta For acf, which calls WP function update_metadata
+		add_action( 'updated_postmeta', [ $this, 'on_postmeta_change_cb' ], 10, 4 );
 
 		parent::init();
 	}
@@ -111,6 +115,15 @@ class Collection extends Query {
 	}
 
 	/**
+	 * @param $id The content node identifier
+	 * @return array The unique list of content stored
+	 */
+	public function retrieve_urls( $id ) {
+		$key = $this->urls_key( $id );
+		return $this->get( $key );
+	}
+
+	/**
 	 * When a query response is being returned to the client, build map for each item and this query/queryId
 	 * That way we will know what to invalidate on data change.
 	 *
@@ -145,8 +158,8 @@ class Collection extends Query {
 			// Save the url this query request came in on, so we can purge it later when something changes
 			$urls = $this->store_content( $this->urls_key( $request_key ), $url_to_save );
 
-			//phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
-			graphql_debug( "Graphql Save Urls: $request_key " . print_r( $urls, 1 ) );
+			//phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_print_r
+			error_log( "Graphql Save Urls: $request_key " . print_r( $urls, 1 ) );
 		}
 
 		// Save/add the node ids for this query.  When one of these change in the future, we can purge the query
@@ -155,8 +168,8 @@ class Collection extends Query {
 		}
 
 		if ( is_array( $this->runtime_nodes ) ) {
-			//phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
-			graphql_debug( 'Graphql Save Nodes: ' . print_r( $this->runtime_nodes, 1 ) );
+			//phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_print_r
+			error_log( 'Graphql Save Nodes: ' . print_r( $this->runtime_nodes, 1 ) );
 		}
 	}
 
@@ -167,7 +180,7 @@ class Collection extends Query {
 	 * @param int     $post_ID Post ID.
 	 * @param WP_Post $post    Post object.
 	 */
-	public function on_post_insert( $post_id, $post ) {
+	public function on_post_change_cb( $post_id, $post ) {
 		if ( 'post' !== $post->post_type ) {
 			return;
 		}
@@ -187,8 +200,13 @@ class Collection extends Query {
 	 *
 	 * @param array $meta
 	 * @param WP_User $user   User object.
+	 * @param bool    $update Whether the user is being updated rather than created.
 	 */
-	public function on_user_insert( $meta, $user ) {
+	public function on_user_change_cb( $meta, $user, $update ) {
+		if ( false === $update ) {
+			return $meta;
+		}
+
 		$id    = Relay::toGlobalId( 'user', (string) $user->ID );
 		$nodes = $this->retrieve_nodes( $id );
 
@@ -197,5 +215,24 @@ class Collection extends Query {
 			do_action( 'wpgraphql_cache_purge_nodes', 'user', $this->nodes_key( $id ), $nodes );
 		}
 		return $meta;
+	}
+
+	/**
+	 * @param int    $meta_id    ID of updated metadata entry.
+	 * @param int    $object_id  Post ID.
+	 * @param string $meta_key   Metadata key.
+	 * @param mixed  $meta_value Metadata value. This will be a PHP-serialized string representation of the value
+	 *                           if the value is an array, an object, or itself a PHP-serialized string.
+	 */
+	public function on_postmeta_change_cb( $meta_id, $post_id, $meta_key, $meta_value ) {
+		// When any post changes, look up graphql queries previously queried containing post resources and purge those
+		// Look up the specific post/node/resource to purge vs $this->purge_all();
+		$id    = Relay::toGlobalId( 'post', $post_id );
+		$nodes = $this->retrieve_nodes( $id );
+
+		// Delete the cached results associated with this post/key
+		if ( is_array( $nodes ) ) {
+			do_action( 'wpgraphql_cache_purge_nodes', 'post', $this->nodes_key( $id ), $nodes );
+		}
 	}
 }
