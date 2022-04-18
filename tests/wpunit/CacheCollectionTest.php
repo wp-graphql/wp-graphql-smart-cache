@@ -62,4 +62,36 @@ class CacheCollectionTest extends \Codeception\TestCase\WPTestCase {
         $this->assertEquals( 'user', $actual[0] );
         $this->assertEquals( "node:$id", $actual[1] );
     }
+
+    public function testPurgeActionTriggeredOnPostMetaChange() {
+        // Create a post for this test
+        $post_id = self::factory()->post->create( [
+            'title' => 'editor',
+            'content' => 'foo bar biz',
+        ] );
+
+        $id = Relay::toGlobalId( 'post', (string) $post_id );
+        $content = uniqid( 'test-data-' );
+
+        // Fill some data in the collection memory for this post. So when post_meta changes, this should call the action cb.
+        $collection = new Collection();
+        $collection->store_content( "node:$id", $content );
+
+        add_action('wpgraphql_cache_purge_nodes', function ( $type, $id, $nodes ) {
+            set_transient( 'my-post-meta', [ $type, $id, $nodes ] );
+        }, 10, 3 );
+
+        // Add postmeta data for the post.
+        add_metadata( 'post', $post_id, 'custom-meta', 'initial value' );
+
+        // Change the postmeta data for the post. This should trigger the above action callback
+        update_post_meta( $post_id, 'custom-meta', 'updated value' );
+
+        // Verify the action callback happened
+        $actual = get_transient( 'my-post-meta' );
+
+        $this->assertEquals( 'post', $actual[0] );
+        $this->assertEquals( "node:$id", $actual[1] );
+        $this->assertEquals( [ $content ], $actual[2] );
+    }
 }
