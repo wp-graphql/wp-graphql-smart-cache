@@ -16,6 +16,8 @@ class Collection extends Query {
 
 	public $is_query;
 
+	public $connection_names = [];
+
 	public function init() {
 		add_action( 'graphql_return_response', [ $this, 'save_query_mapping_cb' ], 10, 7 );
 		add_filter( 'pre_graphql_execute_request', [ $this, 'before_executing_query_cb' ], 10, 2 );
@@ -24,14 +26,27 @@ class Collection extends Query {
 		add_action( 'graphql_after_resolve_field', [ $this, 'during_query_resolve_field' ], 10, 6 );
 
 		// post
-		add_action( 'wp_insert_post', [ $this, 'on_post_change_cb' ], 10, 2 );
+		add_action( 'wp_insert_post', [ $this, 'on_post_change_cb' ], 10, 3 );
 		// user/author
 		add_filter( 'insert_user_meta', [ $this, 'on_user_change_cb' ], 10, 3 );
 		// meta For acf, which calls WP function update_metadata
-		add_action( 'added_postmeta', [ $this, 'on_postmeta_change_cb' ], 10, 4 );
 		add_action( 'updated_postmeta', [ $this, 'on_postmeta_change_cb' ], 10, 4 );
 
+		add_filter( 'graphql_connection_query', [ $this, 'abstract_connection_query_cb' ], 10, 2 );
+
 		parent::init();
+	}
+
+	// When a query contains a connection which means a query with lists of a type,
+	// not that type and track this url query key for that list type.
+	// Then when certain other actions happen, we can invalidate this type
+	public function abstract_connection_query_cb( $query, $resolver ) {
+		if ( false === $resolver->one_to_one ) {
+			$info = $resolver->getInfo();
+			//phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
+			$this->connection_names[] = $info->fieldName;
+		}
+		return $query;
 	}
 
 	public function before_executing_query_cb( $result, $request ) {
@@ -168,9 +183,17 @@ class Collection extends Query {
 			$this->store_content( $this->nodes_key( $node_id ), $request_key );
 		}
 
+		// For each connection resolver, store the url key
+		if ( is_array( $this->connection_names ) ) {
+			$this->connection_names = array_unique( $this->connection_names );
+			foreach ( $this->connection_names as $connection_name ) {
+				$this->store_content( $connection_name, $request_key );
+			}
+		}
+
 		if ( is_array( $this->runtime_nodes ) ) {
 			//phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_print_r
-			error_log( 'Graphql Save Nodes: ' . print_r( $this->runtime_nodes, 1 ) );
+			error_log( "Graphql Save Nodes: $request_key " . print_r( $this->runtime_nodes, 1 ) );
 		}
 	}
 
@@ -180,8 +203,9 @@ class Collection extends Query {
 	 *
 	 * @param int     $post_ID Post ID.
 	 * @param WP_Post $post    Post object.
+	 * @param bool    $update Whether the post is being updated rather than created.
 	 */
-	public function on_post_change_cb( $post_id, $post ) {
+	public function on_post_change_cb( $post_id, $post, $update ) {
 		if ( 'post' !== $post->post_type ) {
 			return;
 		}
@@ -195,6 +219,14 @@ class Collection extends Query {
 		if ( is_array( $nodes ) ) {
 			do_action( 'wpgraphql_cache_purge_nodes', 'post', $this->nodes_key( $id ), $nodes );
 		}
+
+		// if created, clear any cached connection lists for this type
+		if ( false === $update ) {
+			$posts = $this->get( 'posts' );
+			if ( is_array( $posts ) ) {
+				do_action( 'wpgraphql_cache_purge_nodes', 'post', 'posts', $posts );
+			}
+		}
 	}
 
 	/**
@@ -205,15 +237,16 @@ class Collection extends Query {
 	 */
 	public function on_user_change_cb( $meta, $user, $update ) {
 		if ( false === $update ) {
-			return $meta;
-		}
+			// if created, clear any cached connection lists for this type
+			do_action( 'wpgraphql_cache_purge_nodes', 'user', 'users', [] );
+		} else {
+			$id    = Relay::toGlobalId( 'user', (string) $user->ID );
+			$nodes = $this->retrieve_nodes( $id );
 
-		$id    = Relay::toGlobalId( 'user', (string) $user->ID );
-		$nodes = $this->retrieve_nodes( $id );
-
-		// Delete the cached results associated with this key
-		if ( is_array( $nodes ) ) {
-			do_action( 'wpgraphql_cache_purge_nodes', 'user', $this->nodes_key( $id ), $nodes );
+			// Delete the cached results associated with this key
+			if ( is_array( $nodes ) ) {
+				do_action( 'wpgraphql_cache_purge_nodes', 'user', $this->nodes_key( $id ), $nodes );
+			}
 		}
 		return $meta;
 	}
@@ -228,12 +261,23 @@ class Collection extends Query {
 	public function on_postmeta_change_cb( $meta_id, $post_id, $meta_key, $meta_value ) {
 		// When any post changes, look up graphql queries previously queried containing post resources and purge those
 		// Look up the specific post/node/resource to purge vs $this->purge_all();
-		$id    = Relay::toGlobalId( 'post', $post_id );
-		$nodes = $this->retrieve_nodes( $id );
+		$post_type = get_post_type( $post_id );
+		$id        = Relay::toGlobalId( $post_type, $post_id );
+		$nodes     = $this->retrieve_nodes( $id );
 
 		// Delete the cached results associated with this post/key
 		if ( is_array( $nodes ) ) {
-			do_action( 'wpgraphql_cache_purge_nodes', 'post', $this->nodes_key( $id ), $nodes );
+			do_action( 'wpgraphql_cache_purge_nodes', $post_type, $this->nodes_key( $id ), $nodes );
+		}
+
+		// clear any cached connection lists for this type
+		$post_object     = get_post_type_object( $post_type );
+		$connection_name = $post_object->graphql_plural_name;
+		if ( $connection_name ) {
+			$posts = $this->get( $connection_name );
+			if ( is_array( $posts ) ) {
+				do_action( 'wpgraphql_cache_purge_nodes', $post_type, $connection_name, $posts );
+			}
 		}
 	}
 }
