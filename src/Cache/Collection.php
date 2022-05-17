@@ -44,14 +44,16 @@ class Collection extends Query {
 		if ( false === $resolver->one_to_one ) {
 			$info = $resolver->getInfo();
 			//phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
-			$this->connection_names[] = $info->fieldName;
+			$config                   = $info->returnType->config;
+			$this->connection_names[] = strtolower( $config['connection_config']['toType'] );
 		}
 		return $query;
 	}
 
 	public function before_executing_query_cb( $result, $request ) {
 		// Consider this the start of query execution. Clear if we had a list of saved nodes
-		$this->runtime_nodes = [];
+		$this->runtime_nodes    = [];
+		$this->connection_names = [];
 		return $result;
 	}
 
@@ -222,9 +224,12 @@ class Collection extends Query {
 
 		// if created, clear any cached connection lists for this type
 		if ( false === $update ) {
-			$posts = $this->get( 'posts' );
+			$posts = $this->get( 'post' );
 			if ( is_array( $posts ) ) {
-				do_action( 'wpgraphql_cache_purge_nodes', 'post', 'posts', $posts );
+				$post_type       = get_post_type( $post_id );
+				$post_object     = get_post_type_object( $post_type );
+				$connection_name = strtolower( $post_object->graphql_single_name );
+				do_action( 'wpgraphql_cache_purge_nodes', 'post', $connection_name, $posts );
 			}
 		}
 	}
@@ -272,7 +277,7 @@ class Collection extends Query {
 
 		// clear any cached connection lists for this type
 		$post_object     = get_post_type_object( $post_type );
-		$connection_name = $post_object->graphql_plural_name;
+		$connection_name = strtolower( $post_object->graphql_single_name );
 		if ( $connection_name ) {
 			$posts = $this->get( $connection_name );
 			if ( is_array( $posts ) ) {

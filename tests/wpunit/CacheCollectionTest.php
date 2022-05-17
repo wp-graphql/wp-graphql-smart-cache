@@ -100,7 +100,7 @@ class CacheCollectionTest extends \Codeception\TestCase\WPTestCase {
     public function testPluralNameCollectionInvokedWhenPostCreated() {
         // Put at least empty data in transient. This helps trigger the purge action.
         $collection = new Collection();
-        $collection->store_content( 'posts', 'test-id' );
+        $collection->store_content( 'post', 'test-id' );
         $collection->store_content( 'test-id', 'foo' );
 
         // Verify how the test data is stored
@@ -113,7 +113,7 @@ class CacheCollectionTest extends \Codeception\TestCase\WPTestCase {
         $post_id = self::factory()->post->create();
 
         // Verify the action callback happened
-        $this->assertEquals( 'triggered-posts' , get_transient( 'my-post-meta' ) );
+        $this->assertEquals( 'triggered-post' , get_transient( 'my-post-meta' ) );
 
         // Verify transient stored in the posts type list is removed
         $this->assertFalse( $collection->get( 'test-id' ) );
@@ -134,14 +134,14 @@ class CacheCollectionTest extends \Codeception\TestCase\WPTestCase {
 		graphql([ 'query' => $query ]);
 
         $collection = new Collection();
-        $posts = $collection->get( 'posts' );
+        $posts = $collection->get( 'post' );
         $this->assertNotFalse( $posts[0] );
 
         // Create post should trigger purge action and delete content for the above query
         self::factory()->post->create();
 
         // The posts list still has the hash in its list, but that query's hash should be empty
-        $posts = $collection->get( 'posts' );
+        $posts = $collection->get( 'post' );
         $this->assertFalse( $collection->get( $posts[0] ) );
     }
 }
