@@ -21,20 +21,8 @@ class CacheFromConnectionFieldNameTest extends \Codeception\TestCase\WPTestCase 
 
     // Register new connection type
     // query that specific connection
-    // Verify the collection is cleared
+    // Verify the collection is updated
     public function testRegisterTypeFieldName() {
-
-        // register_graphql_connection([
-        //     'fromType' => 'RootQuery',
-        //     'toType' => 'Post',
-        //     'fromFieldName' => 'postsByFoo',
-        //     'connectionArgs' => \WPGraphQL\Connection\PostObjects::get_connection_args(),
-        //     'resolve' => function( $source, $args, $context, $info ) {
-        //         $resolver = new \WPGraphQL\Data\Connection\PostObjectConnectionResolver( $source, $args, $context, $info, 'post' );
-        //         $resolver->set_query_arg( 'author_name', 'foo' );
-        //         return $resolver->get_connection();
-        //     }
-        // ]);
 
         add_action( 'graphql_register_types', function() {
             // A post connection that returns posts for specific author/user name
