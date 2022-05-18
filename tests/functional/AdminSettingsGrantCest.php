@@ -32,8 +32,9 @@ class AdminSettingsGrantCest
 		$transient_name = '_transient_gql_cache_foo:bar';
 		$I->haveOptionInDatabase( $transient_name, [ 'bizz' => 'bang' ] );
 
+		// verify it's there
 		$transients = unserialize( $I->grabFromDatabase( 'wp_options', 'option_value', [ 'option_name' => $transient_name ] ) );
-		codecept_debug( $transients );
+		$I->assertEquals( 'bang', $transients['bizz'] );
 
 		// change the allow/deny setting in admin
 		$I->loginAsAdmin();
@@ -43,7 +44,6 @@ class AdminSettingsGrantCest
 
 		// verify the transient is gone
 		$transients = unserialize( $I->grabFromDatabase( 'wp_options', 'option_value', [ 'option_name like' => '_transient_gql_cache_%' ] ) );
-		codecept_debug( $transients );
 		$I->assertEmpty( $transients );
 	}
 }
