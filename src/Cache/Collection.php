@@ -41,11 +41,43 @@ class Collection extends Query {
 	// not that type and track this url query key for that list type.
 	// Then when certain other actions happen, we can invalidate this type
 	public function abstract_connection_query_cb( $query, $resolver ) {
+		
 		if ( false === $resolver->one_to_one ) {
 			$info = $resolver->getInfo();
 			//phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
 			$config                   = $info->returnType->config;
-			$this->connection_names[] = strtolower( $config['connection_config']['toType'] );
+
+			// get the Type Object the connection is connected to
+			$to_type = $info->schema->getType( ucfirst( $config['connection_config']['toType'] ));
+
+			// if the connection is connected to an "interface" or "union", we need to determine the possible types
+			// so that we can properly invalidate when events occur of those types
+			// for example, if the connection is connected to the interface "ContentNode"
+			// then we need to invalidate the cache for all types that implement that interface
+			// when a post of a "content node" type is created, updated, deleted, etc.
+			if ( is_a( $to_type, 'GraphQL\Type\Definition\InterfaceType' ) ) {
+				$possible_types = $info->schema->getPossibleTypes( $to_type );
+				
+			} else if ( is_a( $to_type, 'GraphQL\Type\Definition\UnionType' ) ) {
+				$union_types = $to_type->getTypes();
+				foreach( $union_types as $union_type ) {
+					if ( is_a( $union_type, 'GraphQL\Type\Definition\ObjectType' ) ) {
+						$possible_types[] = $union_type->name;
+					}
+				}
+			} else if ( is_a( $to_type, 'GraphQL\Type\Definition\ObjectType' ) ) {
+				$possible_types = [ $to_type ];
+			}
+			
+			// if we have possible types to track, then track them
+			if ( ! empty( $possible_types ) ) {
+				foreach ( $possible_types as $possible_type ) {
+					// set the type as a lowercase string to normalize
+					// when we listen for events to purge against	
+					$this->connection_names[] = strtolower( $possible_type );
+				}
+			}
+		
 		}
 		return $query;
 	}
