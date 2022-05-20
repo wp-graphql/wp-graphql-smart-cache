@@ -8,6 +8,7 @@ namespace WPGraphQL\Labs\Cache;
 
 use Exception;
 use GraphQL\Error\SyntaxError;
+use GraphQL\Executor\ExecutionResult;
 use GraphQL\Language\Parser;
 use GraphQL\Language\Visitor;
 use GraphQL\Type\Definition\InterfaceType;
@@ -16,6 +17,7 @@ use GraphQL\Type\Schema;
 use GraphQL\Utils\TypeInfo;
 use WPGraphQL\Labs\Admin\Settings;
 use GraphQLRelay\Relay;
+use WPGraphQL\Request;
 
 class Collection extends Query {
 
@@ -166,9 +168,9 @@ class Collection extends Query {
 		} catch ( SyntaxError $error ) {
 			return [];
 		}
-		$type_map = [];
+		$type_map  = [];
 		$type_info = new TypeInfo( $schema );
-		$visitor = [
+		$visitor   = [
 			'enter' => function ( $node ) use ( $type_info, &$type_map, $schema ) {
 				$type_info->enter( $node );
 				$type = $type_info->getType();
@@ -197,14 +199,21 @@ class Collection extends Query {
 	}
 
 	/**
-	 * When a query response is being returned to the client, build map for each item and this query/queryId
-	 * That way we will know what to invalidate on data change.
+	 * When a query response is being returned to the client, build map for each item and this
+	 * query/queryId That way we will know what to invalidate on data change.
 	 *
-	 * @param $filtered_response GraphQL\Executor\ExecutionResult
-	 * @param $response GraphQL\Executor\ExecutionResult
-	 * @param $request WPGraphQL\Request
+	 * @param ExecutionResult $filtered_response The response after GraphQL Execution has been
+	 *                                           completed and passed through filters
+	 * @param ExecutionResult $response          The raw, unfiltered response of the GraphQL
+	 *                                           Execution
+	 * @param Schema          $schema            The WPGraphQL Schema
+	 * @param string          $operation         The name of the Operation
+	 * @param string          $query             The query string
+	 * @param array           $variables         The variables for the query
+	 * @param Request The WPGraphQL Request object
 	 *
 	 * @return void
+	 * @throws SyntaxError
 	 */
 	public function save_query_mapping_cb(
 		$filtered_response,
