@@ -6,6 +6,13 @@
 
 namespace WPGraphQL\Labs\Cache;
 
+use GraphQL\Error\SyntaxError;
+use GraphQL\Language\Parser;
+use GraphQL\Language\Visitor;
+use GraphQL\Type\Definition\InterfaceType;
+use GraphQL\Type\Definition\Type;
+use GraphQL\Type\Schema;
+use GraphQL\Utils\TypeInfo;
 use WPGraphQL\Labs\Admin\Settings;
 use GraphQLRelay\Relay;
 
@@ -17,7 +24,7 @@ class Collection extends Query {
 	// whether the query is a query (not a mutation or subscription)
 	public $is_query;
 
-	// Types that are referenced in the query 
+	// Types that are referenced in the query
 	public $type_names = [];
 
 	public function init() {
@@ -34,11 +41,16 @@ class Collection extends Query {
 		// meta For acf, which calls WP function update_metadata
 		add_action( 'updated_postmeta', [ $this, 'on_postmeta_change_cb' ], 10, 4 );
 
-		add_action( 'graphql_before_execute', function( $request ) { 
-			$schema = \WPGraphQL::get_schema();
-			$query = $request->params->query ?? null;
-			$this->get_query_types( $schema, $query ); 
-		}, 10, 1 );
+		add_action(
+			'graphql_before_execute',
+			function ( $request ) {
+				$schema = \WPGraphQL::get_schema();
+				$query  = $request->params->query ?? null;
+				$this->get_query_types( $schema, $query );
+			},
+			10,
+			1
+		);
 
 		parent::init();
 	}
@@ -135,25 +147,27 @@ class Collection extends Query {
 	}
 
 	/**
-	 * Given the Schema and a query string, return a list of GraphQL Types that are being asked for by the query.
+	 * Given the Schema and a query string, return a list of GraphQL Types that are being asked for
+	 * by the query.
 	 *
-	 * @param WPSchema $schema The WPGraphQL Schema
-	 * @param string $query The query string
-	 * @return void
+	 * @param Schema $schema The WPGraphQL Schema
+	 * @param string $query  The query string
+	 *
+	 * @return array
+	 * @throws SyntaxError
 	 */
-	public function get_query_types($schema, $query) {
-		
-		$type_info = new \GraphQL\Utils\TypeInfo( $schema );
-		$ast = \GraphQL\Language\Parser::parse( $query );
-		$type_map = [];
+	public function get_query_types( $schema, $query ) {
+		$type_info = new TypeInfo( $schema );
+		$ast       = Parser::parse( $query );
+		$type_map  = [];
 
 		$visitor = [
-			'enter' => function( $node ) use ( $type_info, &$type_map, $schema ) {
+			'enter' => function ( $node ) use ( $type_info, &$type_map, $schema ) {
 				$type_info->enter( $node );
-				$type = $type_info->getType();
-				$named_type = \GraphQL\Type\Definition\Type::getNamedType( $type );
-				
-				if ( $named_type instanceof \GraphQL\Type\Definition\InterfaceType ) {
+				$type       = $type_info->getType();
+				$named_type = Type::getNamedType( $type );
+
+				if ( $named_type instanceof InterfaceType ) {
 					$possible_types = $schema->getPossibleTypes( $named_type );
 					foreach ( $possible_types as $possible_type ) {
 						$type_map[] = $possible_type;
@@ -162,14 +176,13 @@ class Collection extends Query {
 					$type_map[] = $named_type;
 				}
 			},
-			'leave' => function( $node ) use ( $type_info ) {
+			'leave' => function ( $node ) use ( $type_info ) {
 				$type_info->leave( $node );
 			},
 		];
 
-		\GraphQL\Language\Visitor::visit( $ast, $visitor );
+		Visitor::visit( $ast, $visitor );
 		return $type_map;
-
 	}
 
 	/**
