@@ -6,6 +6,7 @@
 
 namespace WPGraphQL\Labs\Cache;
 
+use Exception;
 use GraphQL\Error\SyntaxError;
 use GraphQL\Language\Parser;
 use GraphQL\Language\Visitor;
@@ -154,26 +155,36 @@ class Collection extends Query {
 	 * @param string $query  The query string
 	 *
 	 * @return array
-	 * @throws SyntaxError
+	 * @throws SyntaxError|Exception
 	 */
 	public function get_query_types( $schema, $query ) {
+		if ( empty( $query ) || $schema === null ) {
+			return [];
+		}
+		try {
+			$ast = Parser::parse( $query );
+		} catch ( SyntaxError $error ) {
+			return [];
+		}
+		$type_map = [];
 		$type_info = new TypeInfo( $schema );
-		$ast       = Parser::parse( $query );
-		$type_map  = [];
-
 		$visitor = [
 			'enter' => function ( $node ) use ( $type_info, &$type_map, $schema ) {
 				$type_info->enter( $node );
-				$type       = $type_info->getType();
+				$type = $type_info->getType();
+				if ( ! $type ) {
+					return;
+				}
+
 				$named_type = Type::getNamedType( $type );
 
 				if ( $named_type instanceof InterfaceType ) {
 					$possible_types = $schema->getPossibleTypes( $named_type );
 					foreach ( $possible_types as $possible_type ) {
-						$type_map[] = $possible_type;
+						$type_map[] = strtolower( $possible_type );
 					}
 				} else {
-					$type_map[] = $named_type;
+					$type_map[] = strtolower( $named_type );
 				}
 			},
 			'leave' => function ( $node ) use ( $type_info ) {
@@ -182,7 +193,7 @@ class Collection extends Query {
 		];
 
 		Visitor::visit( $ast, $visitor );
-		return $type_map;
+		return array_values( array_unique( array_filter( $type_map ) ) );
 	}
 
 	/**
@@ -229,7 +240,11 @@ class Collection extends Query {
 			$this->store_content( $this->nodes_key( $node_id ), $request_key );
 		}
 
-		$this->type_names = $this->get_query_types( $schema, $query );
+		// if the request had a queryId instead of a query,
+		// we need to look up that query first
+		if ( ! empty( $query ) ) {
+			$this->type_names = $this->get_query_types( $schema, $query );
+		}
 
 		// For each connection resolver, store the url key
 		if ( is_array( $this->type_names ) ) {
