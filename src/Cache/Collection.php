@@ -14,9 +14,11 @@ class Collection extends Query {
 	// Nodes that are part of the current/in-progress/excuting query
 	public $nodes = [];
 
+	// whether the query is a query (not a mutation or subscription)
 	public $is_query;
 
-	public $connection_names = [];
+	// Types that are referenced in the query 
+	public $type_names = [];
 
 	public function init() {
 		add_action( 'graphql_return_response', [ $this, 'save_query_mapping_cb' ], 10, 7 );
@@ -32,54 +34,13 @@ class Collection extends Query {
 		// meta For acf, which calls WP function update_metadata
 		add_action( 'updated_postmeta', [ $this, 'on_postmeta_change_cb' ], 10, 4 );
 
-		add_filter( 'graphql_connection_query', [ $this, 'abstract_connection_query_cb' ], 10, 2 );
+		add_action( 'graphql_before_execute', function( $request ) { 
+			$schema = \WPGraphQL::get_schema();
+			$query = $request->params->query ?? null;
+			$this->get_query_types( $schema, $query ); 
+		}, 10, 1 );
 
 		parent::init();
-	}
-
-	// When a query contains a connection which means a query with lists of a type,
-	// not that type and track this url query key for that list type.
-	// Then when certain other actions happen, we can invalidate this type
-	public function abstract_connection_query_cb( $query, $resolver ) {
-		
-		if ( false === $resolver->one_to_one ) {
-			$info = $resolver->getInfo();
-			//phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
-			$config                   = $info->returnType->config;
-
-			// get the Type Object the connection is connected to
-			$to_type = $info->schema->getType( ucfirst( $config['connection_config']['toType'] ));
-
-			// if the connection is connected to an "interface" or "union", we need to determine the possible types
-			// so that we can properly invalidate when events occur of those types
-			// for example, if the connection is connected to the interface "ContentNode"
-			// then we need to invalidate the cache for all types that implement that interface
-			// when a post of a "content node" type is created, updated, deleted, etc.
-			if ( is_a( $to_type, 'GraphQL\Type\Definition\InterfaceType' ) ) {
-				$possible_types = $info->schema->getPossibleTypes( $to_type );
-				
-			} else if ( is_a( $to_type, 'GraphQL\Type\Definition\UnionType' ) ) {
-				$union_types = $to_type->getTypes();
-				foreach( $union_types as $union_type ) {
-					if ( is_a( $union_type, 'GraphQL\Type\Definition\ObjectType' ) ) {
-						$possible_types[] = $union_type->name;
-					}
-				}
-			} else if ( is_a( $to_type, 'GraphQL\Type\Definition\ObjectType' ) ) {
-				$possible_types = [ $to_type ];
-			}
-			
-			// if we have possible types to track, then track them
-			if ( ! empty( $possible_types ) ) {
-				foreach ( $possible_types as $possible_type ) {
-					// set the type as a lowercase string to normalize
-					// when we listen for events to purge against	
-					$this->connection_names[] = strtolower( $possible_type );
-				}
-			}
-		
-		}
-		return $query;
 	}
 
 	public function before_executing_query_cb( $result, $request ) {
@@ -174,6 +135,44 @@ class Collection extends Query {
 	}
 
 	/**
+	 * Given the Schema and a query string, return a list of GraphQL Types that are being asked for by the query.
+	 *
+	 * @param WPSchema $schema The WPGraphQL Schema
+	 * @param string $query The query string
+	 * @return void
+	 */
+	public function get_query_types($schema, $query) {
+		
+		$type_info = new \GraphQL\Utils\TypeInfo( $schema );
+		$ast = \GraphQL\Language\Parser::parse( $query );
+		$type_map = [];
+
+		$visitor = [
+			'enter' => function( $node ) use ( $type_info, &$type_map, $schema ) {
+				$type_info->enter( $node );
+				$type = $type_info->getType();
+				$named_type = \GraphQL\Type\Definition\Type::getNamedType( $type );
+				
+				if ( $named_type instanceof \GraphQL\Type\Definition\InterfaceType ) {
+					$possible_types = $schema->getPossibleTypes( $named_type );
+					foreach ( $possible_types as $possible_type ) {
+						$type_map[] = $possible_type;
+					}
+				} else {
+					$type_map[] = $named_type;
+				}
+			},
+			'leave' => function( $node ) use ( $type_info ) {
+				$type_info->leave( $node );
+			},
+		];
+
+		\GraphQL\Language\Visitor::visit( $ast, $visitor );
+		return $type_map;
+
+	}
+
+	/**
 	 * When a query response is being returned to the client, build map for each item and this query/queryId
 	 * That way we will know what to invalidate on data change.
 	 *
@@ -217,11 +216,13 @@ class Collection extends Query {
 			$this->store_content( $this->nodes_key( $node_id ), $request_key );
 		}
 
+		$this->type_names = $this->get_query_types( $schema, $query );
+
 		// For each connection resolver, store the url key
-		if ( is_array( $this->connection_names ) ) {
-			$this->connection_names = array_unique( $this->connection_names );
-			foreach ( $this->connection_names as $connection_name ) {
-				$this->store_content( $connection_name, $request_key );
+		if ( is_array( $this->type_names ) ) {
+			$this->type_names = array_unique( $this->type_names );
+			foreach ( $this->type_names as $type_name ) {
+				$this->store_content( $type_name, $request_key );
 			}
 		}
 
