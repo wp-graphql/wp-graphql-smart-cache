@@ -12,10 +12,14 @@ use GraphQL\Executor\ExecutionResult;
 use GraphQL\Language\Parser;
 use GraphQL\Language\Visitor;
 use GraphQL\Type\Definition\InterfaceType;
+use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Schema;
 use GraphQL\Utils\TypeInfo;
 use GraphQLRelay\Relay;
+use WP_Post;
+use WPGraphQL\AppContext;
+use WPGraphQL\Data\Loader\AbstractDataLoader;
 use WPGraphQL\Labs\Document;
 use WPGraphQL\Request;
 
@@ -37,10 +41,12 @@ class Collection extends Query {
 
 		add_action( 'graphql_after_resolve_field', [ $this, 'during_query_resolve_field' ], 10, 6 );
 
-		// post
-		add_action( 'wp_insert_post', [ $this, 'on_post_change_cb' ], 10, 3 );
+		// listen for posts to transition statuses so we know when to purge
+		add_action( 'transition_post_status', [ $this, 'on_transition_post_status_cb' ], 10, 3 );
+
 		// user/author
 		add_filter( 'insert_user_meta', [ $this, 'on_user_change_cb' ], 10, 3 );
+
 		// meta For acf, which calls WP function update_metadata
 		add_action( 'updated_postmeta', [ $this, 'on_postmeta_change_cb' ], 10, 4 );
 
@@ -251,6 +257,7 @@ class Collection extends Query {
 			$this->type_names = $this->get_query_types( $schema, $query );
 		}
 
+
 		// For each connection resolver, store the url key
 		if ( is_array( $this->type_names ) ) {
 			$this->type_names = array_unique( $this->type_names );
@@ -269,35 +276,75 @@ class Collection extends Query {
 	 * Fires once a post has been saved.
 	 * Purge our saved/cached results data.
 	 *
-	 * @param int     $post_ID Post ID.
-	 * @param WP_Post $post    Post object.
-	 * @param bool    $update Whether the post is being updated rather than created.
+	 * @param string  $new_status The new status of the post
+	 * @param string  $old_status The old status of the post
+	 * @param WP_Post $post       The post being updated
 	 */
-	public function on_post_change_cb( $post_id, $post, $update ) {
-		if ( 'post' !== $post->post_type ) {
+	public function on_transition_post_status_cb( $new_status, $old_status, WP_Post $post  ) {
+
+		// bail if it's an autosave
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 			return;
 		}
 
-		// When any post changes, look up graphql queries previously queried containing post resources and purge those
-		// Look up the specific post/node/resource to purge vs $this->purge_all();
-		$id    = Relay::toGlobalId( 'post', $post_id );
-		$nodes = $this->retrieve_nodes( $id );
-
-		// Delete the cached results associated with this post/key
-		if ( is_array( $nodes ) ) {
-			do_action( 'wpgraphql_cache_purge_nodes', 'post', $this->nodes_key( $id ), $nodes );
+		// If the post type is not intentionally tracked, ignore it
+		if ( ! in_array( $post->post_type, \WPGraphQL::get_allowed_post_types(), true ) ) {
+			return;
 		}
 
-		// if created, clear any cached connection lists for this type
-		if ( false === $update ) {
-			$posts = $this->get( 'post' );
-			if ( is_array( $posts ) ) {
-				$post_type       = get_post_type( $post_id );
-				$post_object     = get_post_type_object( $post_type );
-				$connection_name = strtolower( $post_object->graphql_single_name );
-				do_action( 'wpgraphql_cache_purge_nodes', 'post', $connection_name, $posts );
-			}
+		$initial_post_statuses = [ 'auto-draft', 'inherit', 'new' ];
+
+		// If the post is a fresh post that hasn't been made public, don't track the action
+		if ( in_array( $new_status, $initial_post_statuses, true ) ) {
+			return;
 		}
+
+		// Updating a draft should not log actions
+		if ( 'draft' === $new_status && 'draft' === $old_status ) {
+			return;
+		}
+
+		// If the post isn't coming from a "publish" state or going to a "publish" state
+		// we can ignore the action.
+		if ( 'publish' !== $old_status && 'publish' !== $new_status ) {
+			return;
+		}
+
+		$action_type = 'UPDATE';
+
+		// If a post is moved from 'publish' to any other status, set the action_type to delete
+		// to let Gatsby know it should no longer cache the post
+		if ( 'publish' !== $new_status && 'publish' === $old_status ) {
+			$action_type = 'DELETE';
+
+			// If a post that was not published becomes published, set the action_type to create
+			// to let Gatsby know it should fetch and cache the post
+		} elseif ( 'publish' === $new_status && 'publish' !== $old_status ) {
+			$action_type = 'CREATE';
+		}
+
+		$relay_id    = Relay::toGlobalId( 'post', $post->ID );
+
+		switch ( $action_type ) {
+			case 'CREATE':
+			case 'DELETE':
+				$nodes = $this->retrieve_nodes( $relay_id );
+
+				// Delete the cached results associated with this post/key
+				if ( is_array( $nodes ) && ! empty( $nodes ) ) {
+					do_action( 'wpgraphql_cache_purge_nodes', 'post', $this->nodes_key( $relay_id ), $nodes );
+				}
+				break;
+			case 'UPDATE':
+				$posts = $this->get( 'post' );
+				if ( is_array( $posts ) ) {
+					$post_type_object     = get_post_type_object( $post->post_type );
+					$connection_name = strtolower( $post_type_object->graphql_single_name );
+					do_action( 'wpgraphql_cache_purge_nodes', 'post', $connection_name, $posts );
+				}
+				break;
+		}
+
 	}
 
 	/**
@@ -324,12 +371,39 @@ class Collection extends Query {
 
 	/**
 	 * @param int    $meta_id    ID of updated metadata entry.
-	 * @param int    $object_id  Post ID.
+	 * @param int    $post_id  Post ID.
 	 * @param string $meta_key   Metadata key.
 	 * @param mixed  $meta_value Metadata value. This will be a PHP-serialized string representation of the value
 	 *                           if the value is an array, an object, or itself a PHP-serialized string.
 	 */
 	public function on_postmeta_change_cb( $meta_id, $post_id, $meta_key, $meta_value ) {
+
+		$object = get_post( $post_id );
+
+		/**
+		 * This filter allows plugins to opt-in or out of tracking for meta.
+		 *
+		 * @param bool $should_track Whether the meta key should be tracked.
+		 * @param string $meta_key Metadata key.
+		 * @param int $meta_id ID of updated metadata entry.
+		 * @param mixed $meta_value Metadata value. Serialized if non-scalar.
+		 * @param mixed $object The object the meta is being updated for.
+		 *
+		 * @param bool $tracked whether the meta key is tracked for purging caches
+		 */
+		$should_track = apply_filters( 'graphql_cache_should_track_meta_key', null, $meta_key, $meta_value, $object );
+
+		// If the filter has been applied
+		if ( null !== $should_track && false === $should_track ) {
+			return;
+		}
+
+		// if the meta key starts with an underscore, treat
+		// it as private meta and don't purge the cache
+		if ( strpos( $meta_key, '_' ) === 0 ) {
+			return;
+		}
+
 		// When any post changes, look up graphql queries previously queried containing post resources and purge those
 		// Look up the specific post/node/resource to purge vs $this->purge_all();
 		$post_type = get_post_type( $post_id );
@@ -342,8 +416,13 @@ class Collection extends Query {
 		}
 
 		// clear any cached connection lists for this type
-		$post_object     = get_post_type_object( $post_type );
-		$connection_name = strtolower( $post_object->graphql_single_name );
+		$post_type_object     = get_post_type_object( $post_type );
+
+		if ( ! in_array( $post_type_object->name, \WPGraphQL::get_allowed_post_types(), true ) ) {
+			return;
+		}
+
+		$connection_name = strtolower( $post_type_object->graphql_single_name );
 		if ( $connection_name ) {
 			$posts = $this->get( $connection_name );
 			if ( is_array( $posts ) ) {
