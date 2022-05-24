@@ -28,21 +28,21 @@ Use one of the following commands to build the local images for the app and test
 
 Build all images in the docker compose configuration. Requires having built your own wp-graphql local images.
 
-    WP_VERSION=5.7.2  PHP_VERSION=7.4 docker-compose build --build-arg WP_VERSION=5.7.2 --build-arg PHP_VERSION=7.4
+    WP_VERSION=5.9  PHP_VERSION=8.0 docker-compose build --build-arg WP_VERSION=5.9 --build-arg PHP_VERSION=8.0
 
 Build fresh docker image without cache by adding `--no-cache`.
 
-    WP_VERSION=5.7.2  PHP_VERSION=7.4 docker-compose build --build-arg WP_VERSION=5.7.2 --build-arg PHP_VERSION=7.4 --no-cache
+    WP_VERSION=5.9  PHP_VERSION=8.0 docker-compose build --build-arg WP_VERSION=5.9 --build-arg PHP_VERSION=8.0 --no-cache
 
 Build using wp-graphql image from docker hub registry, instead of building your own wp-graphql image.
 
-    WP_VERSION=5.7.2  PHP_VERSION=7.4 docker-compose build --build-arg WP_VERSION=5.7.2 --build-arg PHP_VERSION=7.4 --build-arg DOCKER_REGISTRY=ghcr.io/wp-graphql/
+    WP_VERSION=5.9  PHP_VERSION=8.0 docker-compose build --build-arg WP_VERSION=5.9 --build-arg PHP_VERSION=8.0 --build-arg DOCKER_REGISTRY=ghcr.io/wp-graphql/
 
 ### docker
 
 Use this command if you want to build a specific image. If you ran the docker-compose command above, this is not necessary.
 
-    docker build -f docker/Dockerfile -t wp-graphql-labs:latest-wp5.6-php7.4 --build-arg WP_VERSION=5.6 --build-arg PHP_VERSION=7.4
+    docker build -f docker/Dockerfile -t wp-graphql-labs:latest-wp5.6-php7.4 --build-arg WP_VERSION=5.6 --build-arg PHP_VERSION=8.0
 
 ## Run
 
@@ -52,7 +52,7 @@ Use one of the following to start the WP app with the plugin installed and runni
 
 This is an example of specifying the WP and PHP version for the wp-graphql images.
 
-    WP_VERSION=5.7.2 PHP_VERSION=7.4 docker compose up app
+    WP_VERSION=5.9 PHP_VERSION=8.0 docker compose up app
 
 ## Shell
 
@@ -60,7 +60,7 @@ Use one of the following if you want to access the WP app with bash command shel
 
     docker-compose run app bash
 
-    WP_VERSION=5.7.2 PHP_VERSION=7.4 docker-compose run app bash
+    WP_VERSION=5.9 PHP_VERSION=8.0 docker-compose run app bash
 
 ## Stop
 
@@ -88,21 +88,21 @@ If you ran the docker-compose build command, above, this step is not necessary a
 
 ### docker
 
-    WP_VERSION=5.7.2 PHP_VERSION=7.4 docker build -f docker/Dockerfile.testing -t wp-graphql-labs-testing:latest-wp5.7.2-php7.4 --build-arg WP_VERSION=5.7.2 --build-arg PHP_VERSION=7.4 --build-arg DOCKER_REGISTRY=ghcr.io/wp-graphql/ .
+    WP_VERSION=5.9 PHP_VERSION=8.0 docker build -f docker/Dockerfile.testing -t wp-graphql-labs-testing:latest-wp5.7.2-php7.4 --build-arg WP_VERSION=5.9 --build-arg PHP_VERSION=8.0 --build-arg DOCKER_REGISTRY=ghcr.io/wp-graphql/ .
 
-    docker build -f docker/Dockerfile.testing -t wp-graphql-labs-testing:latest-wp5.7.2-php7.4 --build-arg WP_VERSION=5.7.2 --build-arg PHP_VERSION=7.4 --build-arg DOCKER_REGISTRY=ghcr.io/wp-graphql/ .
+    docker build -f docker/Dockerfile.testing -t wp-graphql-labs-testing:latest-wp5.7.2-php7.4 --build-arg WP_VERSION=5.9 --build-arg PHP_VERSION=8.0 --build-arg DOCKER_REGISTRY=ghcr.io/wp-graphql/ .
 
 ## Run
 
 Use one of these commands to run the test suites.
 
-    WP_VERSION=5.7.2 PHP_VERSION=7.4 docker-compose run testing
+    WP_VERSION=5.9 PHP_VERSION=8.0 docker-compose run testing
 
     docker-compose run testing
 
 Use the DEBUG environment variable to see the codeception debug during tests.
 
-    WP_VERSION=5.7.2 PHP_VERSION=7.4 docker-compose run -e DEBUG=1 testing
+    WP_VERSION=5.9 PHP_VERSION=8.0 docker-compose run -e DEBUG=1 testing
 
 ## Shell
 
@@ -112,4 +112,4 @@ Use one of the following if you want to access the WP testing app with bash comm
 
 This is an example of specifying the WP and PHP version for the wp-graphql images.
 
-    WP_VERSION=5.7.2 PHP_VERSION=7.4 docker-compose run --entrypoint bash testing
+    WP_VERSION=5.9 PHP_VERSION=8.0 docker-compose run --entrypoint bash testing

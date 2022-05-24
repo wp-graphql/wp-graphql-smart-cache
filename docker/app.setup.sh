@@ -15,7 +15,7 @@ if [ ! -f "${PLUGINS_DIR}/wp-graphql/wp-graphql.php" ]; then
         wp plugin install wp-graphql --activate --allow-root
     else
     	echo "Installing WPGraphQL from Github"
-        wp plugin install https://github.com/wp-graphql/wp-graphql/releases/download/${WPGRAPHQL_VERSION-v1.4.3}/wp-graphql.zip --allow-root
+        wp plugin install "https://downloads.wordpress.org/plugin/wp-graphql.${WPGRAPHQL_VERSION-1.4.3}.zip" --allow-root
     fi
 fi
 

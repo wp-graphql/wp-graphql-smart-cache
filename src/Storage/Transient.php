@@ -1,17 +1,23 @@
 <?php
 
-namespace WPGraphQL\Labs\Cache;
+namespace WPGraphQL\Labs\Storage;
 
 class Transient {
+
+	public $group_name;
+
+	public function __construct( $group_name ) {
+		$this->group_name = $group_name;
+	}
 
 	/**
 	 * Get the data from cache/transient based on the provided key
 	 *
 	 * @param string unique id for this request
-	 * @return mixed|array|object|null  The graphql response or null if not found
+	 * @return mixed|array|object|null  The graphql response or false if not found
 	 */
 	public function get( $key ) {
-		return get_transient( $key );
+		return get_transient( $this->group_name . '_' . $key );
 	}
 
 	/**
@@ -21,9 +27,9 @@ class Transient {
 	 *
 	 * @return bool False if value was not set and true if value was set.
 	 */
-	public function save( $key, $data, $expire ) {
+	public function set( $key, $data, $expire ) {
 		return set_transient(
-			$key,
+			$this->group_name . '_' . $key,
 			is_array( $data ) ? $data : $data->toArray(),
 			$expire
 		);
@@ -37,7 +43,7 @@ class Transient {
 	public function purge_all() {
 		global $wpdb;
 
-		$prefix = Query::KEY_PREFIX;
+		$prefix = $this->group_name;
 
 		// The transient string + our prefix as it is stored in the options database
 		$transient_option_name = $wpdb->esc_like( '_transient_' . $prefix . '_' ) . '%';
@@ -61,4 +67,12 @@ class Transient {
 
 		return true;
 	}
+
+	/**
+	 * @return bool True on successful removal, false on failure.
+	 */
+	public function delete( $key ) {
+		return delete_transient( $this->group_name . '_' . $key );
+	}
+
 }
