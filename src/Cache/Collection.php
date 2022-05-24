@@ -15,7 +15,6 @@ use GraphQL\Type\Definition\InterfaceType;
 use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Schema;
 use GraphQL\Utils\TypeInfo;
-use WPGraphQL\Labs\Admin\Settings;
 use GraphQLRelay\Relay;
 use WPGraphQL\Request;
 
@@ -43,17 +42,6 @@ class Collection extends Query {
 		add_filter( 'insert_user_meta', [ $this, 'on_user_change_cb' ], 10, 3 );
 		// meta For acf, which calls WP function update_metadata
 		add_action( 'updated_postmeta', [ $this, 'on_postmeta_change_cb' ], 10, 4 );
-
-		add_action(
-			'graphql_before_execute',
-			function ( $request ) {
-				$schema = \WPGraphQL::get_schema();
-				$query  = $request->params->query ?? null;
-				$this->get_query_types( $schema, $query );
-			},
-			10,
-			1
-		);
 
 		parent::init();
 	}
