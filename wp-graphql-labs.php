@@ -99,17 +99,3 @@ add_action(
 		$collection->init();
 	}
 );
-
-add_action( 'graphql_register_types', function() {
-
-	register_graphql_field( 'RootQuery', 'listOfThing', [
-		'type' => [
-			'non_null' => [
-				'list_of' => [
-					'non_null' => 'Post'
-				]
-			]
-		]
-	]);
-
-});
