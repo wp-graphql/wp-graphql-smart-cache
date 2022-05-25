@@ -70,8 +70,8 @@ class CacheFromConnectionFieldNameTest extends \Codeception\TestCase\WPTestCase 
         $collection = new Collection();
         // The query hash we expect to be stored/mapped
         $request_key = $collection->build_key( null, $query );
-        $actual = $collection->get( 'post' );
-		
+        $actual = $collection->get( 'list:post' );
+
         $this->assertEquals( [ $request_key ], $actual );
     }
 }

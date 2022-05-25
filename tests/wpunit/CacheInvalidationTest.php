@@ -328,253 +328,61 @@ class CacheInvalidationTest extends \Codeception\TestCase\WPTestCase {
 		$this->assertSame( $single_post_query_results, $this->collection->get( $single_post_query_cache_key ) );
 		$this->assertEmpty( $this->collection->get( $post_list_query_cache_key ) );
 
-//		codecept_debug( [ 'after_publish' => $this->collection->get( 'post' ) ] );
-//
-//		// publishing a post should invalidate the list cache,
-//		$this->assertEmpty( $this->collection->get( 'post' ) );
-//
-//		// but NOT invalidate the individual cache for the random post id
-//		$this->assertEquals( [ 'foo' ], get_transient( 'gql_cache_' . $random_id ) );
-
 		// cleanup
 		wp_delete_post( $auto_draft_post_id, true );
 
 	}
 
-	// scheduled post is published
-
-	// published post is changed to draft
-
-	// published post is changed to private
-
-	// published post is trashed
-
-	// published post is force deleted
-
-	// delete draft post (doesnt evoke purge action)
-
-	// trashed post is restored
-
-
-
-
-
-	// page is created as auto draft
-
-	// page is published from draft
-
-	// published page is changed to draft
-
-	// published page is changed to private
-
-	// published page is trashed
-
-	// published page is force deleted
-
-	// delete draft page (doesnt evoke purge action)
-
-	// trashed page is restored
-
-
-
-	// publish first post to a user (user->post connection should purge)
-
-	// delete only post of a user (user->post connection should purge)
-	// change only post of a user from publish to draft (user->post connection should purge)
-
-	// change post author (user->post connection should purge)
-
-
-
-
-	// update post meta of draft post does not evoke purge action
-
-	// delete post meta of draft post does not evoke purge action
-
-	// update post meta of published post
-
-	// delete post meta of published post
-
-
-
-	// new post types detected?
-	// post type removed?
-	// new taxonomy added?
-	// taxonomy removed?
-	// schema breaking change detected?
-
-
-
-	// post of publicly queryable/show in graphql cpt is created as auto draft
-
-	// post of publicly queryable/show in graphql cpt is published from draft
-
-	// scheduled post of publicly queryable/show in graphql cpt is published
-
-	// published post of publicly queryable/show in graphql cpt is changed to draft
-
-	// published post of publicly queryable/show in graphql cpt is changed to private
-
-	// published post of publicly queryable/show in graphql cpt is trashed
-
-	// published post of publicly queryable/show in graphql cpt is force deleted
-
-	// delete draft post of publicly queryable/show in graphql post type (doesn't evoke purge action)
-
-	// trashed post of publicly queryable/show in graphql post type
-
-
-
-	// post of non-gql post type cpt is created as auto draft
-
-	// post of private cpt is published from draft
-
-	// scheduled post of private cpt is published
-
-	// published post of private cpt is changed to draft
-
-	// published post of private cpt is changed to private
-
-	// published post of private cpt is trashed
-
-	// published post of private cpt is force deleted
-
-	// delete draft post of private post type (doesnt evoke purge action)
-
-
-
-
-	// category term is created
-
-	// category term is updated
-
-	// category term is deleted
-
-	// category term is added to a published post
-
-	// category term is added to a draft post
-
-	// category term is removed from a published post
-
-	// category term is removed from a draft post
-
-	// update category meta
-
-	// delete category meta
-
-	// create child category
-
-	// update child category
-
-	// delete child category
-
-
-
-	// tag term is created
-
-	// tag term is updated
-
-	// tag term is deleted
-
-	// tag term is added to a published post
-
-	// tag term is added to a draft post
-
-	// tag term is removed from a published post
-
-	// tag term is removed from a draft post
-
-	// update tag meta
-
-	// delete tag meta
-
-
-
-
-	// custom tax (show_in_graphql) term is created
-
-	// custom tax (show_in_graphql) term is updated
-
-	// custom tax (show_in_graphql) term is deleted
-
-	// custom tax (show_in_graphql) term is added to a published post
-
-	// custom tax (show_in_graphql) term is added to a draft post
-
-	// custom tax (show_in_graphql) term is removed from a published post
-
-	// custom tax (show_in_graphql) term is removed from a draft post
-
-	// update custom tax (show_in_graphql) term meta (of allowed meta key)
-
-	// delete custom tax (show_in_graphql) term meta (of allowed meta key)
-
-
-
-
-
-	// create user (no purge, not public yet)
-
-	// delete user with no published posts (no purge)
-
-	// delete user without re-assign (what should happen here?)
-	// call purge for each post the author was the author of?
-
-	// delete user and re-assign posts
-	// - purge user
-	// - purge for each post (of each post type) transferred
-	// - purge for the new author being assigned
-
-	// update user that has published posts
-
-	// update user meta (with allowed meta key)
-
-	// update user meta (with non-allowed meta key)
-
-	// delete user meta (with allowed meta key)
-
-	// delete user meta (with non-allowed meta key)
-
-
-
-
-	// upload media item
-
-	// update media item
-
-	// delete media item
-
-	// update media item meta
-
-	// delete media item meta
-
-
-
-
-	// create anv menu (doesnt purge)
-
-	// assign nav menu to location (purge)
-
-	// update nav menu (which is assigned to location, should purge)
-
-	// update nav menu (not assigned to a location, no purge)
-
-	// delete menu (assigned to location, purge)
-
-	// delete menu (not assigned to location, no purge)
-
-
-
-
-	// update permalinks (purge all?)
-
-
-
-
-	// update untracked options (no purge)
-
-	// update tracked option (purge group?)
-
-	// set transient doesn't purge (don't want weird infinite loops)
+	public function testNonNullListOfNonNullPostMapsToListOfPosts() {
+
+		register_graphql_field( 'RootQuery', 'listOfThing', [
+			'type' => [
+				'non_null' => [
+					'list_of' => [
+						'non_null' => 'Post'
+					],
+				],
+			],
+		]);
+
+		$query = '
+		{
+		  listOfThing {
+		    __typename
+		  }
+		}
+		';
+
+		$schema = \WPGraphQL::get_schema();
+		$types = $this->collection->get_query_types( $schema, $query );
+
+		$this->assertContains( 'list:post', $types );
+
+	}
+
+	public function testListOfNonNullPostMapsToListOfPosts() {
+
+		register_graphql_field( 'RootQuery', 'listOfThing', [
+			'type' => [
+				'list_of' => [
+					'non_null' => 'Post'
+				],
+			],
+		]);
+
+		$query = '
+		{
+		  listOfThing {
+		    __typename
+		  }
+		}
+		';
+
+		$schema = \WPGraphQL::get_schema();
+		$types = $this->collection->get_query_types( $schema, $query );
+
+		$this->assertContains( 'list:post', $types );
+
+	}
 
 }

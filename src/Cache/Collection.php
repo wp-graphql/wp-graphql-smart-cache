@@ -49,7 +49,7 @@ class Collection extends Query {
 		add_filter( 'insert_user_meta', [ $this, 'on_user_change_cb' ], 10, 3 );
 
 		// meta For acf, which calls WP function update_metadata
-		add_action( 'updated_postmeta', [ $this, 'on_postmeta_change_cb' ], 10, 4 );
+		add_action( 'updated_post_meta', [ $this, 'on_postmeta_change_cb' ], 10, 4 );
 
 		parent::init();
 	}
@@ -198,7 +198,6 @@ class Collection extends Query {
 
 		Visitor::visit( $ast, Visitor::visitWithTypeInfo( $type_info, $visitor ) );
 		$map = array_values( array_unique( array_filter( $type_map ) ) );
-//		wp_send_json( [ 'map' => $map ]);
 		return apply_filters( 'graphql_cache_collection_get_query_types', $map, $schema, $query, $type_info );
 
 	}
@@ -406,7 +405,7 @@ class Collection extends Query {
 		$should_track = apply_filters( 'graphql_cache_should_track_meta_key', null, $meta_key, $meta_value, $object );
 
 		// If the filter has been applied
-		if ( null !== $should_track && false === $should_track ) {
+		if ( null !== $should_track && true !== (bool) $should_track ) {
 			return;
 		}
 
@@ -416,32 +415,22 @@ class Collection extends Query {
 			return;
 		}
 
-		// When any post changes, look up graphql queries previously queried containing post resources and purge those
-		// Look up the specific post/node/resource to purge vs $this->purge_all();
-		$post_type = get_post_type( $post_id );
-
 		// clear any cached connection lists for this type
-		$post_type_object     = get_post_type_object( $post_type );
-
-		if ( ! in_array( $post_type_object->name, \WPGraphQL::get_allowed_post_types(), true ) ) {
+		if ( ! in_array( $object->post_type, \WPGraphQL::get_allowed_post_types(), true ) ) {
 			return;
 		}
 
+		$post_type_object     = get_post_type_object( $object->post_type );
+
 		$type_name = strtolower( $post_type_object->graphql_single_name );
-		$id        = Relay::toGlobalId( $post_type, $post_id );
-		$nodes     = $this->retrieve_nodes( $id );
+		$relay_id        = Relay::toGlobalId( 'post', $object->ID );
+
+		$nodes = $this->retrieve_nodes( $relay_id );
 
 		// Delete the cached results associated with this post/key
-		if ( is_array( $nodes ) ) {
-			do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->nodes_key( $id ), $nodes );
+		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
+			do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->nodes_key( $relay_id ), $nodes );
 		}
 
-		$connection_name = strtolower( $post_type_object->graphql_single_name );
-		if ( $connection_name ) {
-			$posts = $this->get( $connection_name );
-			if ( is_array( $posts ) ) {
-				do_action( 'wpgraphql_cache_purge_nodes', $post_type, $connection_name, $posts );
-			}
-		}
 	}
 }
