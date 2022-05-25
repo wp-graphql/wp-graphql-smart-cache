@@ -1169,16 +1169,16 @@
         },
         {
             "name": "guzzlehttp/guzzle",
-            "version": "7.4.2",
+            "version": "7.4.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/guzzle.git",
-                "reference": "ac1ec1cd9b5624694c3a40be801d94137afb12b4"
+                "reference": "74a8602c6faec9ef74b7a9391ac82c5e65b1cdab"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/ac1ec1cd9b5624694c3a40be801d94137afb12b4",
-                "reference": "ac1ec1cd9b5624694c3a40be801d94137afb12b4",
+                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/74a8602c6faec9ef74b7a9391ac82c5e65b1cdab",
+                "reference": "74a8602c6faec9ef74b7a9391ac82c5e65b1cdab",
                 "shasum": ""
             },
             "require": {
@@ -1273,7 +1273,7 @@
             ],
             "support": {
                 "issues": "https://github.com/guzzle/guzzle/issues",
-                "source": "https://github.com/guzzle/guzzle/tree/7.4.2"
+                "source": "https://github.com/guzzle/guzzle/tree/7.4.3"
             },
             "funding": [
                 {
@@ -1289,7 +1289,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2022-03-20T14:16:28+00:00"
+            "time": "2022-05-25T13:24:33+00:00"
         },
         {
             "name": "guzzlehttp/promises",
@@ -1492,7 +1492,7 @@
         },
         {
             "name": "illuminate/collections",
-            "version": "v9.14.0",
+            "version": "v9.14.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/collections.git",
@@ -1547,7 +1547,7 @@
         },
         {
             "name": "illuminate/conditionable",
-            "version": "v9.14.0",
+            "version": "v9.14.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/conditionable.git",
@@ -1593,7 +1593,7 @@
         },
         {
             "name": "illuminate/contracts",
-            "version": "v9.14.0",
+            "version": "v9.14.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/contracts.git",
@@ -1641,7 +1641,7 @@
         },
         {
             "name": "illuminate/macroable",
-            "version": "v9.14.0",
+            "version": "v9.14.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/macroable.git",
@@ -1687,16 +1687,16 @@
         },
         {
             "name": "illuminate/support",
-            "version": "v9.14.0",
+            "version": "v9.14.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/support.git",
-                "reference": "d031324a8209335d10af8c90e5a467e503d417f1"
+                "reference": "bf298be4236f77068daa249c483939d5d97321b8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/illuminate/support/zipball/d031324a8209335d10af8c90e5a467e503d417f1",
-                "reference": "d031324a8209335d10af8c90e5a467e503d417f1",
+                "url": "https://api.github.com/repos/illuminate/support/zipball/bf298be4236f77068daa249c483939d5d97321b8",
+                "reference": "bf298be4236f77068daa249c483939d5d97321b8",
                 "shasum": ""
             },
             "require": {
@@ -1752,7 +1752,7 @@
                 "issues": "https://github.com/laravel/framework/issues",
                 "source": "https://github.com/laravel/framework"
             },
-            "time": "2022-05-24T13:49:53+00:00"
+            "time": "2022-05-25T14:48:59+00:00"
         },
         {
             "name": "justinrainbow/json-schema",
@@ -6846,12 +6846,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/wp-graphql/wp-graphql-testcase.git",
-                "reference": "3cf66ee0b6a14e4cd3ecf8a3897b082f2b79fdf2"
+                "reference": "d4c0bd7430efeca5a4982c1ed4d5a7935254abb7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/wp-graphql/wp-graphql-testcase/zipball/3cf66ee0b6a14e4cd3ecf8a3897b082f2b79fdf2",
-                "reference": "3cf66ee0b6a14e4cd3ecf8a3897b082f2b79fdf2",
+                "url": "https://api.github.com/repos/wp-graphql/wp-graphql-testcase/zipball/d4c0bd7430efeca5a4982c1ed4d5a7935254abb7",
+                "reference": "d4c0bd7430efeca5a4982c1ed4d5a7935254abb7",
                 "shasum": ""
             },
             "require": {
@@ -6905,7 +6905,7 @@
                 "issues": "https://github.com/wp-graphql/wp-graphql-testcase/issues",
                 "source": "https://github.com/wp-graphql/wp-graphql-testcase/tree/v2.2.0"
             },
-            "time": "2022-05-24T16:59:38+00:00"
+            "time": "2022-05-25T14:49:51+00:00"
         },
         {
             "name": "zordius/lightncandy",

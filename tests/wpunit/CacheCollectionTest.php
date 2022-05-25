@@ -94,4 +94,64 @@ class CacheCollectionTest extends \Codeception\TestCase\WPTestCase {
         $this->assertEquals( "node:$id", $actual[1] );
         $this->assertEquals( [ $content ], $actual[2] );
     }
+
+    // If have a list of posts stored in memory (means a posts collection query has been cached),
+    // When a new post is created, we want to clear that (make sure the purge nodes is invoked).
+    public function testPluralNameCollectionInvokedWhenPostCreated() {
+        // Put at least empty data in transient. This helps trigger the purge action.
+        $collection = new Collection();
+        $collection->store_content( 'post', 'test-id' );
+        $collection->store_content( 'test-id', 'foo' );
+
+        // Verify how the test data is stored
+        $this->assertEquals( [ 'foo' ], get_transient( 'gql_cache_test-id' ) );
+
+        add_action('wpgraphql_cache_purge_nodes', function ( $type, $id, $nodes ) {
+            set_transient( 'my-post-meta', "triggered-{$id}" );
+        }, 10, 3 );
+
+	    // the post is created as a draft. This should not
+	    // trigger the purge action yet.
+	    $post_id = self::factory()->post->create();
+
+	    // verify it's not been triggered yet.
+	    $this->assertEquals( false , get_transient( 'my-post-meta' ) );
+
+	    // set the post as published. This should trigger it.
+	    self::factory()->post->update_object( $post_id, [
+		    'post_status' => 'publish'
+	    ]);
+
+	    // Verify the action callback happened
+	    $this->assertEquals( 'triggered-post' , get_transient( 'my-post-meta' ) );
+
+	    // Verify transient stored in the posts type list is removed
+	    $this->assertFalse( $collection->get( 'test-id' ) );
+    }
+
+    public function testPostsQueryPurgesWhenPostCreated() {
+        // Create some data
+        self::factory()->post->create();
+
+        // Run a query which the hash will be saved to the posts list
+        $query = "query GetPosts {
+			posts {
+				nodes {
+					title
+				}
+			}
+		}";
+		graphql([ 'query' => $query ]);
+
+        $collection = new Collection();
+        $posts = $collection->get( 'post' );
+        $this->assertNotFalse( $posts[0] );
+
+        // Create post should trigger purge action and delete content for the above query
+        self::factory()->post->create();
+
+        // The posts list still has the hash in its list, but that query's hash should be empty
+        $posts = $collection->get( 'post' );
+        $this->assertFalse( $collection->get( $posts[0] ) );
+    }
 }

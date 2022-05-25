@@ -113,11 +113,13 @@ class Results extends Query {
 	 * Related to the data type that changed.
 	 */
 	public function purge_nodes_cb( $type, $id, $nodes ) {
-		foreach ( $nodes as $request_key ) {
-			$this->delete( $request_key );
-		}
+		if ( is_array( $nodes ) ) {
+			foreach ( $nodes as $request_key ) {
+				$this->delete( $request_key );
+			}
 
-		//phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
-		graphql_debug( 'Graphql delete nodes ' . print_r( $nodes, 1 ) );
+			//phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
+			graphql_debug( 'Graphql delete nodes ' . print_r( $nodes, 1 ) );
+		}
 	}
 }
