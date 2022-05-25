@@ -404,6 +404,7 @@ class Collection extends Query {
 		 *
 		 * @param bool   $tracked      whether the meta key is tracked for purging caches
 		 */
+		//phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 		$should_track = apply_filters( 'graphql_cache_should_track_meta_key', null, $meta_key, $meta_value, $object );
 
 		// If the filter has been applied
