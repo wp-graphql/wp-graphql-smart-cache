@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a368ac73c025236499b09dce33e12263",
+    "content-hash": "a12b36f0fef910ca07625c29d0c2f447",
     "packages": [],
     "packages-dev": [
         {
@@ -1993,6 +1993,9 @@
                 "bordoni/phpass": "0.3.*",
                 "illuminate/support": ">=4.0.0",
                 "php": ">=5.3.0"
+            },
+            "replace": {
+                "mikemclin/laravel-wp-password": "self.version"
             },
             "require-dev": {
                 "mockery/mockery": "~0.9",
@@ -6838,6 +6841,73 @@
             "time": "2020-05-13T23:57:56+00:00"
         },
         {
+            "name": "wp-graphql/wp-graphql-testcase",
+            "version": "v2.2.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/wp-graphql/wp-graphql-testcase.git",
+                "reference": "d4c0bd7430efeca5a4982c1ed4d5a7935254abb7"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/wp-graphql/wp-graphql-testcase/zipball/d4c0bd7430efeca5a4982c1ed4d5a7935254abb7",
+                "reference": "d4c0bd7430efeca5a4982c1ed4d5a7935254abb7",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.1 || ^8.0",
+                "phpunit/phpunit": "^7.5 || ^8.5.0 || ^9.5"
+            },
+            "require-dev": {
+                "automattic/vipwpcs": "^2.2",
+                "composer/installers": "^1.9",
+                "johnpbloch/wordpress": "^5.4",
+                "simpod/php-coveralls-mirror": "^3.0",
+                "wp-coding-standards/wpcs": "^2.3",
+                "wp-graphql/wp-graphql": "^1.1.8"
+            },
+            "suggest": {
+                "codeception/module-asserts": "Needed for \\Tests\\WPGraphQL\\TestCase\\WPGraphQLTestcase to work.",
+                "codeception/module-rest": "Needed for \\Tests\\WPGraphQL\\TestCase\\WPGraphQLTestcase to work.",
+                "codeception/util-universalframework": "Needed for \\Tests\\WPGraphQL\\TestCase\\WPGraphQLTestcase to work.",
+                "lucatume/wp-browser": "Needed for \\Tests\\WPGraphQL\\TestCase\\WPGraphQLTestcase to work.",
+                "wp-phpunit/wp-phpunit": "Needed for \\Tests\\WPGraphQL\\TestCase\\WPGraphQLUnitTestcase to work."
+            },
+            "type": "library",
+            "extra": {
+                "wordpress-install-dir": "local/public",
+                "installer-paths": {
+                    "local/public/wp-content/plugins/{$name}/": [
+                        "type:wordpress-plugin"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Tests\\WPGraphQL\\": "src/"
+                },
+                "classmap": [
+                    "src/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Geoff Taylor",
+                    "email": "geoffrey.taylor@outlook.com"
+                }
+            ],
+            "description": "Codeception module for WPGraphQL API testing",
+            "support": {
+                "issues": "https://github.com/wp-graphql/wp-graphql-testcase/issues",
+                "source": "https://github.com/wp-graphql/wp-graphql-testcase/tree/v2.2.0"
+            },
+            "time": "2022-05-25T14:49:51+00:00"
+        },
+        {
             "name": "zordius/lightncandy",
             "version": "v1.2.6",
             "source": {
@@ -6901,5 +6971,5 @@
     "prefer-lowest": false,
     "platform": [],
     "platform-dev": [],
-    "plugin-api-version": "2.3.0"
+    "plugin-api-version": "2.0.0"
 }

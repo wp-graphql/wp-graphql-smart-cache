@@ -1,7 +1,8 @@
 <?php
 /**
  * When processing a GraphQL query, collect nodes based on the query and url they are part of.
- * When content changes for nodes, invalidate and trigger actions that allow caches to be invalidated for nodes, queries, urls.
+ * When content changes for nodes, invalidate and trigger actions that allow caches to be
+ * invalidated for nodes, queries, urls.
  */
 
 namespace WPGraphQL\Labs\Cache;
@@ -19,6 +20,7 @@ use GraphQL\Type\Schema;
 use GraphQL\Utils\TypeInfo;
 use GraphQLRelay\Relay;
 use WP_Post;
+use WP_User;
 use WPGraphQL\AppContext;
 use WPGraphQL\Data\Loader\AbstractDataLoader;
 use WPGraphQL\Labs\Document;
@@ -58,6 +60,7 @@ class Collection extends Query {
 		// Consider this the start of query execution. Clear if we had a list of saved nodes
 		$this->runtime_nodes    = [];
 		$this->connection_names = [];
+
 		return $result;
 	}
 
@@ -65,7 +68,8 @@ class Collection extends Query {
 	 * Filter the model before returning.
 	 *
 	 * @param mixed              $model The Model to be returned by the loader
-	 * @param mixed              $entry The entry loaded by dataloader that was used to create the Model
+	 * @param mixed              $entry The entry loaded by dataloader that was used to create the
+	 *                                  Model
 	 * @param mixed              $key   The Key that was used to load the entry
 	 * @param AbstractDataLoader $this  The AbstractDataLoader Instance
 	 */
@@ -73,17 +77,18 @@ class Collection extends Query {
 		if ( isset( $model->id ) ) {
 			$this->runtime_nodes[] = $model->id;
 		}
+
 		return $model;
 	}
 
 	/**
 	 * An action after the field resolves
 	 *
-	 * @param mixed           $source    The source passed down the Resolve Tree
-	 * @param array           $args      The args for the field
-	 * @param AppContext      $context   The AppContext passed down the ResolveTree
-	 * @param ResolveInfo     $info      The ResolveInfo passed down the ResolveTree
-	 * @param string          $type_name The name of the type the fields belong to
+	 * @param mixed       $source    The source passed down the Resolve Tree
+	 * @param array       $args      The args for the field
+	 * @param AppContext  $context   The AppContext passed down the ResolveTree
+	 * @param ResolveInfo $info      The ResolveInfo passed down the ResolveTree
+	 * @param string      $type_name The name of the type the fields belong to
 	 */
 	public function during_query_resolve_field( $source, $args, $context, $info, $field_resolver, $type_name ) {
 		// If at any point while processing fields and it shows this request is a query, track that.
@@ -115,8 +120,9 @@ class Collection extends Query {
 	}
 
 	/**
-	 * @param string $key The identifier to the list
+	 * @param string $key     The identifier to the list
 	 * @param string $content to add
+	 *
 	 * @return array The unique list of content stored
 	 */
 	public function store_content( $key, $content ) {
@@ -124,6 +130,7 @@ class Collection extends Query {
 		$data[] = $content;
 		$data   = array_unique( $data );
 		$this->save( $key, $data );
+
 		return $data;
 	}
 
@@ -133,15 +140,18 @@ class Collection extends Query {
 	 */
 	public function retrieve_nodes( $id ) {
 		$key = $this->nodes_key( $id );
+
 		return $this->get( $key );
 	}
 
 	/**
 	 * @param mixed|string|int $id The content node identifier
+	 *
 	 * @return array The unique list of content stored
 	 */
 	public function retrieve_urls( $id ) {
 		$key = $this->urls_key( $id );
+
 		return $this->get( $key );
 	}
 
@@ -156,7 +166,7 @@ class Collection extends Query {
 	 * @throws SyntaxError|Exception
 	 */
 	public function get_query_types( $schema, $query ) {
-		if ( empty( $query ) || $schema === null ) {
+		if ( empty( $query ) || null === $schema ) {
 			return [];
 		}
 		try {
@@ -256,8 +266,8 @@ class Collection extends Query {
 		// if the request had a queryId instead of a query,
 		// we need to look up that query first
 		if ( empty( $query ) && ! empty( $this->params->queryId ) ) {
-			$document    = new Document();
-			$query = $document->get( $this->params->queryId );
+			$document = new Document();
+			$query    = $document->get( $this->params->queryId );
 		}
 
 		// if there's a query (saved or part of the params) get the query types
@@ -288,7 +298,7 @@ class Collection extends Query {
 	 * @param string  $old_status The old status of the post
 	 * @param WP_Post $post       The post being updated
 	 */
-	public function on_transition_post_status_cb( $new_status, $old_status, WP_Post $post  ) {
+	public function on_transition_post_status_cb( $new_status, $old_status, WP_Post $post ) {
 
 		// bail if it's an autosave
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
@@ -349,18 +359,16 @@ class Collection extends Query {
 		// specific node in it
 		if ( 'UPDATE' === $action_type || 'DELETE' === $action_type ) {
 			$nodes = $this->retrieve_nodes( $relay_id );
-
 			// Delete the cached results associated with this post/key
 			if ( is_array( $nodes ) && ! empty( $nodes ) ) {
 				do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->nodes_key( $relay_id ), $nodes );
 			}
 		}
-
 	}
 
 	/**
 	 *
-	 * @param array $meta
+	 * @param array   $meta
 	 * @param WP_User $user   User object.
 	 * @param bool    $update Whether the user is being updated rather than created.
 	 */
@@ -377,31 +385,35 @@ class Collection extends Query {
 				do_action( 'wpgraphql_cache_purge_nodes', 'user', $this->nodes_key( $id ), $nodes );
 			}
 		}
+
 		return $meta;
 	}
 
 	/**
 	 * @param int    $meta_id    ID of updated metadata entry.
-	 * @param int    $post_id  Post ID.
+	 * @param int    $post_id    Post ID.
 	 * @param string $meta_key   Metadata key.
-	 * @param mixed  $meta_value Metadata value. This will be a PHP-serialized string representation of the value
-	 *                           if the value is an array, an object, or itself a PHP-serialized string.
+	 * @param mixed  $meta_value Metadata value. This will be a PHP-serialized string
+	 *                           representation of the value if the value is an array, an object,
+	 *                           or itself a PHP-serialized string.
 	 */
 	public function on_postmeta_change_cb( $meta_id, $post_id, $meta_key, $meta_value ) {
 
+		// get the post object being modified
 		$object = get_post( $post_id );
 
 		/**
 		 * This filter allows plugins to opt-in or out of tracking for meta.
 		 *
-		 * @param bool $should_track Whether the meta key should be tracked.
-		 * @param string $meta_key Metadata key.
-		 * @param int $meta_id ID of updated metadata entry.
-		 * @param mixed $meta_value Metadata value. Serialized if non-scalar.
-		 * @param mixed $object The object the meta is being updated for.
+		 * @param bool   $should_track Whether the meta key should be tracked.
+		 * @param string $meta_key     Metadata key.
+		 * @param int    $meta_id      ID of updated metadata entry.
+		 * @param mixed  $meta_value   Metadata value. Serialized if non-scalar.
+		 * @param mixed  $object       The object the meta is being updated for.
 		 *
-		 * @param bool $tracked whether the meta key is tracked for purging caches
+		 * @param bool   $tracked      whether the meta key is tracked for purging caches
 		 */
+		//phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 		$should_track = apply_filters( 'graphql_cache_should_track_meta_key', null, $meta_key, $meta_value, $object );
 
 		// If the filter has been applied
@@ -416,7 +428,9 @@ class Collection extends Query {
 		}
 
 		// clear any cached connection lists for this type
-		if ( ! in_array( $object->post_type, \WPGraphQL::get_allowed_post_types(), true ) ) {
+		$post_type_object = get_post_type_object( $object->post_type );
+
+		if ( ! in_array( $post_type_object->name, \WPGraphQL::get_allowed_post_types(), true ) ) {
 			return;
 		}
 
