@@ -110,13 +110,23 @@ class CacheCollectionTest extends \Codeception\TestCase\WPTestCase {
             set_transient( 'my-post-meta', "triggered-{$id}" );
         }, 10, 3 );
 
-        $post_id = self::factory()->post->create();
+	    // the post is created as a draft. This should not
+	    // trigger the purge action yet.
+	    $post_id = self::factory()->post->create();
 
-        // Verify the action callback happened
-        $this->assertEquals( 'triggered-post' , get_transient( 'my-post-meta' ) );
+	    // verify it's not been triggered yet.
+	    $this->assertEquals( false , get_transient( 'my-post-meta' ) );
 
-        // Verify transient stored in the posts type list is removed
-        $this->assertFalse( $collection->get( 'test-id' ) );
+	    // set the post as published. This should trigger it.
+	    self::factory()->post->update_object( $post_id, [
+		    'post_status' => 'publish'
+	    ]);
+
+	    // Verify the action callback happened
+	    $this->assertEquals( 'triggered-post' , get_transient( 'my-post-meta' ) );
+
+	    // Verify transient stored in the posts type list is removed
+	    $this->assertFalse( $collection->get( 'test-id' ) );
     }
 
     public function testPostsQueryPurgesWhenPostCreated() {
