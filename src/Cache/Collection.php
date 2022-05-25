@@ -178,7 +178,6 @@ class Collection extends Query {
 		$type_info = new TypeInfo( $schema );
 		$visitor   = [
 			'enter' => function ( $node, $key, $parent, $path, $ancestors ) use ( $type_info, &$type_map, $schema ) {
-
 				$type_info->enter( $node );
 				$type = $type_info->getType();
 				if ( ! $type ) {
@@ -190,14 +189,14 @@ class Collection extends Query {
 				// determine if the field is returning a list of types
 				// or singular types
 				// @todo: this might still be too fragile. We might need to adjust for cases where we can have list_of( nonNull( type ) ), etc
-				$prefix = $named_type && ( $type->name === Type::listOf( $named_type )->name ) ? 'list:' : null;
+				$prefix = $named_type && ( Type::listOf( $named_type )->name === $type->name ) ? 'list:' : null;
 
 				if ( $named_type instanceof InterfaceType ) {
 					$possible_types = $schema->getPossibleTypes( $named_type );
 					foreach ( $possible_types as $possible_type ) {
 						$type_map[] = $prefix . strtolower( $possible_type );
 					}
-				} else if ( $named_type instanceof ObjectType ) {
+				} elseif ( $named_type instanceof ObjectType ) {
 					$type_map[] = $prefix . strtolower( $named_type );
 				}
 			},
@@ -208,8 +207,8 @@ class Collection extends Query {
 
 		Visitor::visit( $ast, Visitor::visitWithTypeInfo( $type_info, $visitor ) );
 		$map = array_values( array_unique( array_filter( $type_map ) ) );
+		// @phpcs:ignore
 		return apply_filters( 'graphql_cache_collection_get_query_types', $map, $schema, $query, $type_info );
-
 	}
 
 	/**
@@ -340,9 +339,9 @@ class Collection extends Query {
 			$action_type = 'CREATE';
 		}
 
-		$relay_id    = Relay::toGlobalId( 'post', $post->ID );
-		$post_type_object     = get_post_type_object( $post->post_type );
-		$type_name = strtolower( $post_type_object->graphql_single_name );
+		$relay_id         = Relay::toGlobalId( 'post', $post->ID );
+		$post_type_object = get_post_type_object( $post->post_type );
+		$type_name        = strtolower( $post_type_object->graphql_single_name );
 
 		// if we create a post
 		// we need to purge lists of the type
@@ -434,17 +433,14 @@ class Collection extends Query {
 			return;
 		}
 
-		$post_type_object     = get_post_type_object( $object->post_type );
-
-		$type_name = strtolower( $post_type_object->graphql_single_name );
-		$relay_id        = Relay::toGlobalId( 'post', $object->ID );
-
-		$nodes = $this->retrieve_nodes( $relay_id );
+		$post_type_object = get_post_type_object( $object->post_type );
+		$type_name        = strtolower( $post_type_object->graphql_single_name );
+		$relay_id         = Relay::toGlobalId( 'post', $object->ID );
+		$nodes            = $this->retrieve_nodes( $relay_id );
 
 		// Delete the cached results associated with this post/key
 		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
 			do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->nodes_key( $relay_id ), $nodes );
 		}
-
 	}
 }
