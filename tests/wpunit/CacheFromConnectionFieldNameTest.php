@@ -44,7 +44,7 @@ class CacheFromConnectionFieldNameTest extends \Codeception\TestCase\WPTestCase 
             'role' => 'editor',
             'user_nicename' => 'foo',
         ] );
-    
+
         // Create a post by the user
         $post_id = self::factory()->post->create( [
             'post_author' => $user_id,
@@ -71,6 +71,7 @@ class CacheFromConnectionFieldNameTest extends \Codeception\TestCase\WPTestCase 
         // The query hash we expect to be stored/mapped
         $request_key = $collection->build_key( null, $query );
         $actual = $collection->get( 'post' );
+		
         $this->assertEquals( [ $request_key ], $actual );
     }
 }

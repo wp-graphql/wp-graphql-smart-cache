@@ -6,17 +6,33 @@
 
 namespace WPGraphQL\Labs\Cache;
 
-use WPGraphQL\Labs\Admin\Settings;
+use Exception;
+use GraphQL\Error\SyntaxError;
+use GraphQL\Executor\ExecutionResult;
+use GraphQL\Language\Parser;
+use GraphQL\Language\Visitor;
+use GraphQL\Type\Definition\InterfaceType;
+use GraphQL\Type\Definition\ResolveInfo;
+use GraphQL\Type\Definition\Type;
+use GraphQL\Type\Schema;
+use GraphQL\Utils\TypeInfo;
 use GraphQLRelay\Relay;
+use WP_Post;
+use WPGraphQL\AppContext;
+use WPGraphQL\Data\Loader\AbstractDataLoader;
+use WPGraphQL\Labs\Document;
+use WPGraphQL\Request;
 
 class Collection extends Query {
 
 	// Nodes that are part of the current/in-progress/excuting query
 	public $nodes = [];
 
+	// whether the query is a query (not a mutation or subscription)
 	public $is_query;
 
-	public $connection_names = [];
+	// Types that are referenced in the query
+	public $type_names = [];
 
 	public function init() {
 		add_action( 'graphql_return_response', [ $this, 'save_query_mapping_cb' ], 10, 7 );
@@ -25,29 +41,16 @@ class Collection extends Query {
 
 		add_action( 'graphql_after_resolve_field', [ $this, 'during_query_resolve_field' ], 10, 6 );
 
-		// post
-		add_action( 'wp_insert_post', [ $this, 'on_post_change_cb' ], 10, 3 );
+		// listen for posts to transition statuses so we know when to purge
+		add_action( 'transition_post_status', [ $this, 'on_transition_post_status_cb' ], 10, 3 );
+
 		// user/author
 		add_filter( 'insert_user_meta', [ $this, 'on_user_change_cb' ], 10, 3 );
+
 		// meta For acf, which calls WP function update_metadata
 		add_action( 'updated_postmeta', [ $this, 'on_postmeta_change_cb' ], 10, 4 );
 
-		add_filter( 'graphql_connection_query', [ $this, 'abstract_connection_query_cb' ], 10, 2 );
-
 		parent::init();
-	}
-
-	// When a query contains a connection which means a query with lists of a type,
-	// not that type and track this url query key for that list type.
-	// Then when certain other actions happen, we can invalidate this type
-	public function abstract_connection_query_cb( $query, $resolver ) {
-		if ( false === $resolver->one_to_one ) {
-			$info = $resolver->getInfo();
-			//phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
-			$config                   = $info->returnType->config;
-			$this->connection_names[] = strtolower( $config['connection_config']['toType'] );
-		}
-		return $query;
 	}
 
 	public function before_executing_query_cb( $result, $request ) {
@@ -142,14 +145,70 @@ class Collection extends Query {
 	}
 
 	/**
-	 * When a query response is being returned to the client, build map for each item and this query/queryId
-	 * That way we will know what to invalidate on data change.
+	 * Given the Schema and a query string, return a list of GraphQL Types that are being asked for
+	 * by the query.
 	 *
-	 * @param $filtered_response GraphQL\Executor\ExecutionResult
-	 * @param $response GraphQL\Executor\ExecutionResult
-	 * @param $request WPGraphQL\Request
+	 * @param Schema $schema The WPGraphQL Schema
+	 * @param string $query  The query string
+	 *
+	 * @return array
+	 * @throws SyntaxError|Exception
+	 */
+	public function get_query_types( $schema, $query ) {
+		if ( empty( $query ) || $schema === null ) {
+			return [];
+		}
+		try {
+			$ast = Parser::parse( $query );
+		} catch ( SyntaxError $error ) {
+			return [];
+		}
+		$type_map  = [];
+		$type_info = new TypeInfo( $schema );
+		$visitor   = [
+			'enter' => function ( $node ) use ( $type_info, &$type_map, $schema ) {
+				$type_info->enter( $node );
+				$type = $type_info->getType();
+				if ( ! $type ) {
+					return;
+				}
+
+				$named_type = Type::getNamedType( $type );
+
+				if ( $named_type instanceof InterfaceType ) {
+					$possible_types = $schema->getPossibleTypes( $named_type );
+					foreach ( $possible_types as $possible_type ) {
+						$type_map[] = strtolower( $possible_type );
+					}
+				} else {
+					$type_map[] = strtolower( $named_type );
+				}
+			},
+			'leave' => function ( $node ) use ( $type_info ) {
+				$type_info->leave( $node );
+			},
+		];
+
+		Visitor::visit( $ast, $visitor );
+		return array_values( array_unique( array_filter( $type_map ) ) );
+	}
+
+	/**
+	 * When a query response is being returned to the client, build map for each item and this
+	 * query/queryId That way we will know what to invalidate on data change.
+	 *
+	 * @param ExecutionResult $filtered_response The response after GraphQL Execution has been
+	 *                                           completed and passed through filters
+	 * @param ExecutionResult $response          The raw, unfiltered response of the GraphQL
+	 *                                           Execution
+	 * @param Schema          $schema            The WPGraphQL Schema
+	 * @param string          $operation         The name of the Operation
+	 * @param string          $query             The query string
+	 * @param array           $variables         The variables for the query
+	 * @param Request The WPGraphQL Request object
 	 *
 	 * @return void
+	 * @throws SyntaxError
 	 */
 	public function save_query_mapping_cb(
 		$filtered_response,
@@ -185,11 +244,25 @@ class Collection extends Query {
 			$this->store_content( $this->nodes_key( $node_id ), $request_key );
 		}
 
+		// if the request had a queryId instead of a query,
+		// we need to look up that query first
+		if ( empty( $query ) && ! empty( $this->params->queryId ) ) {
+			$document    = new Document();
+			$query = $document->get( $this->params->queryId );
+		}
+
+		// if there's a query (saved or part of the params) get the query types
+		// from the query
+		if ( ! empty( $query ) ) {
+			$this->type_names = $this->get_query_types( $schema, $query );
+		}
+
+
 		// For each connection resolver, store the url key
-		if ( is_array( $this->connection_names ) ) {
-			$this->connection_names = array_unique( $this->connection_names );
-			foreach ( $this->connection_names as $connection_name ) {
-				$this->store_content( $connection_name, $request_key );
+		if ( is_array( $this->type_names ) ) {
+			$this->type_names = array_unique( $this->type_names );
+			foreach ( $this->type_names as $type_name ) {
+				$this->store_content( $type_name, $request_key );
 			}
 		}
 
@@ -203,35 +276,75 @@ class Collection extends Query {
 	 * Fires once a post has been saved.
 	 * Purge our saved/cached results data.
 	 *
-	 * @param int     $post_ID Post ID.
-	 * @param WP_Post $post    Post object.
-	 * @param bool    $update Whether the post is being updated rather than created.
+	 * @param string  $new_status The new status of the post
+	 * @param string  $old_status The old status of the post
+	 * @param WP_Post $post       The post being updated
 	 */
-	public function on_post_change_cb( $post_id, $post, $update ) {
-		if ( 'post' !== $post->post_type ) {
+	public function on_transition_post_status_cb( $new_status, $old_status, WP_Post $post  ) {
+
+		// bail if it's an autosave
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 			return;
 		}
 
-		// When any post changes, look up graphql queries previously queried containing post resources and purge those
-		// Look up the specific post/node/resource to purge vs $this->purge_all();
-		$id    = Relay::toGlobalId( 'post', $post_id );
-		$nodes = $this->retrieve_nodes( $id );
-
-		// Delete the cached results associated with this post/key
-		if ( is_array( $nodes ) ) {
-			do_action( 'wpgraphql_cache_purge_nodes', 'post', $this->nodes_key( $id ), $nodes );
+		// If the post type is not intentionally tracked, ignore it
+		if ( ! in_array( $post->post_type, \WPGraphQL::get_allowed_post_types(), true ) ) {
+			return;
 		}
 
-		// if created, clear any cached connection lists for this type
-		if ( false === $update ) {
-			$posts = $this->get( 'post' );
-			if ( is_array( $posts ) ) {
-				$post_type       = get_post_type( $post_id );
-				$post_object     = get_post_type_object( $post_type );
-				$connection_name = strtolower( $post_object->graphql_single_name );
-				do_action( 'wpgraphql_cache_purge_nodes', 'post', $connection_name, $posts );
-			}
+		$initial_post_statuses = [ 'auto-draft', 'inherit', 'new' ];
+
+		// If the post is a fresh post that hasn't been made public, don't track the action
+		if ( in_array( $new_status, $initial_post_statuses, true ) ) {
+			return;
 		}
+
+		// Updating a draft should not log actions
+		if ( 'draft' === $new_status && 'draft' === $old_status ) {
+			return;
+		}
+
+		// If the post isn't coming from a "publish" state or going to a "publish" state
+		// we can ignore the action.
+		if ( 'publish' !== $old_status && 'publish' !== $new_status ) {
+			return;
+		}
+
+		$action_type = 'UPDATE';
+
+		// If a post is moved from 'publish' to any other status, set the action_type to delete
+		// to let Gatsby know it should no longer cache the post
+		if ( 'publish' !== $new_status && 'publish' === $old_status ) {
+			$action_type = 'DELETE';
+
+			// If a post that was not published becomes published, set the action_type to create
+			// to let Gatsby know it should fetch and cache the post
+		} elseif ( 'publish' === $new_status && 'publish' !== $old_status ) {
+			$action_type = 'CREATE';
+		}
+
+		$relay_id    = Relay::toGlobalId( 'post', $post->ID );
+
+		switch ( $action_type ) {
+			case 'CREATE':
+			case 'DELETE':
+				$nodes = $this->retrieve_nodes( $relay_id );
+
+				// Delete the cached results associated with this post/key
+				if ( is_array( $nodes ) && ! empty( $nodes ) ) {
+					do_action( 'wpgraphql_cache_purge_nodes', 'post', $this->nodes_key( $relay_id ), $nodes );
+				}
+				break;
+			case 'UPDATE':
+				$posts = $this->get( 'post' );
+				if ( is_array( $posts ) ) {
+					$post_type_object     = get_post_type_object( $post->post_type );
+					$connection_name = strtolower( $post_type_object->graphql_single_name );
+					do_action( 'wpgraphql_cache_purge_nodes', 'post', $connection_name, $posts );
+				}
+				break;
+		}
+
 	}
 
 	/**
@@ -258,12 +371,39 @@ class Collection extends Query {
 
 	/**
 	 * @param int    $meta_id    ID of updated metadata entry.
-	 * @param int    $object_id  Post ID.
+	 * @param int    $post_id  Post ID.
 	 * @param string $meta_key   Metadata key.
 	 * @param mixed  $meta_value Metadata value. This will be a PHP-serialized string representation of the value
 	 *                           if the value is an array, an object, or itself a PHP-serialized string.
 	 */
 	public function on_postmeta_change_cb( $meta_id, $post_id, $meta_key, $meta_value ) {
+
+		$object = get_post( $post_id );
+
+		/**
+		 * This filter allows plugins to opt-in or out of tracking for meta.
+		 *
+		 * @param bool $should_track Whether the meta key should be tracked.
+		 * @param string $meta_key Metadata key.
+		 * @param int $meta_id ID of updated metadata entry.
+		 * @param mixed $meta_value Metadata value. Serialized if non-scalar.
+		 * @param mixed $object The object the meta is being updated for.
+		 *
+		 * @param bool $tracked whether the meta key is tracked for purging caches
+		 */
+		$should_track = apply_filters( 'graphql_cache_should_track_meta_key', null, $meta_key, $meta_value, $object );
+
+		// If the filter has been applied
+		if ( null !== $should_track && false === $should_track ) {
+			return;
+		}
+
+		// if the meta key starts with an underscore, treat
+		// it as private meta and don't purge the cache
+		if ( strpos( $meta_key, '_' ) === 0 ) {
+			return;
+		}
+
 		// When any post changes, look up graphql queries previously queried containing post resources and purge those
 		// Look up the specific post/node/resource to purge vs $this->purge_all();
 		$post_type = get_post_type( $post_id );
@@ -276,8 +416,13 @@ class Collection extends Query {
 		}
 
 		// clear any cached connection lists for this type
-		$post_object     = get_post_type_object( $post_type );
-		$connection_name = strtolower( $post_object->graphql_single_name );
+		$post_type_object     = get_post_type_object( $post_type );
+
+		if ( ! in_array( $post_type_object->name, \WPGraphQL::get_allowed_post_types(), true ) ) {
+			return;
+		}
+
+		$connection_name = strtolower( $post_type_object->graphql_single_name );
 		if ( $connection_name ) {
 			$posts = $this->get( $connection_name );
 			if ( is_array( $posts ) ) {
