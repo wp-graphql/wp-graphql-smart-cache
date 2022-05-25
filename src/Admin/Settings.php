@@ -62,16 +62,31 @@ class Settings {
 				register_graphql_settings_field(
 					'graphql_persisted_queries_section',
 					[
-						'name'    => Grant::GLOBAL_SETTING_NAME,
-						'label'   => __( 'Allow/Deny Mode', 'wp-graphql-labs' ),
-						'desc'    => __( 'Allow or deny specific queries. Or leave your graphql endpoint wideopen with the public option (not recommended).', 'wp-graphql-labs' ),
-						'type'    => 'radio',
-						'default' => Grant::GLOBAL_DEFAULT,
-						'options' => [
+						'name'              => Grant::GLOBAL_SETTING_NAME,
+						'label'             => __( 'Allow/Deny Mode', 'wp-graphql-labs' ),
+						'desc'              => __( 'Allow or deny specific queries. Or leave your graphql endpoint wideopen with the public option (not recommended).', 'wp-graphql-labs' ),
+						'type'              => 'radio',
+						'default'           => Grant::GLOBAL_DEFAULT,
+						'options'           => [
 							Grant::GLOBAL_PUBLIC  => 'Public',
 							Grant::GLOBAL_ALLOWED => 'Allow only specific queries',
 							Grant::GLOBAL_DENIED  => 'Deny some specific queries',
 						],
+						'sanitize_callback' => function ( $value ) {
+							// If the value changed, trigger cache purge
+							if ( function_exists( 'get_graphql_setting' ) ) {
+								$current_setting = \get_graphql_setting( Grant::GLOBAL_SETTING_NAME, Grant::GLOBAL_DEFAULT, 'graphql_persisted_queries_section' );
+								if ( $current_setting !== $value ) {
+									// Action for those listening to purge_all
+									do_action( 'wpgraphql_cache_purge_all' );
+
+									// Purge the local cache results if enabled
+									$cache_object = new Results();
+									$cache_object->purge_all();
+								}
+							}
+							return $value;
+						},
 					]
 				);
 
@@ -156,7 +171,7 @@ class Settings {
 							 //phpcs:ignore
 							if ( 'on' === $_POST['graphql_cache_section']['purge_all'] ) {
 
-								// Trigger action when cache pure_all is invoked
+								// Trigger action when cache purge_all is invoked
 								do_action( 'wpgraphql_cache_purge_all' );
 
 								$cache_object = new Results();
