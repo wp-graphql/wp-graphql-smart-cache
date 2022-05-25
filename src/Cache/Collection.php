@@ -19,6 +19,7 @@ use GraphQL\Type\Schema;
 use GraphQL\Utils\TypeInfo;
 use GraphQLRelay\Relay;
 use WP_Post;
+use WP_User;
 use WPGraphQL\AppContext;
 use WPGraphQL\Data\Loader\AbstractDataLoader;
 use WPGraphQL\Labs\Document;
@@ -165,7 +166,7 @@ class Collection extends Query {
 	 * @throws SyntaxError|Exception
 	 */
 	public function get_query_types( $schema, $query ) {
-		if ( empty( $query ) || $schema === null ) {
+		if ( empty( $query ) || null === $schema ) {
 			return [];
 		}
 		try {
@@ -176,7 +177,7 @@ class Collection extends Query {
 		$type_map  = [];
 		$type_info = new TypeInfo( $schema );
 		$visitor   = [
-			'enter' => function( $node ) use ( $type_info, &$type_map, $schema ) {
+			'enter' => function ( $node ) use ( $type_info, &$type_map, $schema ) {
 				$type_info->enter( $node );
 				$type = $type_info->getType();
 				if ( ! $type ) {
@@ -194,7 +195,7 @@ class Collection extends Query {
 					$type_map[] = strtolower( $named_type );
 				}
 			},
-			'leave' => function( $node ) use ( $type_info ) {
+			'leave' => function ( $node ) use ( $type_info ) {
 				$type_info->leave( $node );
 			},
 		];
@@ -267,7 +268,6 @@ class Collection extends Query {
 		if ( ! empty( $query ) ) {
 			$this->type_names = $this->get_query_types( $schema, $query );
 		}
-
 
 		// For each connection resolver, store the url key
 		if ( is_array( $this->type_names ) ) {
@@ -355,7 +355,6 @@ class Collection extends Query {
 				}
 				break;
 		}
-
 	}
 
 	/**
@@ -391,6 +390,7 @@ class Collection extends Query {
 	 */
 	public function on_postmeta_change_cb( $meta_id, $post_id, $meta_key, $meta_value ) {
 
+		// get the post object being modified
 		$object = get_post( $post_id );
 
 		/**
