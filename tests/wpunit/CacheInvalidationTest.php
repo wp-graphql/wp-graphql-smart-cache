@@ -11,6 +11,10 @@ class CacheInvalidationTest extends \Codeception\TestCase\WPTestCase {
 	public function setUp(): void {
 		\WPGraphQL::clear_schema();
 
+		if ( ! defined( 'GRAPHQL_DEBUG' ) ) {
+			define( 'GRAPHQL_DEBUG', true );
+		}
+
 		$this->collection = new Collection();
 
 		// enable caching for the whole test suite
@@ -21,7 +25,6 @@ class CacheInvalidationTest extends \Codeception\TestCase\WPTestCase {
 
 	public function tearDown(): void {
 		\WPGraphQL::clear_schema();
-
 		// disable caching
 		delete_option( 'graphql_cache_section' );
 		parent::tearDown();
@@ -36,12 +39,12 @@ class CacheInvalidationTest extends \Codeception\TestCase\WPTestCase {
 	// the query should be invalidated
 	public function testContentNodesQueryInvalidatesWhenPostOfPublicPostTypeIsPublished() {
 
-		$post = $this->factory()->post->create([
+		$post = self::factory()->post->create([
 			'post_type' => 'post',
 			'post_status' => 'publish'
 		]);
 
-		$page = $this->factory()->post->create([
+		$page = self::factory()->post->create([
 			'post_type' => 'page',
 			'post_status' => 'publish'
 		]);
@@ -63,10 +66,10 @@ class CacheInvalidationTest extends \Codeception\TestCase\WPTestCase {
 
 		codecept_debug( [ 'request_key' => $request_key ]);
 
-		$actual = $collection->get( 'post' );
+		$actual = $collection->get( 'list:post' );
 		$this->assertEmpty( $actual );
 
-		$actual = $collection->get( 'page' );
+		$actual = $collection->get( 'list:page' );
 		$this->assertEmpty( $actual );
 
 		$cached_query = $collection->get( $request_key );
@@ -87,16 +90,16 @@ class CacheInvalidationTest extends \Codeception\TestCase\WPTestCase {
 		// there should be cached data for the query
 		$this->assertNotEmpty( $cached_query );
 
-		$actual = $collection->get( 'post' );
-		codecept_debug( [ 'post' => $actual ]);
+		$actual = $collection->get( 'list:post' );
+		codecept_debug( [ 'list:post' => $actual ]);
 		$this->assertEquals( [ $request_key ], $actual );
 
-		$actual = $collection->get( 'page' );
-		codecept_debug( [ 'page' => $actual ]);
+		$actual = $collection->get( 'list:page' );
+		codecept_debug( [ 'list:page' => $actual ]);
 		$this->assertEquals( [ $request_key ], $actual );
 
 
-		$this->factory->post->update_object( $post, [
+		self::factory()->post->update_object( $post, [
 			'post_title' => 'updated title'
 		]);
 
@@ -233,34 +236,105 @@ class CacheInvalidationTest extends \Codeception\TestCase\WPTestCase {
 
 		// start with an auto-draft post
 		$auto_draft_post_id = self::factory()->post->create([
-			'post_type' => 'auto-draft',
-			'post_status' => 'publish'
+			'post_type' => 'post',
+			'post_status' => 'auto-draft'
 		]);
 
-		// store data in the post cache
-		$this->collection->store_content( 'post', $random_id );
-		$this->collection->store_content( $random_id, 'foo' );
-		codecept_debug( [ 'get_post' => $this->collection->get( 'post' ) ] );
+		$post_list_query = '
+		{
+		  posts {
+		    nodes {
+		      id
+		      title
+		    }
+		  }
+		}
+		';
 
+		$single_post_query = '
+		query GetPost($id:ID!) {
+		  post(id:$id idType:DATABASE_ID) {
+		    __typename
+		    databaseId
+		  }
+		}
+		';
 
-		// assert that the data is in the post cache
-		$this->assertEquals( [ 'foo' ], get_transient( 'gql_cache_' . $random_id ) );
-		$this->assertContains( $random_id, $this->collection->get( 'post' ) );
+		$single_post_query_variables = [
+			'id' => $auto_draft_post_id
+		];
+
+		$post_list_query_cache_key = $this->collection->build_key( null, $post_list_query );
+		$single_post_query_cache_key = $this->collection->build_key( null, $single_post_query, $single_post_query_variables );
+
+		$post_keys =  $this->collection->get( 'post' );
+		$this->assertEmpty( $post_keys );
+
+		$cached_query =  $this->collection->get( $post_list_query_cache_key );
+		$this->assertEmpty( $cached_query );
+
+		$cached_query =  $this->collection->get( $single_post_query_cache_key );
+		$this->assertEmpty( $cached_query );
+
+		codecept_debug( [
+			'before_execute' => $cached_query,
+			'post_list_caches' => $this->collection->get( 'list:post' )
+		]);
+
+		$post_list_query_results = graphql([
+			'query' => $post_list_query
+		]);
+
+		// ensure the query executed without errors
+		$this->assertArrayNotHasKey( 'errors', $post_list_query_results );
+		$this->assertNotEmpty( $post_list_query_results['data'] );
+
+		// assert that the results are cached
+		$this->assertNotEmpty( $this->collection->get( $post_list_query_cache_key ) );
+		$this->assertSame( $post_list_query_results, $this->collection->get( $post_list_query_cache_key ) );
+
+		$single_post_query_results = graphql([
+			'query' => $single_post_query,
+			'variables' => $single_post_query_variables
+		]);
+
+		codecept_debug( [
+			'before_publish' => [
+				'single_post_query_results' => $single_post_query_results,
+				'post_list_caches' => $this->collection->get( 'list:post' )
+			]
+		]);
+
+		// ensure the query executed without errors
+		$this->assertArrayNotHasKey( 'errors', $single_post_query_results );
+		$this->assertNotEmpty( $single_post_query_results['data'] );
+
+		// assert that the results are cached
+		$this->assertNotEmpty( $this->collection->get( $single_post_query_cache_key ) );
+		$this->assertSame( $single_post_query_results, $this->collection->get( $single_post_query_cache_key ) );
+
 
 		// publish the auto draft post
 		self::factory()->post->update_object( $auto_draft_post_id, [
 			'post_status' => 'publish'
 		]);
 
-		codecept_debug( [ 'after_publish' => $this->collection->get( 'post' ) ] );
+		codecept_debug( [ 'after_publish' => [
+			'post_list_query_key' => $post_list_query_cache_key,
+			'post_list_query' => $this->collection->get( $post_list_query_cache_key ),
+			'post_list_caches' => $this->collection->get( 'list:post' ),
+		]]);
 
-		// publishing a post should invalidate the list cache,
-		$this->assertEmpty( $this->collection->get( 'post' ) );
+		$this->assertSame( $single_post_query_results, $this->collection->get( $single_post_query_cache_key ) );
+		$this->assertEmpty( $this->collection->get( $post_list_query_cache_key ) );
 
-		// but NOT invalidate the individual cache for the random post id
-		$this->assertEquals( [ 'foo' ], get_transient( 'gql_cache_' . $random_id ) );
-
-
+//		codecept_debug( [ 'after_publish' => $this->collection->get( 'post' ) ] );
+//
+//		// publishing a post should invalidate the list cache,
+//		$this->assertEmpty( $this->collection->get( 'post' ) );
+//
+//		// but NOT invalidate the individual cache for the random post id
+//		$this->assertEquals( [ 'foo' ], get_transient( 'gql_cache_' . $random_id ) );
 
 		// cleanup
 		wp_delete_post( $auto_draft_post_id, true );

@@ -117,12 +117,27 @@ class CacheCollectionTest extends \Codeception\TestCase\WPTestCase {
 	    // verify it's not been triggered yet.
 	    $this->assertEquals( false , get_transient( 'my-post-meta' ) );
 
-	    // set the post as published. This should trigger it.
+		// update post meta of the non-published post
+	    update_post_meta( $post_id, 'test_meta', 'meta_value' );
+
+	    // this should not have been triggered yet, because the post was published
+	    // but meta was not updated
+	    $this->assertEquals( false , get_transient( 'my-post-meta' ) );
+
+	    // set the post as published. This should still not trigger it, as no meta has changed
+	    // on a published post
 	    self::factory()->post->update_object( $post_id, [
 		    'post_status' => 'publish'
 	    ]);
 
-	    // Verify the action callback happened
+	    // this should not have been triggered yet, because the post was published
+	    // but meta was not updated
+	    $this->assertEquals( false , get_transient( 'my-post-meta' ) );
+
+		// update the post meta
+		update_post_meta( $post_id, 'test_meta', 'meta_value' );
+
+		// now that we updated meta of a published post, this should be triggered
 	    $this->assertEquals( 'triggered-post' , get_transient( 'my-post-meta' ) );
 
 	    // Verify transient stored in the posts type list is removed
