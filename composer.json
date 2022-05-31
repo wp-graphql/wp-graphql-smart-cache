@@ -9,6 +9,14 @@
             "WPGraphQL\\Labs\\": "src"
         }
     },
+    "autoload-dev": {
+      "files": [
+        "tests/_data/config.php"
+      ],
+      "psr-4": {
+        "TestCase\\WPGraphQLLabs\\": "tests/_support/"
+      }
+    },
     "require-dev": {
         "wp-graphql/wp-graphql-testcase": "*",
         "squizlabs/php_codesniffer": "^3.6",
