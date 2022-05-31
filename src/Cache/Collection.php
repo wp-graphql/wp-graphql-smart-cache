@@ -80,10 +80,10 @@ class Collection extends Query {
 		// if the request has a query, use it
 		if ( ! empty( $request->params->query ) ) {
 			$query = $request->params->query;
-		// else, use the requests queryId
+			// else, use the requests queryId
 		} elseif ( ! empty( $request->params->queryId ) ) {
 			$document = new Document();
-			$query = $document->get( $request->params->queryId );
+			$query    = $document->get( $request->params->queryId );
 		}
 
 		// if there's a query (saved or part of the params) get the query types
@@ -94,7 +94,6 @@ class Collection extends Query {
 			// @todo: should this info be output as an extension?
 			// output the types as graphql debug info
 			graphql_debug( 'query_types', [ 'types' => $this->type_names ] );
-
 		}
 	}
 
