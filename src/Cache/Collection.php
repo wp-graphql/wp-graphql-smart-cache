@@ -77,17 +77,18 @@ class Collection extends Query {
 	 * @throws SyntaxError
 	 */
 	public function determine_query_types( Request $request ) {
-		// if the request has a query, use it
-		if ( ! empty( $request->params->query ) ) {
-			$query = $request->params->query;
-			// else, use the requests queryId
-		} elseif ( ! empty( $request->params->queryId ) ) {
+
+		// if the request has a queryId, use it to determine the query document
+		if ( ! empty( $request->params->queryId ) ) {
 			$document = new Document();
 			$query    = $document->get( $request->params->queryId );
+			// if no queryId was presented in the request, but a query was, use it
+		} else if ( ! empty( $request->params->query ) ) {
+			$query = $request->params->query;
 		}
 
-		// if there's a query (saved or part of the params) get the query types
-		// from the query
+		// if there's a query (either saved or part of the request params)
+		// get the GraphQL Types being asked for by the query
 		if ( ! empty( $query ) ) {
 			$this->type_names = $this->get_query_types( $request->schema, $query );
 
