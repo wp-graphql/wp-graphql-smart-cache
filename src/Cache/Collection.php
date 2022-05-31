@@ -13,6 +13,7 @@ use GraphQL\Executor\ExecutionResult;
 use GraphQL\Language\Parser;
 use GraphQL\Language\Visitor;
 use GraphQL\Type\Definition\InterfaceType;
+use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Schema;
@@ -50,7 +51,7 @@ class Collection extends Query {
 		add_filter( 'insert_user_meta', [ $this, 'on_user_change_cb' ], 10, 3 );
 
 		// meta For acf, which calls WP function update_metadata
-		add_action( 'updated_postmeta', [ $this, 'on_postmeta_change_cb' ], 10, 4 );
+		add_action( 'updated_post_meta', [ $this, 'on_postmeta_change_cb' ], 10, 4 );
 
 		parent::init();
 	}
@@ -73,7 +74,7 @@ class Collection extends Query {
 	 * @param AbstractDataLoader $this  The AbstractDataLoader Instance
 	 */
 	public function data_loaded_process_cb( $model ) {
-		if ( $model->id ) {
+		if ( isset( $model->id ) ) {
 			$this->runtime_nodes[] = $model->id;
 		}
 
@@ -134,8 +135,7 @@ class Collection extends Query {
 	}
 
 	/**
-	 * @param $id The content node identifier
-	 *
+	 * @param mixed|string|int $id The content node identifier
 	 * @return array The unique list of content stored
 	 */
 	public function retrieve_nodes( $id ) {
@@ -145,7 +145,7 @@ class Collection extends Query {
 	}
 
 	/**
-	 * @param $id The content node identifier
+	 * @param mixed|string|int $id The content node identifier
 	 *
 	 * @return array The unique list of content stored
 	 */
@@ -177,7 +177,7 @@ class Collection extends Query {
 		$type_map  = [];
 		$type_info = new TypeInfo( $schema );
 		$visitor   = [
-			'enter' => function ( $node ) use ( $type_info, &$type_map, $schema ) {
+			'enter' => function ( $node, $key, $parent, $path, $ancestors ) use ( $type_info, &$type_map, $schema ) {
 				$type_info->enter( $node );
 				$type = $type_info->getType();
 				if ( ! $type ) {
@@ -186,23 +186,29 @@ class Collection extends Query {
 
 				$named_type = Type::getNamedType( $type );
 
+				// determine if the field is returning a list of types
+				// or singular types
+				// @todo: this might still be too fragile. We might need to adjust for cases where we can have list_of( nonNull( type ) ), etc
+				$prefix = $named_type && ( Type::listOf( $named_type )->name === $type->name ) ? 'list:' : null;
+
 				if ( $named_type instanceof InterfaceType ) {
 					$possible_types = $schema->getPossibleTypes( $named_type );
 					foreach ( $possible_types as $possible_type ) {
-						$type_map[] = strtolower( $possible_type );
+						$type_map[] = $prefix . strtolower( $possible_type );
 					}
-				} else {
-					$type_map[] = strtolower( $named_type );
+				} elseif ( $named_type instanceof ObjectType ) {
+					$type_map[] = $prefix . strtolower( $named_type );
 				}
 			},
-			'leave' => function ( $node ) use ( $type_info ) {
+			'leave' => function ( $node, $key, $parent, $path, $ancestors ) use ( $type_info ) {
 				$type_info->leave( $node );
 			},
 		];
 
-		Visitor::visit( $ast, $visitor );
-
-		return array_values( array_unique( array_filter( $type_map ) ) );
+		Visitor::visit( $ast, Visitor::visitWithTypeInfo( $type_info, $visitor ) );
+		$map = array_values( array_unique( array_filter( $type_map ) ) );
+		// @phpcs:ignore
+		return apply_filters( 'graphql_cache_collection_get_query_types', $map, $schema, $query, $type_info );
 	}
 
 	/**
@@ -321,39 +327,41 @@ class Collection extends Query {
 			return;
 		}
 
+		// Default action type is update when the transition_post_status hook is run
 		$action_type = 'UPDATE';
 
 		// If a post is moved from 'publish' to any other status, set the action_type to delete
-		// to let Gatsby know it should no longer cache the post
 		if ( 'publish' !== $new_status && 'publish' === $old_status ) {
 			$action_type = 'DELETE';
 
 			// If a post that was not published becomes published, set the action_type to create
-			// to let Gatsby know it should fetch and cache the post
 		} elseif ( 'publish' === $new_status && 'publish' !== $old_status ) {
 			$action_type = 'CREATE';
 		}
 
-		$relay_id = Relay::toGlobalId( 'post', $post->ID );
+		$relay_id         = Relay::toGlobalId( 'post', $post->ID );
+		$post_type_object = get_post_type_object( $post->post_type );
+		$type_name        = strtolower( $post_type_object->graphql_single_name );
 
-		switch ( $action_type ) {
-			case 'CREATE':
-			case 'DELETE':
-				$nodes = $this->retrieve_nodes( $relay_id );
+		// if we create a post
+		// we need to purge lists of the type
+		// as the created node might affect the list
+		if ( 'CREATE' === $action_type ) {
+			$nodes = $this->get( 'list:' . $type_name );
+			if ( is_array( $nodes ) ) {
+				do_action( 'wpgraphql_cache_purge_nodes', 'list:' . $type_name, $type_name, $nodes );
+			}
+		}
 
-				// Delete the cached results associated with this post/key
-				if ( is_array( $nodes ) && ! empty( $nodes ) ) {
-					do_action( 'wpgraphql_cache_purge_nodes', 'post', $this->nodes_key( $relay_id ), $nodes );
-				}
-				break;
-			case 'UPDATE':
-				$posts = $this->get( 'post' );
-				if ( is_array( $posts ) ) {
-					$post_type_object = get_post_type_object( $post->post_type );
-					$connection_name  = strtolower( $post_type_object->graphql_single_name );
-					do_action( 'wpgraphql_cache_purge_nodes', 'post', $connection_name, $posts );
-				}
-				break;
+		// if we update or delete a post
+		// we need to purge any queries that have that
+		// specific node in it
+		if ( 'UPDATE' === $action_type || 'DELETE' === $action_type ) {
+			$nodes = $this->retrieve_nodes( $relay_id );
+			// Delete the cached results associated with this post/key
+			if ( is_array( $nodes ) && ! empty( $nodes ) ) {
+				do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->nodes_key( $relay_id ), $nodes );
+			}
 		}
 	}
 
@@ -418,30 +426,21 @@ class Collection extends Query {
 			return;
 		}
 
-		// When any post changes, look up graphql queries previously queried containing post resources and purge those
-		// Look up the specific post/node/resource to purge vs $this->purge_all();
-		$post_type = get_post_type( $post_id );
-		$id        = Relay::toGlobalId( $post_type, $post_id );
-		$nodes     = $this->retrieve_nodes( $id );
-
-		// Delete the cached results associated with this post/key
-		if ( is_array( $nodes ) ) {
-			do_action( 'wpgraphql_cache_purge_nodes', $post_type, $this->nodes_key( $id ), $nodes );
-		}
-
 		// clear any cached connection lists for this type
-		$post_type_object = get_post_type_object( $post_type );
+		$post_type_object = get_post_type_object( $object->post_type );
 
 		if ( ! in_array( $post_type_object->name, \WPGraphQL::get_allowed_post_types(), true ) ) {
 			return;
 		}
 
-		$connection_name = strtolower( $post_type_object->graphql_single_name );
-		if ( $connection_name ) {
-			$posts = $this->get( $connection_name );
-			if ( is_array( $posts ) ) {
-				do_action( 'wpgraphql_cache_purge_nodes', $post_type, $connection_name, $posts );
-			}
+		$post_type_object = get_post_type_object( $object->post_type );
+		$type_name        = strtolower( $post_type_object->graphql_single_name );
+		$relay_id         = Relay::toGlobalId( 'post', $object->ID );
+		$nodes            = $this->retrieve_nodes( $relay_id );
+
+		// Delete the cached results associated with this post/key
+		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
+			do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->nodes_key( $relay_id ), $nodes );
 		}
 	}
 }
