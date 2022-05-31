@@ -53,6 +53,9 @@ class Collection extends Query {
 		// meta For acf, which calls WP function update_metadata
 		add_action( 'updated_post_meta', [ $this, 'on_postmeta_change_cb' ], 10, 4 );
 
+		// before execution begins, determine the type names map
+		add_action( 'graphql_before_execute', [ $this, 'determine_query_types' ], 10, 1 );
+
 		parent::init();
 	}
 
@@ -62,6 +65,38 @@ class Collection extends Query {
 		$this->connection_names = [];
 
 		return $result;
+	}
+
+	/**
+	 * Given a query string, determine the GraphQL Types represented by the queried
+	 * fields.
+	 *
+	 * @param Request $request
+	 *
+	 * @return void
+	 * @throws SyntaxError
+	 */
+	public function determine_query_types( Request $request ) {
+
+		$query = isset( $request->params->query ) ? $request->params->query : null;
+
+		// if the request had a queryId instead of a query,
+		// we need to look up that query first
+		if ( empty( $query ) && ! empty( $request->params->queryId ) ) {
+			$document = new Document();
+			$query    = $document->get( $request->params->queryId );
+		}
+
+		// if there's a query (saved or part of the params) get the query types
+		// from the query
+		if ( ! empty( $query ) ) {
+			$this->type_names = $this->get_query_types( $request->schema, $query );
+		}
+
+		// @todo: should this info be output as an extension?
+		// output the types as graphql debug info
+		graphql_debug( 'query_types', [ 'types' => $this->type_names ] );
+
 	}
 
 	/**
@@ -207,6 +242,7 @@ class Collection extends Query {
 
 		Visitor::visit( $ast, Visitor::visitWithTypeInfo( $type_info, $visitor ) );
 		$map = array_values( array_unique( array_filter( $type_map ) ) );
+
 		// @phpcs:ignore
 		return apply_filters( 'graphql_cache_collection_get_query_types', $map, $schema, $query, $type_info );
 	}
@@ -262,21 +298,8 @@ class Collection extends Query {
 			$this->store_content( $this->nodes_key( $node_id ), $request_key );
 		}
 
-		// if the request had a queryId instead of a query,
-		// we need to look up that query first
-		if ( empty( $query ) && ! empty( $this->params->queryId ) ) {
-			$document = new Document();
-			$query    = $document->get( $this->params->queryId );
-		}
-
-		// if there's a query (saved or part of the params) get the query types
-		// from the query
-		if ( ! empty( $query ) ) {
-			$this->type_names = $this->get_query_types( $schema, $query );
-		}
-
 		// For each connection resolver, store the url key
-		if ( is_array( $this->type_names ) ) {
+		if ( ! empty( $this->type_names ) && is_array( $this->type_names ) ) {
 			$this->type_names = array_unique( $this->type_names );
 			foreach ( $this->type_names as $type_name ) {
 				$this->store_content( $type_name, $request_key );
