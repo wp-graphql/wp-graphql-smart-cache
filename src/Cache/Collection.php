@@ -83,7 +83,7 @@ class Collection extends Query {
 			$document = new Document();
 			$query    = $document->get( $request->params->queryId );
 			// if no queryId was presented in the request, but a query was, use it
-		} else if ( ! empty( $request->params->query ) ) {
+		} elseif ( ! empty( $request->params->query ) ) {
 			$query = $request->params->query;
 		}
 
