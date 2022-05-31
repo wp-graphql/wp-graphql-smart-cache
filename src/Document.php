@@ -281,12 +281,12 @@ class Document {
 	 * Load a persisted query corresponding to a query ID (hash) or alias/alternate name
 	 *
 	 * @param  string $query_id Query ID
-	 * @return string Query
+	 * @return mixed Query|null
 	 */
 	public function get( $query_id ) {
 		$post = Utils::getPostByTermName( $query_id, self::TYPE_NAME, self::ALIAS_TAXONOMY_NAME );
 		if ( false === $post || empty( $post->post_content ) ) {
-			return;
+			return null;
 		}
 
 		return $post->post_content;

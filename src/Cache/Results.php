@@ -119,7 +119,7 @@ class Results extends Query {
 			}
 
 			//phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
-			graphql_debug( 'Graphql delete nodes',  [ 'nodes' => $nodes ] );
+			graphql_debug( 'Graphql delete nodes', [ 'nodes' => $nodes ] );
 		}
 	}
 }
