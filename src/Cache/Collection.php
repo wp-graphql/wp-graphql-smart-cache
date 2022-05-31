@@ -439,7 +439,7 @@ class Collection extends Query {
 		$should_track = apply_filters( 'graphql_cache_should_track_meta_key', null, $meta_key, $meta_value, $object );
 
 		// If the filter has been applied
-		if ( null !== $should_track && true !== (bool) $should_track ) {
+		if ( null !== $should_track && false === $should_track ) {
 			return;
 		}
 
