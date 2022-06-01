@@ -50,7 +50,6 @@ class Collection extends Query {
 		// listen for changes to the post author.
 		// This will need to evict list queries.
 		add_action( 'post_updated', function( $post_id, WP_Post $post_after, WP_Post $post_before ) {
-
 			// if the post author hasn't changed, do nothing
 			if ( $post_after->post_author === $post_before->post_author ) {
 				return;
@@ -63,12 +62,10 @@ class Collection extends Query {
 			if ( is_array( $nodes ) ) {
 				do_action( 'wpgraphql_cache_purge_nodes', 'list:' . $type_name, $type_name, $nodes );
 			}
-
 		}, 10, 3 );
 
 		// listen for posts to be deleted. Queries with deleted nodes should be purged.
 		add_action( 'deleted_post', function( $post_id, WP_Post $post ) {
-
 			if ( ! in_array( $post->post_type, \WPGraphQL::get_allowed_post_types(), true ) ) {
 				return;
 			}
@@ -78,16 +75,14 @@ class Collection extends Query {
 			}
 
 			$post_type_object = get_post_type_object( $post->post_type );
-
-			$relay_id  = Relay::toGlobalId( 'post', $post->ID );
-			$type_name = strtolower( $post_type_object->graphql_single_name );
-			$nodes     = $this->retrieve_nodes( $relay_id );
+			$relay_id         = Relay::toGlobalId( 'post', $post->ID );
+			$type_name        = strtolower( $post_type_object->graphql_single_name );
+			$nodes            = $this->retrieve_nodes( $relay_id );
 
 			// Delete the cached results associated with this post/key
 			if ( is_array( $nodes ) && ! empty( $nodes ) ) {
 				do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->nodes_key( $relay_id ), $nodes );
 			}
-
 		}, 10, 2 );
 
 		// when a term is edited, purge caches for that term
@@ -242,6 +237,7 @@ class Collection extends Query {
 
 	/**
 	 * @param mixed|string|int $id The content node identifier
+	 *
 	 * @return array The unique list of content stored
 	 */
 	public function retrieve_nodes( $id ) {
@@ -283,7 +279,7 @@ class Collection extends Query {
 		$type_map  = [];
 		$type_info = new TypeInfo( $schema );
 		$visitor   = [
-			'enter' => function ( $node, $key, $parent, $path, $ancestors ) use ( $type_info, &$type_map, $schema ) {
+			'enter' => function( $node, $key, $parent, $path, $ancestors ) use ( $type_info, &$type_map, $schema ) {
 				$type_info->enter( $node );
 				$type = $type_info->getType();
 				if ( ! $type ) {
@@ -306,7 +302,7 @@ class Collection extends Query {
 					$type_map[] = $prefix . strtolower( $named_type );
 				}
 			},
-			'leave' => function ( $node, $key, $parent, $path, $ancestors ) use ( $type_info ) {
+			'leave' => function( $node, $key, $parent, $path, $ancestors ) use ( $type_info ) {
 				$type_info->leave( $node );
 			},
 		];
