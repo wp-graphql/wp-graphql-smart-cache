@@ -47,6 +47,33 @@ class Collection extends Query {
 		// listen for posts to transition statuses so we know when to purge
 		add_action( 'transition_post_status', [ $this, 'on_transition_post_status_cb' ], 10, 3 );
 
+		// when a term is edited, purge caches for that term
+		// this action is called when term caches are updated on a delay.
+		// for example, if a scheduled post is assigned to a term,
+		// this won't be called when the post is initially inserted with the
+		// term assigned, but when the post is published
+		add_action( 'edited_term_taxonomy', function( $tt_id, $taxonomy ) {
+
+			if ( ! in_array( $taxonomy, \WPGraphQL::get_allowed_taxonomies(), true ) ) {
+				return;
+			}
+
+			$term = get_term_by( 'term_taxonomy_id', $tt_id, $taxonomy );
+
+			if ( ! $term instanceof \WP_Term ) {
+				return;
+			}
+
+			$relay_id  = Relay::toGlobalId( 'term', $term->term_id );
+			$type_name = strtolower( get_taxonomy( $taxonomy )->graphql_single_name );
+			$nodes     = $this->retrieve_nodes( $relay_id );
+			// Delete the cached results associated with this post/key
+			if ( is_array( $nodes ) && ! empty( $nodes ) ) {
+				do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->nodes_key( $relay_id ), $nodes );
+			}
+
+		}, 10, 2 );
+
 		// user/author
 		add_filter( 'insert_user_meta', [ $this, 'on_user_change_cb' ], 10, 3 );
 
@@ -91,7 +118,6 @@ class Collection extends Query {
 		// get the GraphQL Types being asked for by the query
 		if ( ! empty( $query ) ) {
 			$this->type_names = $this->get_query_types( $request->schema, $query );
-
 			// @todo: should this info be output as an extension?
 			// output the types as graphql debug info
 			graphql_debug( 'query_types', [ 'types' => $this->type_names ] );
