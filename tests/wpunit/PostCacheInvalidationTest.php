@@ -216,9 +216,6 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		// set the object terms on the published post
 		wp_set_object_terms( $this->published_post->ID, [ $this->category->term_id ], 'category' );
 
-		// purge all caches (since we just added a term to a published post and we want to start in a clean state again)
-		$this->collection->purge_all();
-
 		// re-populate the caches
 		$this->_populateCaches();
 
@@ -575,9 +572,99 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 	}
 
 	// delete draft post (doesnt evoke purge action)
+	public function testDraftPostIsForceDeleted() {
+
+		// no caches should be evicted to start
+		$non_evicted_caches_before_delete = $this->getNonEvictedCaches();
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+		// delete the draft post
+		// this shouldn't evict any caches as the draft post shouldn't
+		// be in the cache in the first place
+		wp_delete_post( $this->draft_post->ID, true );
+
+		// assert that caches have been evicted
+		// as a draft post shouldn't evict any caches
+		$this->assertEmpty( $this->getEvictedCaches() );
+		$this->assertSame( $non_evicted_caches_before_delete, $this->getNonEvictedCaches() );
+	}
+
 	// trashed post is restored
+	public function testTrashedPostIsRestored() {
+
+		// ensure we have no evicted caches to start
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+		// trash a post
+		wp_trash_post( $this->draft_post->ID );
+
+		// trashing the draft post shouldn't evict any caches
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+		// publish the trashed post
+		wp_publish_post( $this->draft_post->ID );
+
+		$evicted_caches = $this->getEvictedCaches();
+		$non_evicted_caches = $this->getNonEvictedCaches();
+
+		$this->assertNotEmpty( $evicted_caches );
+		$this->assertNotEmpty( $non_evicted_caches );
+
+		codecept_debug( [
+			'evicted' => $evicted_caches,
+			'non' => $non_evicted_caches
+		]);
+
+		// publishing a post should evict the listContentNode cache
+		$this->assertContains( 'listContentNode', $evicted_caches );
+
+		// publishing a post should evict the listPost cache
+		$this->assertContains( 'listPost', $evicted_caches );
 
 
+		$this->assertNotEmpty( $non_evicted_caches );
+
+		// publishing a trashed post should not evict a query for another post
+		$this->assertContains( 'singlePost', $non_evicted_caches );
+
+		// publishing a trashed post should not evict a query for another post
+		$this->assertContains( 'singleContentNode', $non_evicted_caches );
+
+		// publishing a trashed post should not evict a query for another single node by id
+		$this->assertContains( 'singleNodeById', $non_evicted_caches );
+
+		// publishing a trashed post should not evict a query for another post by uri
+		$this->assertContains( 'singleNodeByUri', $non_evicted_caches );
+
+		// the post did not have a category assigned, so the category list should not be evicted
+		$this->assertContains( 'listCategory', $non_evicted_caches );
+
+		// the post did not have a category assigned, so the singleCategory should not be evicted
+		$this->assertContains( 'singleCategory', $non_evicted_caches );
+
+		// no pages were affected, should remain cached
+		$this->assertContains( 'listPage', $non_evicted_caches );
+
+		// no pages were affected, should remain cached
+		$this->assertContains( 'singlePage', $non_evicted_caches );
+
+		// no Test Post Type nodes were affected, should remain cached
+		$this->assertContains( 'listTestPostType', $non_evicted_caches );
+		$this->assertContains( 'singleTestPostType', $non_evicted_caches );
+
+		// no Private Post Type nodes were affected, should remain cached
+		$this->assertContains( 'listPrivatePostType', $non_evicted_caches );
+		$this->assertContains( 'singlePrivatePostType', $non_evicted_caches );
+
+		// no tag nodes were affected, should remain cached
+		$this->assertContains( 'listTag', $non_evicted_caches );
+		$this->assertContains( 'singleTag', $non_evicted_caches );
+
+		// no Test Taxonomy term nodes were affected, should remain cached
+		$this->assertContains( 'listTestTaxonomyTerm', $non_evicted_caches );
+		$this->assertContains( 'singleTestTaxonomyTerm', $non_evicted_caches );
+
+	}
 
 	// page is created as auto draft
 	// page is published from draft

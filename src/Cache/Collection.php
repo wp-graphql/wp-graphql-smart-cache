@@ -44,9 +44,10 @@ class Collection extends Query {
 
 		add_action( 'graphql_after_resolve_field', [ $this, 'during_query_resolve_field' ], 10, 6 );
 
-		// listen for posts to transition statuses so we know when to purge
+		// listen for posts to transition statuses, so we know when to purge
 		add_action( 'transition_post_status', [ $this, 'on_transition_post_status_cb' ], 10, 3 );
 
+		// listen for posts to be deleted. Queries with deleted nodes should be purged.
 		add_action( 'deleted_post', function( $post_id, WP_Post $post ) {
 
 			if ( ! in_array( $post->post_type, \WPGraphQL::get_allowed_post_types(), true ) ) {
