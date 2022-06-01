@@ -47,11 +47,36 @@ class Collection extends Query {
 		// listen for posts to transition statuses so we know when to purge
 		add_action( 'transition_post_status', [ $this, 'on_transition_post_status_cb' ], 10, 3 );
 
+		add_action( 'deleted_post', function( $post_id, WP_Post $post ) {
+
+			if ( ! in_array( $post->post_type, \WPGraphQL::get_allowed_post_types(), true ) ) {
+				return;
+			}
+
+			if ( 'publish' !== $post->post_status ) {
+				return;
+			}
+
+			$post_type_object = get_post_type_object( $post->post_type );
+
+			$relay_id  = Relay::toGlobalId( 'post', $post->ID );
+			$type_name = strtolower( $post_type_object->graphql_single_name );
+			$nodes     = $this->retrieve_nodes( $relay_id );
+
+			// Delete the cached results associated with this post/key
+			if ( is_array( $nodes ) && ! empty( $nodes ) ) {
+				do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->nodes_key( $relay_id ), $nodes );
+			}
+
+		}, 10, 2 );
+
 		// when a term is edited, purge caches for that term
 		// this action is called when term caches are updated on a delay.
 		// for example, if a scheduled post is assigned to a term,
 		// this won't be called when the post is initially inserted with the
 		// term assigned, but when the post is published
+		//
+		// @todo: move this out of an anonymous callback
 		add_action( 'edited_term_taxonomy', function( $tt_id, $taxonomy ) {
 
 			if ( ! in_array( $taxonomy, \WPGraphQL::get_allowed_taxonomies(), true ) ) {
@@ -67,6 +92,7 @@ class Collection extends Query {
 			$relay_id  = Relay::toGlobalId( 'term', $term->term_id );
 			$type_name = strtolower( get_taxonomy( $taxonomy )->graphql_single_name );
 			$nodes     = $this->retrieve_nodes( $relay_id );
+
 			// Delete the cached results associated with this post/key
 			if ( is_array( $nodes ) && ! empty( $nodes ) ) {
 				do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->nodes_key( $relay_id ), $nodes );
