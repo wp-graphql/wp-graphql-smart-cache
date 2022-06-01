@@ -57,6 +57,16 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 	public $draft_private_post_type;
 
 	/**
+	 * @var WP_Post
+	 */
+	public $scheduled_post;
+
+	/**
+	 * @var WP_Post
+	 */
+	public $scheduled_post_with_category;
+
+	/**
 	 * @var WP_Term
 	 */
 	public $category;
@@ -96,11 +106,13 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 	public function setUp(): void {
 		parent::setUp();
 
-
 		/**
 		 * Clear the schema
 		 */
 		$this->clearSchema();
+
+		// prevent default category from being added to posts on creation
+		update_option( 'default_category', 0 );
 
 		// enable caching for the whole test suite
 		add_option( 'graphql_cache_section', [ 'cache_toggle' => 'on' ] );
@@ -189,6 +201,23 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 			'post_author' => $this->admin->ID,
 		]);
 
+		$this->scheduled_post = self::factory()->post->create_and_get([
+			'post_type' => 'post',
+			'post_status' => 'future',
+			'post_title' => 'Test Scheduled Post',
+			'post_author' => $this->admin,
+			'post_date' => date( "Y-m-d H:i:s", strtotime( '+1 day' ) ),
+		]);
+
+		$this->scheduled_post_with_category = self::factory()->post->create_and_get([
+			'post_type' => 'post',
+			'post_status' => 'future',
+			'post_title' => 'Test Scheduled Post',
+			'post_author' => $this->admin,
+			'post_date' => date( "Y-m-d H:i:s", strtotime( '+1 day' ) ),
+			'post_category' => [ $this->category->term_id ]
+		]);
+
 		// create a draft post
 		$this->draft_post = self::factory()->post->create_and_get([
 			'post_type' => 'post',
@@ -239,6 +268,7 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 		$this->assertInstanceOf( \WP_Post::class, $this->draft_test_post_type );
 		$this->assertInstanceOf( \WP_Post::class, $this->published_private_post_type );
 		$this->assertInstanceOf( \WP_Post::class, $this->draft_private_post_type );
+		$this->assertInstanceOf( \WP_Post::class, $this->scheduled_post_with_category );
 		$this->assertInstanceOf( \WP_Term::class, $this->category );
 		$this->assertInstanceOf( \WP_Term::class, $this->tag );
 		$this->assertInstanceOf( \WP_Term::class, $this->test_taxonomy_term );
@@ -602,11 +632,7 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 			// check any expected cache keys to ensure they're not empty
 			if ( ! empty( $expectedCacheKeys ) ) {
 				foreach ( $expectedCacheKeys as $expected_cache_key ) {
-					codecept_debug( [ 'cacheKeyIsEmpty' => [
-						'name' => $name,
-						'key' => $expected_cache_key,
-						'value' => $this->collection->get( $expected_cache_key )
-					]]);
+
 					$this->assertNotEmpty( $this->collection->get( $expected_cache_key ) );
 					$this->assertContains( $cache_key, $this->collection->get( $expected_cache_key ) );
 				}
@@ -626,6 +652,9 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 		return $this->query_results;
 	}
 
+	/**
+	 * @return array
+	 */
 	public function getEvictedCaches() {
 		$empty = [];
 		if ( ! empty( $this->query_results ) ) {
@@ -638,6 +667,13 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 		}
 
 		return $empty;
+	}
+
+	/**
+	 * @return int[]|string[]
+	 */
+	public function getNonEvictedCaches() {
+		return array_diff( array_keys( $this->query_results ), $this->getEvictedCaches() );
 	}
 
 	/**
