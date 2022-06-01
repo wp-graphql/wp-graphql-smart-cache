@@ -17,6 +17,11 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 	public $admin;
 
 	/**
+	 * @var WP_User
+	 */
+	public $editor;
+
+	/**
 	 * @var Collection
 	 */
 	public $collection;
@@ -65,6 +70,11 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 	 * @var WP_Post
 	 */
 	public $scheduled_post;
+
+	/**
+	 * @var WP_Post
+	 */
+	public $published_post_by_editor;
 
 	/**
 	 * @var WP_Post
@@ -173,6 +183,10 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 			'role' => 'administrator'
 		]);
 
+		$this->editor = self::factory()->user->create_and_get([
+			'role' => 'editor'
+		]);
+
 		// create a test tag
 		$this->tag = self::factory()->term->create_and_get([
 			'taxonomy' => 'post_tag',
@@ -199,11 +213,13 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 		$this->published_post = self::factory()->post->create_and_get([
 			'post_type' => 'post',
 			'post_status' => 'publish',
-			'tax_input' => [
-				'post_tag' => [ $this->tag->term_id ],
-				'category' => [ $this->category->term_id ]
-			],
 			'post_author' => $this->admin->ID,
+		]);
+
+		$this->published_post_by_editor = self::factory()->post->create_and_get([
+			'post_type' => 'post',
+			'post_status' => 'publish',
+			'post_author' => $this->editor->ID,
 		]);
 
 		$this->scheduled_post = self::factory()->post->create_and_get([
@@ -227,10 +243,6 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 		$this->draft_post = self::factory()->post->create_and_get([
 			'post_type' => 'post',
 			'post_status' => 'draft',
-			'tax_input' => [
-				'post_tag' => [ $this->tag->term_id ],
-				'category' => [ $this->category->term_id ]
-			],
 			'post_author' => $this->admin->ID,
 		]);
 
@@ -580,6 +592,40 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 					'list:testTaxonomyTerm'
 				],
 			],
+			'adminUserWithPostsConnection' => [
+				'name' => 'adminUserWithPostsConnection',
+				'query' => $this->getSingleUserByDatabaseIdWithAuthoredPostsQuery(),
+				'variables' => [ 'id' => $this->admin->ID ],
+				'assertions' => [
+					$this->expectedField( 'user.__typename', 'User' ),
+					$this->expectedField( 'user.databaseId', $this->admin->ID ),
+					$this->expectedNode( 'user.posts.nodes', [
+						'__typename' => 'Post',
+						'databaseId' => $this->published_post->ID,
+					])
+				],
+				'expectedCacheKeys' => [
+					'list:post',
+					'node:' . $this->toRelayId( 'user', $this->admin->ID )
+				]
+			],
+			'editorUserWithPostsConnection' => [
+				'name' => 'editorUserWithPostsConnection',
+				'query' => $this->getSingleUserByDatabaseIdWithAuthoredPostsQuery(),
+				'variables' => [ 'id' => $this->editor->ID ],
+				'assertions' => [
+					$this->expectedField( 'user.__typename', 'User' ),
+					$this->expectedField( 'user.databaseId', $this->editor->ID ),
+					$this->expectedNode( 'user.posts.nodes', [
+						'__typename' => 'Post',
+						'databaseId' => $this->published_post_by_editor->ID,
+					])
+				],
+				'expectedCacheKeys' => [
+					'list:post',
+					'node:' . $this->toRelayId( 'user', $this->editor->ID )
+				]
+			]
 //			@todo: I believe the WPGraphQL Model Layer might have some bugs to fix re: private taxonomies? 🤔
 //			'singlePrivateTaxonomyTerm' => [
 //				'name' => 'singlePrivateTaxonomyTerm',
@@ -633,8 +679,13 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 				'variables' => $variables,
 			] );
 
+			// we only want to do this if there are errors to surface
+			if ( array_key_exists( 'errors', $actual ) ) {
+				$this->assertArrayNotHasKey( 'errors', $actual );
+			}
+
 			// ensure the query was successful
-			// $this->assertQuerySuccessful( $actual, $assertions );
+ 		    // $this->assertQuerySuccessful( $actual, $assertions );
 
 			// ensure the results are now cached under the cache key
 			// $this->assertNotEmpty( $this->collection->get( $cache_key ) );
@@ -1104,7 +1155,7 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 	        posts {
 	          nodes {
 	            __typename
-	            id
+	            databaseId
 	          }
 	        }
 		  }

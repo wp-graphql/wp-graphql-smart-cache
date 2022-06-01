@@ -1105,12 +1105,166 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 
 
 	// publish first post to a user (user->post connection should purge)
+	public function testPublishFirstPostToUserShouldPurgeUserToPostConnection() {
+
+		$new_user = self::factory()->user->create_and_get([
+			'role' => 'administrator'
+		]);
+
+		$query = $this->getSingleUserByDatabaseIdWithAuthoredPostsQuery();
+		$variables = [ 'id' => $new_user->ID ];
+
+		$cache_key = $this->collection->build_key( null, $query, $variables );
+
+		$this->assertEmpty( $this->collection->get( $cache_key ) );
+
+		$actual = graphql([
+			'query' => $query,
+			'variables' => $variables
+		]);
+
+		self::assertQuerySuccessful( $actual, [
+			$this->expectedField( 'user', self::IS_NULL )
+		]);
+
+		// ensure the query is cached now
+		$this->assertNotEmpty( $this->collection->get( $cache_key ) );
+		$this->assertSame( $actual, $this->collection->get( $cache_key ) );
+
+		$new_post = self::factory()->post->create_and_get([
+			'post_type' => 'post',
+			'post_status' => 'publish',
+			'post_author' => $new_user->ID,
+		]);
+
+		// assert that the query for a user and the users post has been evicted
+		$this->assertEmpty( $this->collection->get( $cache_key ) );
+
+		$query_again = graphql([
+			'query' => $query,
+			'variables' => $variables
+		]);
+
+		// the query should be cached again
+		$this->assertNotEmpty( $this->collection->get( $cache_key ) );
+		$this->assertSame( $query_again, $this->collection->get( $cache_key ) );
+
+		// the results should have the user data
+		self::assertQuerySuccessful( $query_again, [
+			$this->expectedField( 'user.__typename', 'User' ),
+			$this->expectedNode( 'user.posts.nodes', [
+				'__typename' => 'Post',
+				'databaseId' => $new_post->ID,
+			]),
+		]);
+
+	}
+
 	// delete only post of a user (user->post connection should purge)
+	public function testDeleteOnlyPostOfUserShouldPurgeUserToPostConnection() {
+
+		$new_user = self::factory()->user->create_and_get([
+			'role' => 'administrator'
+		]);
+
+		$new_post = self::factory()->post->create_and_get([
+			'post_type' => 'post',
+			'post_status' => 'publish',
+			'post_author' => $new_user->ID,
+		]);
+
+		$query = $this->getSingleUserByDatabaseIdWithAuthoredPostsQuery();
+		$variables = [ 'id' => $new_user->ID ];
+
+		$cache_key = $this->collection->build_key( null, $query, $variables );
+
+		$this->assertEmpty( $this->collection->get( $cache_key ) );
+
+		$actual = graphql([
+			'query' => $query,
+			'variables' => $variables
+		]);
+
+		// the query should be cached again
+		$this->assertNotEmpty( $this->collection->get( $cache_key ) );
+		$this->assertSame( $actual, $this->collection->get( $cache_key ) );
+
+		// the results should have the user data
+		self::assertQuerySuccessful( $actual, [
+			$this->expectedField( 'user.__typename', 'User' ),
+			$this->expectedNode( 'user.posts.nodes', [
+				'__typename' => 'Post',
+				'databaseId' => $new_post->ID,
+			]),
+		]);
+
+
+		self::factory()->post->update_object( $new_post->ID, [
+			'post_status' => 'draft'
+		]);
+
+		// after setting the only post of the author to draft, the cache should be cleared
+		$this->assertEmpty( $this->collection->get( $cache_key ) );
+
+
+		$actual = graphql([
+			'query' => $query,
+			'variables' => $variables
+		]);
+
+		// the results should now be null for the user as it's a private entity again
+		self::assertQuerySuccessful( $actual, [
+			$this->expectedField( 'user', self::IS_NULL )
+		]);
+
+	}
+
+	// @todo
 	// change only post of a user from publish to draft (user->post connection should purge)
+
 	// change post author (user->post connection should purge)
+	public function testChangeAuthorOfPost() {
+
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+		self::factory()->post->update_object( $this->published_post->ID, [
+			'post_author' => $this->editor
+		]);
+
+		$evicted_caches = $this->getEvictedCaches();
+		$this->assertNotEmpty( $evicted_caches );
+
+		// the "adminUserWithPostsConnection" (previous author) query should have been evicted
+		$this->assertContains( 'adminUserWithPostsConnection', $evicted_caches );
+
+		// the "editorUserWithPostsConnection" (new author) query should have been evicted
+		$this->assertContains( 'editorUserWithPostsConnection', $evicted_caches );
+
+		// these should have also been evicted as the published post has changed
+		$this->assertContains( 'listPost', $evicted_caches );
+		$this->assertContains( 'singlePost', $evicted_caches );
+		$this->assertContains( 'singleContentNode', $evicted_caches );
+		$this->assertContains( 'listContentNode', $evicted_caches );
+		$this->assertContains( 'singleNodeByUri', $evicted_caches );
+
+	}
 
 
-	// update post meta of draft post does not evoke purge action
+	// update post meta of draft post does not evict cache
+	public function testUpdatePostMetaOfDraftPostDoesntEvictCache() {
+
+		$this->assertEmpty( $this->getEvictedCaches() );
+		$non_evicted_caches_before = $this->getNonEvictedCaches();
+
+		// update meta on a draft post
+		update_post_meta( $this->draft_post, 'meta_key', uniqid( null, true ) );
+
+		// there should be no evicted cache after updating meta of a draft post
+		$this->assertEmpty( $this->getEvictedCaches() );
+		$this->assertEqualSets( $non_evicted_caches_before, $this->getNonEvictedCaches() );
+
+	}
+
 	// delete post meta of draft post does not evoke purge action
 	// update post meta of published post
 	// delete post meta of published post
