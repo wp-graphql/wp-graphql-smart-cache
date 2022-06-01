@@ -47,6 +47,25 @@ class Collection extends Query {
 		// listen for posts to transition statuses, so we know when to purge
 		add_action( 'transition_post_status', [ $this, 'on_transition_post_status_cb' ], 10, 3 );
 
+		// listen for changes to the post author.
+		// This will need to evict list queries.
+		add_action( 'post_updated', function( $post_id, WP_Post $post_after, WP_Post $post_before ) {
+
+			// if the post author hasn't changed, do nothing
+			if ( $post_after->post_author === $post_before->post_author ) {
+				return;
+			}
+
+			$post_type_object = get_post_type_object( $post_after->post_type );
+			$type_name        = strtolower( $post_type_object->graphql_single_name );
+
+			$nodes = $this->get( 'list:' . $type_name );
+			if ( is_array( $nodes ) ) {
+				do_action( 'wpgraphql_cache_purge_nodes', 'list:' . $type_name, $type_name, $nodes );
+			}
+
+		}, 10, 3 );
+
 		// listen for posts to be deleted. Queries with deleted nodes should be purged.
 		add_action( 'deleted_post', function( $post_id, WP_Post $post ) {
 
@@ -437,6 +456,7 @@ class Collection extends Query {
 			if ( is_array( $nodes ) && ! empty( $nodes ) ) {
 				do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->nodes_key( $relay_id ), $nodes );
 			}
+
 		}
 	}
 
