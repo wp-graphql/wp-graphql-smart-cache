@@ -39,6 +39,11 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 	/**
 	 * @var WP_Post
 	 */
+	public $draft_page;
+
+	/**
+	 * @var WP_Post
+	 */
 	public $published_test_post_type;
 
 	/**
@@ -233,6 +238,12 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 		$this->published_page = self::factory()->post->create_and_get([
 			'post_type' => 'page',
 			'post_status' => 'publish',
+			'post_author' => $this->admin->ID,
+		]);
+
+		$this->draft_page = self::factory()->post->create_and_get([
+			'post_type' => 'page',
+			'post_status' => 'draft',
 			'post_author' => $this->admin->ID,
 		]);
 
