@@ -630,7 +630,6 @@ class Collection extends Query {
 	 * @param mixed    $meta_value Metadata value. Serialized if non-scalar.
 	 */
 	public function on_postmeta_deleted_cb( $meta_ids, $object_id, $meta_key, $meta_value ) {
-
 		$post = get_post( $object_id );
 
 		// if the post type is not tracked, ignore it
@@ -658,6 +657,5 @@ class Collection extends Query {
 		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
 			do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->nodes_key( $relay_id ), $nodes );
 		}
-
 	}
 }
