@@ -20,6 +20,7 @@ use GraphQL\Type\Schema;
 use GraphQL\Utils\TypeInfo;
 use GraphQLRelay\Relay;
 use WP_Post;
+use WP_Taxonomy;
 use WP_User;
 use WPGraphQL\AppContext;
 use WPGraphQL\Data\Loader\AbstractDataLoader;
@@ -37,6 +38,7 @@ class Collection extends Query {
 	// Types that are referenced in the query
 	public $type_names = [];
 
+	// initialize the cache collection
 	public function init() {
 		add_action( 'graphql_return_response', [ $this, 'save_query_mapping_cb' ], 10, 7 );
 		add_filter( 'pre_graphql_execute_request', [ $this, 'before_executing_query_cb' ], 10, 2 );
@@ -49,71 +51,17 @@ class Collection extends Query {
 
 		// listen for changes to the post author.
 		// This will need to evict list queries.
-		add_action( 'post_updated', function( $post_id, WP_Post $post_after, WP_Post $post_before ) {
-			// if the post author hasn't changed, do nothing
-			if ( $post_after->post_author === $post_before->post_author ) {
-				return;
-			}
-
-			$post_type_object = get_post_type_object( $post_after->post_type );
-			$type_name        = strtolower( $post_type_object->graphql_single_name );
-
-			$nodes = $this->get( 'list:' . $type_name );
-			if ( is_array( $nodes ) ) {
-				do_action( 'wpgraphql_cache_purge_nodes', 'list:' . $type_name, $type_name, $nodes );
-			}
-		}, 10, 3 );
+		add_action( 'post_updated', [ $this, 'on_post_updated_cb' ], 10, 3 );
 
 		// listen for posts to be deleted. Queries with deleted nodes should be purged.
-		add_action( 'deleted_post', function( $post_id, WP_Post $post ) {
-			if ( ! in_array( $post->post_type, \WPGraphQL::get_allowed_post_types(), true ) ) {
-				return;
-			}
-
-			if ( 'publish' !== $post->post_status ) {
-				return;
-			}
-
-			$post_type_object = get_post_type_object( $post->post_type );
-			$relay_id         = Relay::toGlobalId( 'post', $post->ID );
-			$type_name        = strtolower( $post_type_object->graphql_single_name );
-			$nodes            = $this->retrieve_nodes( $relay_id );
-
-			// Delete the cached results associated with this post/key
-			if ( is_array( $nodes ) && ! empty( $nodes ) ) {
-				do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->nodes_key( $relay_id ), $nodes );
-			}
-		}, 10, 2 );
+		add_action( 'deleted_post', [ $this, 'on_deleted_post_cb' ], 10, 2 );
 
 		// when a term is edited, purge caches for that term
 		// this action is called when term caches are updated on a delay.
 		// for example, if a scheduled post is assigned to a term,
 		// this won't be called when the post is initially inserted with the
 		// term assigned, but when the post is published
-		//
-		// @todo: move this out of an anonymous callback
-		add_action( 'edited_term_taxonomy', function( $tt_id, $taxonomy ) {
-
-			if ( ! in_array( $taxonomy, \WPGraphQL::get_allowed_taxonomies(), true ) ) {
-				return;
-			}
-
-			$term = get_term_by( 'term_taxonomy_id', $tt_id, $taxonomy );
-
-			if ( ! $term instanceof \WP_Term ) {
-				return;
-			}
-
-			$relay_id  = Relay::toGlobalId( 'term', $term->term_id );
-			$type_name = strtolower( get_taxonomy( $taxonomy )->graphql_single_name );
-			$nodes     = $this->retrieve_nodes( $relay_id );
-
-			// Delete the cached results associated with this post/key
-			if ( is_array( $nodes ) && ! empty( $nodes ) ) {
-				do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->nodes_key( $relay_id ), $nodes );
-			}
-
-		}, 10, 2 );
+		add_action( 'edited_term_taxonomy', [ $this, 'on_edited_term_taxonomy_cb' ], 10, 2 );
 
 		// user/author
 		add_filter( 'insert_user_meta', [ $this, 'on_user_change_cb' ], 10, 3 );
@@ -279,7 +227,7 @@ class Collection extends Query {
 		$type_map  = [];
 		$type_info = new TypeInfo( $schema );
 		$visitor   = [
-			'enter' => function( $node, $key, $parent, $path, $ancestors ) use ( $type_info, &$type_map, $schema ) {
+			'enter' => function ( $node, $key, $parent, $path, $ancestors ) use ( $type_info, &$type_map, $schema ) {
 				$type_info->enter( $node );
 				$type = $type_info->getType();
 				if ( ! $type ) {
@@ -302,7 +250,7 @@ class Collection extends Query {
 					$type_map[] = $prefix . strtolower( $named_type );
 				}
 			},
-			'leave' => function( $node, $key, $parent, $path, $ancestors ) use ( $type_info ) {
+			'leave' => function ( $node, $key, $parent, $path, $ancestors ) use ( $type_info ) {
 				$type_info->leave( $node );
 			},
 		];
@@ -312,6 +260,92 @@ class Collection extends Query {
 
 		// @phpcs:ignore
 		return apply_filters( 'graphql_cache_collection_get_query_types', $map, $schema, $query, $type_info );
+	}
+
+	/**
+	 * Listen for updates to a post so we can purge caches relevant to the change
+	 *
+	 * @param int     $post_id The ID of the post being updated
+	 * @param WP_Post $post_after The Post Object after the update
+	 * @param WP_Post $post_before The Post Object before the update
+	 *
+	 * @return void
+	 */
+	public function on_post_updated_cb( $post_id, WP_Post $post_after, WP_Post $post_before ) {
+		// if the post author hasn't changed, do nothing
+		if ( $post_after->post_author === $post_before->post_author ) {
+			return;
+		}
+
+		$post_type_object = get_post_type_object( $post_after->post_type );
+		$type_name        = strtolower( $post_type_object->graphql_single_name );
+
+		$nodes = $this->get( 'list:' . $type_name );
+		if ( is_array( $nodes ) ) {
+			do_action( 'wpgraphql_cache_purge_nodes', 'list:' . $type_name, $type_name, $nodes );
+		}
+	}
+
+	/**
+	 * Listen for posts being deleted and purge relevant caches
+	 *
+	 * @param int     $post_id The ID of the post being deleted
+	 * @param WP_Post $post The Post object that is being deleted
+	 *
+	 * @return void
+	 */
+	public function on_deleted_post_cb( $post_id, WP_Post $post ) {
+		if ( ! in_array( $post->post_type, \WPGraphQL::get_allowed_post_types(), true ) ) {
+			return;
+		}
+
+		if ( 'publish' !== $post->post_status ) {
+			return;
+		}
+
+		$post_type_object = get_post_type_object( $post->post_type );
+		$relay_id         = Relay::toGlobalId( 'post', $post->ID );
+		$type_name        = strtolower( $post_type_object->graphql_single_name );
+		$nodes            = $this->retrieve_nodes( $relay_id );
+
+		// Delete the cached results associated with this post/key
+		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
+			do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->nodes_key( $relay_id ), $nodes );
+		}
+	}
+
+	/**
+	 * Listen for changes to the Term Taxonomy. This is called after posts that have
+	 * a taxonomy associated with them are published. We don't always want to purge
+	 * caches related to terms when they're associated with a post, but rather when the association
+	 * becomes public. For example, a term being associated with a draft post shouldn't purge
+	 * cache, but the publishing of the draft post that has a term associated with it
+	 * should purge the terms cache.
+	 *
+	 * @param int         $tt_id
+	 * @param WP_Taxonomy $taxonomy
+	 *
+	 * @return void
+	 */
+	public function on_edited_term_taxonomy_cb( $tt_id, WP_Taxonomy $taxonomy ) {
+		if ( ! in_array( $taxonomy, \WPGraphQL::get_allowed_taxonomies(), true ) ) {
+			return;
+		}
+
+		$term = get_term_by( 'term_taxonomy_id', $tt_id, $taxonomy );
+
+		if ( ! $term instanceof \WP_Term ) {
+			return;
+		}
+
+		$relay_id  = Relay::toGlobalId( 'term', $term->term_id );
+		$type_name = strtolower( get_taxonomy( $taxonomy )->graphql_single_name );
+		$nodes     = $this->retrieve_nodes( $relay_id );
+
+		// Delete the cached results associated with this post/key
+		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
+			do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->nodes_key( $relay_id ), $nodes );
+		}
 	}
 
 	/**
@@ -452,7 +486,6 @@ class Collection extends Query {
 			if ( is_array( $nodes ) && ! empty( $nodes ) ) {
 				do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->nodes_key( $relay_id ), $nodes );
 			}
-
 		}
 	}
 
