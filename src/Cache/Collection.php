@@ -91,6 +91,9 @@ class Collection extends Query {
 		// not when its being inserted (added) the first time
 		add_action( 'added_post_meta', [ $this, 'on_postmeta_change_cb' ], 10, 4 );
 
+		// listen for when meta is deleted
+		add_action( 'deleted_post_meta', [ $this, 'on_postmeta_deleted_cb' ], 10, 4 );
+
 		// before execution begins, determine the type names map
 		add_action( 'graphql_before_execute', [ $this, 'determine_query_types' ], 10, 1 );
 
@@ -226,6 +229,47 @@ class Collection extends Query {
 	}
 
 	/**
+	 * Determines whether the meta should be tracked or not.
+	 *
+	 * By default, meta keys that start with an underscore are treated as
+	 * private and are not tracked for cache evictions. They can be filtered to
+	 * be allowed.
+	 *
+	 * @param string $meta_key Metadata key.
+	 * @param mixed $meta_value Metadata value. Serialized if non-scalar.
+	 * @param object $object The object the metadata is for.
+	 *
+	 * @return bool
+	 */
+	public function should_track_meta( $meta_key, $meta_value, $object ) {
+
+		/**
+		 * This filter allows plugins to opt-in or out of tracking for meta.
+		 *
+		 * @param bool $should_track Whether the meta key should be tracked.
+		 * @param string $meta_key Metadata key.
+		 * @param int $meta_id ID of updated metadata entry.
+		 * @param mixed $meta_value Metadata value. Serialized if non-scalar.
+		 * @param mixed $object The object the meta is being updated for.
+		 *
+		 * @param bool $tracked whether the meta key is tracked for purging caches
+		 */
+		$should_track = apply_filters( 'graphql_cache_should_track_meta_key', null, $meta_key, $meta_value, $object );
+
+		// If the filter has been applied return it
+		if ( null !== $should_track ) {
+			return (bool) $should_track;
+		}
+
+		// If the meta key starts with an underscore, don't track it
+		if ( strpos( $meta_key, '_' ) === 0 ) {
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
 	 * Given the Schema and a query string, return a list of GraphQL Types that are being asked for
 	 * by the query.
 	 *
@@ -306,6 +350,8 @@ class Collection extends Query {
 			do_action( 'wpgraphql_cache_purge_nodes', 'list:' . $type_name, $type_name, $nodes );
 		}
 	}
+
+
 
 	/**
 	 * Listen for posts being deleted and purge relevant caches
@@ -411,7 +457,7 @@ class Collection extends Query {
 			$urls = $this->store_content( $this->urls_key( $request_key ), $url_to_save );
 
 			//phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_print_r
-			error_log( "Graphql Save Urls: $request_key " . print_r( $urls, 1 ) );
+			 error_log( "Graphql Save Urls: $request_key " . print_r( $urls, 1 ) );
 		}
 
 		// Save/add the node ids for this query.  When one of these change in the future, we can purge the query
@@ -429,7 +475,7 @@ class Collection extends Query {
 
 		if ( is_array( $this->runtime_nodes ) ) {
 			//phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_print_r
-			error_log( "Graphql Save Nodes: $request_key " . print_r( $this->runtime_nodes, 1 ) );
+			 error_log( "Graphql Save Nodes: $request_key " . print_r( $this->runtime_nodes, 1 ) );
 		}
 	}
 
@@ -546,48 +592,72 @@ class Collection extends Query {
 	public function on_postmeta_change_cb( $meta_id, $post_id, $meta_key, $meta_value ) {
 
 		// get the post object being modified
-		$object = get_post( $post_id );
+		$post = get_post( $post_id );
 
-		/**
-		 * This filter allows plugins to opt-in or out of tracking for meta.
-		 *
-		 * @param bool   $should_track Whether the meta key should be tracked.
-		 * @param string $meta_key     Metadata key.
-		 * @param int    $meta_id      ID of updated metadata entry.
-		 * @param mixed  $meta_value   Metadata value. Serialized if non-scalar.
-		 * @param mixed  $object       The object the meta is being updated for.
-		 *
-		 * @param bool   $tracked      whether the meta key is tracked for purging caches
-		 */
+		// if the post type is not tracked, ignore it
+		if ( ! in_array( $post->post_type, \WPGraphQL::get_allowed_post_types(), true ) ) {
+			return;
+		}
+
+		// if the post is not published, ignore it
+		if ( 'publish' !== $post->post_status ) {
+			return;
+		}
+
+		// if the meta key isn't tracked, ignore it
 		//phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
-		$should_track = apply_filters( 'graphql_cache_should_track_meta_key', null, $meta_key, $meta_value, $object );
-
-		// If the filter has been applied
-		if ( null !== $should_track && false === $should_track ) {
+		if ( false === $this->should_track_meta( $meta_key, $meta_value, $post ) ) {
 			return;
 		}
 
-		// if the meta key starts with an underscore, treat
-		// it as private meta and don't purge the cache
-		if ( strpos( $meta_key, '_' ) === 0 ) {
-			return;
-		}
-
-		// clear any cached connection lists for this type
-		$post_type_object = get_post_type_object( $object->post_type );
-
-		if ( ! in_array( $post_type_object->name, \WPGraphQL::get_allowed_post_types(), true ) ) {
-			return;
-		}
-
-		$post_type_object = get_post_type_object( $object->post_type );
+		$post_type_object = get_post_type_object( $post->post_type );
 		$type_name        = strtolower( $post_type_object->graphql_single_name );
-		$relay_id         = Relay::toGlobalId( 'post', $object->ID );
+		$relay_id         = Relay::toGlobalId( 'post', $post->ID );
 		$nodes            = $this->retrieve_nodes( $relay_id );
 
 		// Delete the cached results associated with this post/key
 		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
 			do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->nodes_key( $relay_id ), $nodes );
 		}
+	}
+
+	/**
+	 * Purges caches when meta is deleted on a post
+	 *
+	 * @param string[] $meta_ids    An array of metadata entry IDs to delete.
+	 * @param int      $object_id   ID of the object metadata is for.
+	 * @param string   $meta_key    Metadata key.
+	 * @param mixed    $meta_value Metadata value. Serialized if non-scalar.
+	 */
+	public function on_postmeta_deleted_cb( $meta_ids, $object_id, $meta_key, $meta_value ) {
+
+		$post = get_post( $object_id );
+
+		// if the post type is not tracked, ignore it
+		if ( ! in_array( $post->post_type, \WPGraphQL::get_allowed_post_types(), true ) ) {
+			return;
+		}
+
+		// if the post is not published, ignore it
+		if ( 'publish' !== $post->post_status ) {
+			return;
+		}
+
+		// if the meta key isn't tracked, ignore it
+		//phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
+		if ( false === $this->should_track_meta( $meta_key, $meta_value, $post ) ) {
+			return;
+		}
+
+		$post_type_object = get_post_type_object( $post->post_type );
+		$type_name        = strtolower( $post_type_object->graphql_single_name );
+		$relay_id         = Relay::toGlobalId( 'post', $post->ID );
+		$nodes            = $this->retrieve_nodes( $relay_id );
+
+		// Delete the cached results associated with this post/key
+		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
+			do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->nodes_key( $relay_id ), $nodes );
+		}
+
 	}
 }

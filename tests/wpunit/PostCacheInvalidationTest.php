@@ -145,7 +145,6 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 	 */
 	public function testPublishingScheduledPostWithCategoryAssigned() {
 
-
 		// ensure all queries have a cache
 		$this->assertEmpty( $this->getEvictedCaches() );
 
@@ -155,7 +154,7 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		// publish the post
 		wp_publish_post( $this->scheduled_post_with_category->ID );
 
-		codecept_debug( [ 'empty_after_publish' => wp_get_object_terms( $this->scheduled_post_with_category->ID, 'category' ) ]);
+		codecept_debug( [ 'set_associated_term' => wp_get_object_terms( $this->scheduled_post_with_category->ID, 'category' ) ]);
 
 		// get the evicted caches _after_ publish
 		$evicted_caches = $this->getEvictedCaches();
@@ -168,17 +167,6 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		$this->assertContains( 'listContentNode', $evicted_caches );
 		$this->assertContains( 'listCategory', $evicted_caches );
 		$this->assertContains( 'singleCategory', $evicted_caches );
-
-
-		// we're also asserting that we cleared the "listCategory" cache because
-		// a category in the list was updated
-		// by being assigned to this post
-		$this->assertEmpty( $this->collection->get( $this->query_results['listCategory']['cacheKey'] ) );
-
-		// the single category query should no longer be in the cache because a post was published that
-		// was associated with the category
-		$this->assertEmpty( $this->collection->get( $this->query_results['singleCategory']['cacheKey'] ) );
-
 
 		// ensure the other caches remain cached
 		$this->assertNotContains( 'singleTag', $evicted_caches );
@@ -234,54 +222,17 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		// make assertions about the evicted caches
 		$this->assertNotEmpty( $evicted_caches );
 
-		// the post was unpublished, so the singlePost query should be evicted
-		$this->assertContains( 'singlePost', $evicted_caches );
-
-		// the post that was unpublished was part of the list, and should be evicted
-		$this->assertContains( 'listPost', $evicted_caches );
-
-		// the post was the single content node and should be evicted
-		$this->assertContains( 'singleContentNode', $evicted_caches );
-
-		// the post was part of the content node list and should be evicted
-		$this->assertContains( 'listContentNode', $evicted_caches );
-
-		// the post was the single node by id and should be evicted
-		$this->assertContains( 'singleNodeById', $evicted_caches );
-
-		// the post was the single node by uri and should be evicted
-		$this->assertContains( 'singleNodeByUri', $evicted_caches );
-
-		// the post had a category assigned, so the category list should be evicted
-		$this->assertContains( 'listCategory', $evicted_caches );
-
-		// the single category should be evicted as its post count has changed
-		$this->assertContains( 'singleCategory', $evicted_caches );
-
-
-		$this->assertNotEmpty( $non_evicted_caches );
-
-		// no pages were affected, should remain cached
-		$this->assertContains( 'listPage', $non_evicted_caches );
-
-		// no pages were affected, should remain cached
-		$this->assertContains( 'singlePage', $non_evicted_caches );
-
-		// no Test Post Type nodes were affected, should remain cached
-		$this->assertContains( 'listTestPostType', $non_evicted_caches );
-		$this->assertContains( 'singleTestPostType', $non_evicted_caches );
-
-		// no Private Post Type nodes were affected, should remain cached
-		$this->assertContains( 'listPrivatePostType', $non_evicted_caches );
-		$this->assertContains( 'singlePrivatePostType', $non_evicted_caches );
-
-		// no tag nodes were affected, should remain cached
-		$this->assertContains( 'listTag', $non_evicted_caches );
-		$this->assertContains( 'singleTag', $non_evicted_caches );
-
-		// no Test Taxonomy term nodes were affected, should remain cached
-		$this->assertContains( 'listTestTaxonomyTerm', $non_evicted_caches );
-		$this->assertContains( 'singleTestTaxonomyTerm', $non_evicted_caches );
+		$this->assertEqualSets([
+			'listPost',
+			'singleContentNode',
+			'singlePost',
+			'singleNodeByUri',
+			'singleNodeById',
+			'listContentNode',
+			'adminUserWithPostsConnection',
+			'singleCategory',
+			'listCategory',
+		], $evicted_caches );
 
 	}
 
@@ -299,11 +250,16 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		// assert that caches have been evicted
 		$evicted_caches = $this->getEvictedCaches();
 		$this->assertNotEmpty( $evicted_caches );
-		$this->assertContains( 'singlePost', $evicted_caches );
-		$this->assertContains( 'listPost', $evicted_caches );
-		$this->assertContains( 'singleContentNode', $evicted_caches );
-		$this->assertContains( 'singleNodeById', $evicted_caches );
-		$this->assertContains( 'singleNodeByUri', $evicted_caches );
+
+		$this->assertEqualSets([
+			'singlePost',
+			'listPost',
+			'singleContentNode',
+			'singleNodeById',
+			'singleNodeByUri',
+			'listContentNode',
+			'adminUserWithPostsConnection',
+		], $evicted_caches );
 	}
 
 	public function testPublishedPostWithCategoryIsChangedToPrivate() {
@@ -332,54 +288,17 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		// make assertions about the evicted caches
 		$this->assertNotEmpty( $evicted_caches );
 
-		// the post was unpublished, so the singlePost query should be evicted
-		$this->assertContains( 'singlePost', $evicted_caches );
-
-		// the post that was unpublished was part of the list, and should be evicted
-		$this->assertContains( 'listPost', $evicted_caches );
-
-		// the post was the single content node and should be evicted
-		$this->assertContains( 'singleContentNode', $evicted_caches );
-
-		// the post was part of the content node list and should be evicted
-		$this->assertContains( 'listContentNode', $evicted_caches );
-
-		// the post was the single node by id and should be evicted
-		$this->assertContains( 'singleNodeById', $evicted_caches );
-
-		// the post was the single node by uri and should be evicted
-		$this->assertContains( 'singleNodeByUri', $evicted_caches );
-
-		// the post had a category assigned, so the category list should be evicted
-		$this->assertContains( 'listCategory', $evicted_caches );
-
-		// the single category should be evicted as its post count has changed
-		$this->assertContains( 'singleCategory', $evicted_caches );
-
-
-		$this->assertNotEmpty( $non_evicted_caches );
-
-		// no pages were affected, should remain cached
-		$this->assertContains( 'listPage', $non_evicted_caches );
-
-		// no pages were affected, should remain cached
-		$this->assertContains( 'singlePage', $non_evicted_caches );
-
-		// no Test Post Type nodes were affected, should remain cached
-		$this->assertContains( 'listTestPostType', $non_evicted_caches );
-		$this->assertContains( 'singleTestPostType', $non_evicted_caches );
-
-		// no Private Post Type nodes were affected, should remain cached
-		$this->assertContains( 'listPrivatePostType', $non_evicted_caches );
-		$this->assertContains( 'singlePrivatePostType', $non_evicted_caches );
-
-		// no tag nodes were affected, should remain cached
-		$this->assertContains( 'listTag', $non_evicted_caches );
-		$this->assertContains( 'singleTag', $non_evicted_caches );
-
-		// no Test Taxonomy term nodes were affected, should remain cached
-		$this->assertContains( 'listTestTaxonomyTerm', $non_evicted_caches );
-		$this->assertContains( 'singleTestTaxonomyTerm', $non_evicted_caches );
+		$this->assertEqualSets([
+			'listPost',
+			'singleContentNode',
+			'singleNodeById',
+			'singleNodeByUri',
+			'singlePost',
+			'listContentNode',
+			'adminUserWithPostsConnection',
+			'singleCategory',
+			'listCategory',
+		], $evicted_caches );
 
 	}
 	// published post is trashed
@@ -395,11 +314,16 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		// assert that caches have been evicted
 		$evicted_caches = $this->getEvictedCaches();
 		$this->assertNotEmpty( $evicted_caches );
-		$this->assertContains( 'singlePost', $evicted_caches );
-		$this->assertContains( 'listPost', $evicted_caches );
-		$this->assertContains( 'singleContentNode', $evicted_caches );
-		$this->assertContains( 'singleNodeById', $evicted_caches );
-		$this->assertContains( 'singleNodeByUri', $evicted_caches );
+
+		$this->assertEqualSets([
+			'singlePost',
+			'listPost',
+			'singleContentNode',
+			'singleNodeById',
+			'singleNodeByUri',
+			'listContentNode',
+			'adminUserWithPostsConnection'
+		], $evicted_caches );
 	}
 
 	public function testPublishedPostWithCategoryIsTrashed() {
@@ -428,54 +352,17 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		// make assertions about the evicted caches
 		$this->assertNotEmpty( $evicted_caches );
 
-		// the post was unpublished, so the singlePost query should be evicted
-		$this->assertContains( 'singlePost', $evicted_caches );
-
-		// the post that was unpublished was part of the list, and should be evicted
-		$this->assertContains( 'listPost', $evicted_caches );
-
-		// the post was the single content node and should be evicted
-		$this->assertContains( 'singleContentNode', $evicted_caches );
-
-		// the post was part of the content node list and should be evicted
-		$this->assertContains( 'listContentNode', $evicted_caches );
-
-		// the post was the single node by id and should be evicted
-		$this->assertContains( 'singleNodeById', $evicted_caches );
-
-		// the post was the single node by uri and should be evicted
-		$this->assertContains( 'singleNodeByUri', $evicted_caches );
-
-		// the post had a category assigned, so the category list should be evicted
-		$this->assertContains( 'listCategory', $evicted_caches );
-
-		// the single category should be evicted as its post count has changed
-		$this->assertContains( 'singleCategory', $evicted_caches );
-
-
-		$this->assertNotEmpty( $non_evicted_caches );
-
-		// no pages were affected, should remain cached
-		$this->assertContains( 'listPage', $non_evicted_caches );
-
-		// no pages were affected, should remain cached
-		$this->assertContains( 'singlePage', $non_evicted_caches );
-
-		// no Test Post Type nodes were affected, should remain cached
-		$this->assertContains( 'listTestPostType', $non_evicted_caches );
-		$this->assertContains( 'singleTestPostType', $non_evicted_caches );
-
-		// no Private Post Type nodes were affected, should remain cached
-		$this->assertContains( 'listPrivatePostType', $non_evicted_caches );
-		$this->assertContains( 'singlePrivatePostType', $non_evicted_caches );
-
-		// no tag nodes were affected, should remain cached
-		$this->assertContains( 'listTag', $non_evicted_caches );
-		$this->assertContains( 'singleTag', $non_evicted_caches );
-
-		// no Test Taxonomy term nodes were affected, should remain cached
-		$this->assertContains( 'listTestTaxonomyTerm', $non_evicted_caches );
-		$this->assertContains( 'singleTestTaxonomyTerm', $non_evicted_caches );
+		$this->assertEqualSets( [
+			'singlePost',
+			'listPost',
+			'singleContentNode',
+			'listContentNode',
+			'singleNodeById',
+			'singleNodeByUri',
+			'listCategory',
+			'singleCategory',
+			'adminUserWithPostsConnection'
+		], $evicted_caches );
 
 	}
 
@@ -488,12 +375,16 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 
 		// assert that caches have been evicted
 		$evicted_caches = $this->getEvictedCaches();
-		$this->assertNotEmpty( $evicted_caches );
-		$this->assertContains( 'singlePost', $evicted_caches );
-		$this->assertContains( 'listPost', $evicted_caches );
-		$this->assertContains( 'singleContentNode', $evicted_caches );
-		$this->assertContains( 'singleNodeById', $evicted_caches );
-		$this->assertContains( 'singleNodeByUri', $evicted_caches );
+
+		$this->assertEqualSets([
+			'adminUserWithPostsConnection',
+			'singlePost',
+			'listPost',
+			'listContentNode',
+			'singleContentNode',
+			'singleNodeById',
+			'singleNodeByUri'
+		], $evicted_caches );
 	}
 
 	public function testPublishedPostWithCategoryIsForceDeleted() {
@@ -515,59 +406,21 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 
 		// assert that caches have been evicted
 		$evicted_caches = $this->getEvictedCaches();
-		$non_evicted_caches = $this->getNonEvictedCaches();
 
 		// make assertions about the evicted caches
 		$this->assertNotEmpty( $evicted_caches );
 
-		// the post was unpublished, so the singlePost query should be evicted
-		$this->assertContains( 'singlePost', $evicted_caches );
-
-		// the post that was unpublished was part of the list, and should be evicted
-		$this->assertContains( 'listPost', $evicted_caches );
-
-		// the post was the single content node and should be evicted
-		$this->assertContains( 'singleContentNode', $evicted_caches );
-
-		// the post was part of the content node list and should be evicted
-		$this->assertContains( 'listContentNode', $evicted_caches );
-
-		// the post was the single node by id and should be evicted
-		$this->assertContains( 'singleNodeById', $evicted_caches );
-
-		// the post was the single node by uri and should be evicted
-		$this->assertContains( 'singleNodeByUri', $evicted_caches );
-
-		// the post had a category assigned, so the category list should be evicted
-		$this->assertContains( 'listCategory', $evicted_caches );
-
-		// the single category should be evicted as its post count has changed
-		$this->assertContains( 'singleCategory', $evicted_caches );
-
-
-		$this->assertNotEmpty( $non_evicted_caches );
-
-		// no pages were affected, should remain cached
-		$this->assertContains( 'listPage', $non_evicted_caches );
-
-		// no pages were affected, should remain cached
-		$this->assertContains( 'singlePage', $non_evicted_caches );
-
-		// no Test Post Type nodes were affected, should remain cached
-		$this->assertContains( 'listTestPostType', $non_evicted_caches );
-		$this->assertContains( 'singleTestPostType', $non_evicted_caches );
-
-		// no Private Post Type nodes were affected, should remain cached
-		$this->assertContains( 'listPrivatePostType', $non_evicted_caches );
-		$this->assertContains( 'singlePrivatePostType', $non_evicted_caches );
-
-		// no tag nodes were affected, should remain cached
-		$this->assertContains( 'listTag', $non_evicted_caches );
-		$this->assertContains( 'singleTag', $non_evicted_caches );
-
-		// no Test Taxonomy term nodes were affected, should remain cached
-		$this->assertContains( 'listTestTaxonomyTerm', $non_evicted_caches );
-		$this->assertContains( 'singleTestTaxonomyTerm', $non_evicted_caches );
+		$this->assertEqualSets([
+			'adminUserWithPostsConnection',
+			'singleCategory',
+			'listCategory',
+			'singleNodeByUri',
+			'singleNodeById',
+			'listContentNode',
+			'singleContentNode',
+			'listPost',
+			'singlePost'
+		], $evicted_caches );
 
 	}
 
@@ -615,54 +468,13 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 			'non' => $non_evicted_caches
 		]);
 
-		// publishing a post should evict the listContentNode cache
-		$this->assertContains( 'listContentNode', $evicted_caches );
 
-		// publishing a post should evict the listPost cache
-		$this->assertContains( 'listPost', $evicted_caches );
-
-
-		$this->assertNotEmpty( $non_evicted_caches );
-
-		// publishing a trashed post should not evict a query for another post
-		$this->assertContains( 'singlePost', $non_evicted_caches );
-
-		// publishing a trashed post should not evict a query for another post
-		$this->assertContains( 'singleContentNode', $non_evicted_caches );
-
-		// publishing a trashed post should not evict a query for another single node by id
-		$this->assertContains( 'singleNodeById', $non_evicted_caches );
-
-		// publishing a trashed post should not evict a query for another post by uri
-		$this->assertContains( 'singleNodeByUri', $non_evicted_caches );
-
-		// the post did not have a category assigned, so the category list should not be evicted
-		$this->assertContains( 'listCategory', $non_evicted_caches );
-
-		// the post did not have a category assigned, so the singleCategory should not be evicted
-		$this->assertContains( 'singleCategory', $non_evicted_caches );
-
-		// no pages were affected, should remain cached
-		$this->assertContains( 'listPage', $non_evicted_caches );
-
-		// no pages were affected, should remain cached
-		$this->assertContains( 'singlePage', $non_evicted_caches );
-
-		// no Test Post Type nodes were affected, should remain cached
-		$this->assertContains( 'listTestPostType', $non_evicted_caches );
-		$this->assertContains( 'singleTestPostType', $non_evicted_caches );
-
-		// no Private Post Type nodes were affected, should remain cached
-		$this->assertContains( 'listPrivatePostType', $non_evicted_caches );
-		$this->assertContains( 'singlePrivatePostType', $non_evicted_caches );
-
-		// no tag nodes were affected, should remain cached
-		$this->assertContains( 'listTag', $non_evicted_caches );
-		$this->assertContains( 'singleTag', $non_evicted_caches );
-
-		// no Test Taxonomy term nodes were affected, should remain cached
-		$this->assertContains( 'listTestTaxonomyTerm', $non_evicted_caches );
-		$this->assertContains( 'singleTestTaxonomyTerm', $non_evicted_caches );
+		$this->assertEqualSets([
+			'listContentNode',
+			'listPost',
+			'adminUserWithPostsConnection',
+			'editorUserWithPostsConnection'
+		], $evicted_caches );
 
 	}
 
@@ -694,54 +506,10 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 
 		$this->assertNotEmpty( $evicted_caches );
 
-		// publishing a page should evict the listContentNode cache
-		$this->assertContains( 'listContentNode', $evicted_caches );
-
-		// publishing a page should evict the listPage query
-		$this->assertContains( 'listPage', $evicted_caches );
-
-
-		$this->assertNotEmpty( $non_evicted_caches );
-
-		// publishing a post not should evict the listPost cache
-		$this->assertContains( 'listPost', $non_evicted_caches );
-
-		// publishing a trashed post should not evict a query for another post
-		$this->assertContains( 'singlePost', $non_evicted_caches );
-
-		// publishing a trashed post should not evict a query for another post
-		$this->assertContains( 'singleContentNode', $non_evicted_caches );
-
-		// publishing a trashed post should not evict a query for another single node by id
-		$this->assertContains( 'singleNodeById', $non_evicted_caches );
-
-		// publishing a trashed post should not evict a query for another post by uri
-		$this->assertContains( 'singleNodeByUri', $non_evicted_caches );
-
-		// the post did not have a category assigned, so the category list should not be evicted
-		$this->assertContains( 'listCategory', $non_evicted_caches );
-
-		// the post did not have a category assigned, so the singleCategory should not be evicted
-		$this->assertContains( 'singleCategory', $non_evicted_caches );
-
-		// the singlePage query is for a different page than the one that was published and should remain cached
-		$this->assertContains( 'singlePage', $non_evicted_caches );
-
-		// no Test Post Type nodes were affected, should remain cached
-		$this->assertContains( 'listTestPostType', $non_evicted_caches );
-		$this->assertContains( 'singleTestPostType', $non_evicted_caches );
-
-		// no Private Post Type nodes were affected, should remain cached
-		$this->assertContains( 'listPrivatePostType', $non_evicted_caches );
-		$this->assertContains( 'singlePrivatePostType', $non_evicted_caches );
-
-		// no tag nodes were affected, should remain cached
-		$this->assertContains( 'listTag', $non_evicted_caches );
-		$this->assertContains( 'singleTag', $non_evicted_caches );
-
-		// no Test Taxonomy term nodes were affected, should remain cached
-		$this->assertContains( 'listTestTaxonomyTerm', $non_evicted_caches );
-		$this->assertContains( 'singleTestTaxonomyTerm', $non_evicted_caches );
+		$this->assertEqualSets([
+			'listPage',
+			'listContentNode'
+		], $evicted_caches );
 
 	}
 
@@ -761,54 +529,11 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 
 		$this->assertNotEmpty( $evicted_caches );
 
-		// setting a published page to draft should evict the listContentNode cache
-		$this->assertContains( 'listContentNode', $evicted_caches );
-
-		// setting a published page to draft should evict the listPage query
-		$this->assertContains( 'listPage', $evicted_caches );
-
-		// the singlePage query should be evicted
-		$this->assertContains( 'singlePage', $evicted_caches );
-
-
-		$this->assertNotEmpty( $non_evicted_caches );
-
-		// setting a published page to draft should not evict the listPost cache
-		$this->assertContains( 'listPost', $non_evicted_caches );
-
-		// setting a published page to draft should not evict a query for another post
-		$this->assertContains( 'singlePost', $non_evicted_caches );
-
-		// setting a published page to draft should not evict a query for another post
-		$this->assertContains( 'singleContentNode', $non_evicted_caches );
-
-		// setting a published page to draft should not evict a query for another single node by id
-		$this->assertContains( 'singleNodeById', $non_evicted_caches );
-
-		// setting a published page to draft should not evict a query for another post by uri
-		$this->assertContains( 'singleNodeByUri', $non_evicted_caches );
-
-		// the page did not have a category assigned, so the category list should not be evicted
-		$this->assertContains( 'listCategory', $non_evicted_caches );
-
-		// the page did not have a category assigned, so the singleCategory should not be evicted
-		$this->assertContains( 'singleCategory', $non_evicted_caches );
-
-		// no Test Post Type nodes were affected, should remain cached
-		$this->assertContains( 'listTestPostType', $non_evicted_caches );
-		$this->assertContains( 'singleTestPostType', $non_evicted_caches );
-
-		// no Private Post Type nodes were affected, should remain cached
-		$this->assertContains( 'listPrivatePostType', $non_evicted_caches );
-		$this->assertContains( 'singlePrivatePostType', $non_evicted_caches );
-
-		// no tag nodes were affected, should remain cached
-		$this->assertContains( 'listTag', $non_evicted_caches );
-		$this->assertContains( 'singleTag', $non_evicted_caches );
-
-		// no Test Taxonomy term nodes were affected, should remain cached
-		$this->assertContains( 'listTestTaxonomyTerm', $non_evicted_caches );
-		$this->assertContains( 'singleTestTaxonomyTerm', $non_evicted_caches );
+		$this->assertEqualSets([
+			'listPage',
+			'listContentNode',
+			'singlePage'
+		], $evicted_caches );
 
 	}
 
@@ -824,59 +549,13 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 
 		$evicted_caches = $this->getEvictedCaches();
 
-		$non_evicted_caches = $this->getNonEvictedCaches();
-
 		$this->assertNotEmpty( $evicted_caches );
 
-		// setting a published page to private should evict the listContentNode cache
-		$this->assertContains( 'listContentNode', $evicted_caches );
-
-		// setting a published page to private should evict the listPage query
-		$this->assertContains( 'listPage', $evicted_caches );
-
-		// the singlePage query should be evicted
-		$this->assertContains( 'singlePage', $evicted_caches );
-
-
-
-		$this->assertNotEmpty( $non_evicted_caches );
-
-		// setting a published page to private should not evict the listPost cache
-		$this->assertContains( 'listPost', $non_evicted_caches );
-
-		// setting a published page to private should not evict a query for another post
-		$this->assertContains( 'singlePost', $non_evicted_caches );
-
-		// setting a published page to private should not evict a query for another post
-		$this->assertContains( 'singleContentNode', $non_evicted_caches );
-
-		// setting a published page to private should not evict a query for another single node by id
-		$this->assertContains( 'singleNodeById', $non_evicted_caches );
-
-		// setting a published page to private should not evict a query for another post by uri
-		$this->assertContains( 'singleNodeByUri', $non_evicted_caches );
-
-		// the page did not have a category assigned, so the category list should not be evicted
-		$this->assertContains( 'listCategory', $non_evicted_caches );
-
-		// the page did not have a category assigned, so the singleCategory should not be evicted
-		$this->assertContains( 'singleCategory', $non_evicted_caches );
-
-		// no Test Post Type nodes were affected, should remain cached
-		$this->assertContains( 'listTestPostType', $non_evicted_caches );
-		$this->assertContains( 'singleTestPostType', $non_evicted_caches );
-
-		// no Private Post Type nodes were affected, should remain cached
-		$this->assertContains( 'listPrivatePostType', $non_evicted_caches );
-		$this->assertContains( 'singlePrivatePostType', $non_evicted_caches );
-
-		// no tag nodes were affected, should remain cached
-		$this->assertContains( 'listTag', $non_evicted_caches );
-		$this->assertContains( 'singleTag', $non_evicted_caches );
-
-		// no Test Taxonomy term nodes were affected, should remain cached
-		$this->assertContains( 'listTestTaxonomyTerm', $non_evicted_caches );
-		$this->assertContains( 'singleTestTaxonomyTerm', $non_evicted_caches );
+		$this->assertEqualSets([
+			'singlePage',
+			'listPage',
+			'listContentNode'
+		], $evicted_caches );
 
 	}
 
@@ -896,54 +575,11 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 
 		$this->assertNotEmpty( $evicted_caches );
 
-		// setting a published page to trashed should evict the listContentNode cache
-		$this->assertContains( 'listContentNode', $evicted_caches );
-
-		// setting a published page to trashed should evict the listPage query
-		$this->assertContains( 'listPage', $evicted_caches );
-
-		// the singlePage query should be evicted
-		$this->assertContains( 'singlePage', $evicted_caches );
-
-
-		$this->assertNotEmpty( $non_evicted_caches );
-
-		// setting a published page to trashed should not evict the listPost cache
-		$this->assertContains( 'listPost', $non_evicted_caches );
-
-		// setting a published page to trashed should not evict a query for another post
-		$this->assertContains( 'singlePost', $non_evicted_caches );
-
-		// setting a published page to trashed should not evict a query for another post
-		$this->assertContains( 'singleContentNode', $non_evicted_caches );
-
-		// setting a published page to trashed should not evict a query for another single node by id
-		$this->assertContains( 'singleNodeById', $non_evicted_caches );
-
-		// setting a published page to trashed should not evict a query for another post by uri
-		$this->assertContains( 'singleNodeByUri', $non_evicted_caches );
-
-		// the page did not have a category assigned, so the category list should not be evicted
-		$this->assertContains( 'listCategory', $non_evicted_caches );
-
-		// the page did not have a category assigned, so the singleCategory should not be evicted
-		$this->assertContains( 'singleCategory', $non_evicted_caches );
-
-		// no Test Post Type nodes were affected, should remain cached
-		$this->assertContains( 'listTestPostType', $non_evicted_caches );
-		$this->assertContains( 'singleTestPostType', $non_evicted_caches );
-
-		// no Private Post Type nodes were affected, should remain cached
-		$this->assertContains( 'listPrivatePostType', $non_evicted_caches );
-		$this->assertContains( 'singlePrivatePostType', $non_evicted_caches );
-
-		// no tag nodes were affected, should remain cached
-		$this->assertContains( 'listTag', $non_evicted_caches );
-		$this->assertContains( 'singleTag', $non_evicted_caches );
-
-		// no Test Taxonomy term nodes were affected, should remain cached
-		$this->assertContains( 'listTestTaxonomyTerm', $non_evicted_caches );
-		$this->assertContains( 'singleTestTaxonomyTerm', $non_evicted_caches );
+		$this->assertEqualSets([
+			'singlePage',
+			'listPage',
+			'listContentNode'
+		], $evicted_caches );
 
 	}
 
@@ -957,57 +593,13 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 
 		$evicted_caches = $this->getEvictedCaches();
 
-		$non_evicted_caches = $this->getNonEvictedCaches();
-
 		$this->assertNotEmpty( $evicted_caches );
 
-		// setting a published page to trashed should evict the listContentNode cache
-		$this->assertContains( 'listContentNode', $evicted_caches );
-
-		// setting a published page to trashed should evict the listPage query
-		$this->assertContains( 'listPage', $evicted_caches );
-
-		// the singlePage query is should be evicted
-		$this->assertContains( 'singlePage', $evicted_caches );
-
-		$this->assertNotEmpty( $non_evicted_caches );
-
-		// setting a published page to trashed should not evict the listPost cache
-		$this->assertContains( 'listPost', $non_evicted_caches );
-
-		// setting a published page to trashed should not evict a query for another post
-		$this->assertContains( 'singlePost', $non_evicted_caches );
-
-		// setting a published page to trashed should not evict a query for another post
-		$this->assertContains( 'singleContentNode', $non_evicted_caches );
-
-		// setting a published page to trashed should not evict a query for another single node by id
-		$this->assertContains( 'singleNodeById', $non_evicted_caches );
-
-		// setting a published page to trashed should not evict a query for another post by uri
-		$this->assertContains( 'singleNodeByUri', $non_evicted_caches );
-
-		// the page did not have a category assigned, so the category list should not be evicted
-		$this->assertContains( 'listCategory', $non_evicted_caches );
-
-		// the page did not have a category assigned, so the singleCategory should not be evicted
-		$this->assertContains( 'singleCategory', $non_evicted_caches );
-
-		// no Test Post Type nodes were affected, should remain cached
-		$this->assertContains( 'listTestPostType', $non_evicted_caches );
-		$this->assertContains( 'singleTestPostType', $non_evicted_caches );
-
-		// no Private Post Type nodes were affected, should remain cached
-		$this->assertContains( 'listPrivatePostType', $non_evicted_caches );
-		$this->assertContains( 'singlePrivatePostType', $non_evicted_caches );
-
-		// no tag nodes were affected, should remain cached
-		$this->assertContains( 'listTag', $non_evicted_caches );
-		$this->assertContains( 'singleTag', $non_evicted_caches );
-
-		// no Test Taxonomy term nodes were affected, should remain cached
-		$this->assertContains( 'listTestTaxonomyTerm', $non_evicted_caches );
-		$this->assertContains( 'singleTestTaxonomyTerm', $non_evicted_caches );
+		$this->assertEqualSets([
+			'listPage',
+			'singlePage',
+			'listContentNode'
+		], $evicted_caches );
 
 	}
 
@@ -1056,48 +648,12 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		// publishing a page should evict the listPage cache
 		$this->assertContains( 'listPage', $evicted_caches );
 
+		$this->assertEqualSets([
+			'listContentNode',
+			'listPage'
+		], $evicted_caches );
 
 		$this->assertNotEmpty( $non_evicted_caches );
-
-		// publishing a trashed page should not evict a query for a single post
-		$this->assertContains( 'singlePost', $non_evicted_caches );
-
-		// publishing a trashed page should not evict a query for single post
-		$this->assertContains( 'singleContentNode', $non_evicted_caches );
-
-		// publishing a trashed page should not evict a query for another single node by id
-		$this->assertContains( 'singleNodeById', $non_evicted_caches );
-
-		// publishing a trashed page should not evict a query for another post by uri
-		$this->assertContains( 'singleNodeByUri', $non_evicted_caches );
-
-		// the page did not have a category assigned, so the category list should not be evicted
-		$this->assertContains( 'listCategory', $non_evicted_caches );
-
-		// the page did not have a category assigned, so the singleCategory should not be evicted
-		$this->assertContains( 'singleCategory', $non_evicted_caches );
-
-		// no posts were affected, should remain cached
-		$this->assertContains( 'listPost', $non_evicted_caches );
-
-		// no pages were affected, should remain cached
-		$this->assertContains( 'singlePage', $non_evicted_caches );
-
-		// no Test Post Type nodes were affected, should remain cached
-		$this->assertContains( 'listTestPostType', $non_evicted_caches );
-		$this->assertContains( 'singleTestPostType', $non_evicted_caches );
-
-		// no Private Post Type nodes were affected, should remain cached
-		$this->assertContains( 'listPrivatePostType', $non_evicted_caches );
-		$this->assertContains( 'singlePrivatePostType', $non_evicted_caches );
-
-		// no tag nodes were affected, should remain cached
-		$this->assertContains( 'listTag', $non_evicted_caches );
-		$this->assertContains( 'singleTag', $non_evicted_caches );
-
-		// no Test Taxonomy term nodes were affected, should remain cached
-		$this->assertContains( 'listTestTaxonomyTerm', $non_evicted_caches );
-		$this->assertContains( 'singleTestTaxonomyTerm', $non_evicted_caches );
 
 	}
 
@@ -1232,18 +788,16 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		$evicted_caches = $this->getEvictedCaches();
 		$this->assertNotEmpty( $evicted_caches );
 
-		// the "adminUserWithPostsConnection" (previous author) query should have been evicted
-		$this->assertContains( 'adminUserWithPostsConnection', $evicted_caches );
-
-		// the "editorUserWithPostsConnection" (new author) query should have been evicted
-		$this->assertContains( 'editorUserWithPostsConnection', $evicted_caches );
-
-		// these should have also been evicted as the published post has changed
-		$this->assertContains( 'listPost', $evicted_caches );
-		$this->assertContains( 'singlePost', $evicted_caches );
-		$this->assertContains( 'singleContentNode', $evicted_caches );
-		$this->assertContains( 'listContentNode', $evicted_caches );
-		$this->assertContains( 'singleNodeByUri', $evicted_caches );
+		$this->assertEqualSets([
+			'editorUserWithPostsConnection',
+			'adminUserWithPostsConnection',
+			'listPost',
+			'singlePost',
+			'singleContentNode',
+			'listContentNode',
+			'singleNodeByUri',
+			'singleNodeById'
+		], $evicted_caches );
 
 	}
 
@@ -1301,16 +855,91 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		$this->assertNotEmpty( $evicted_caches );
 
 		codecept_debug( [ 'evicted' => $evicted_caches ]);
-		$this->assertContains( 'singlePost', $evicted_caches );
-		$this->assertContains( 'listPost', $evicted_caches );
+
+		$this->assertEqualSets( [
+			'listPost',
+			'adminUserWithPostsConnection',
+			'listContentNode',
+			'singleContentNode',
+			'singleNodeById',
+			'singleNodeByUri',
+			'singlePost'
+		], $evicted_caches );
 
 		$this->assertNotSame( $non_evicted_caches_before, $this->getNonEvictedCaches() );
 
 	}
 
-	public function testUpdateAllowedPostMetaOnPage() {}
+	public function testUpdateAllowedPostMetaOnPage() {
 
-	public function testUpdateAllowedPostMetaOnCustomPostType() {}
+		// there should be no evicted caches to start
+		$this->assertEmpty( $this->getEvictedCaches() );
+		$non_evicted_caches_before = $this->getNonEvictedCaches();
+
+		// meta is considered public if the key doesn't start win an underscore
+		$key = 'test_meta_key';
+
+		// we ensure the value is unique so that it properly triggers the updated_post_meta hook
+		// if the value were the same as the previous value the hook wouldn't fire and we wouldn't
+		// need to purge cache
+		$value = 'value' . uniqid( 'test_', true );
+
+		// update post meta on the published PAGE.
+		// if the meta doesn't exist yet, it will fire the "added_post_meta" hook
+		update_post_meta( $this->published_page->ID, $key, $value );
+
+		// this event SHOULD evict caches that contain the published PAGE
+		$evicted_caches = $this->getEvictedCaches();
+		$this->assertNotEmpty( $evicted_caches );
+
+		codecept_debug( [ 'evicted' => $evicted_caches ]);
+
+		$this->assertEqualSets( [
+			'listPage',
+			'singlePage',
+			'listContentNode'
+		], $evicted_caches );
+
+		$non_evicted_caches_after = $this->getNonEvictedCaches();
+		$this->assertNotSame( $non_evicted_caches_before, $non_evicted_caches_after );
+
+	}
+
+	public function testUpdateAllowedPostMetaOnCustomPostType() {
+
+		// there should be no evicted caches to start
+		$this->assertEmpty( $this->getEvictedCaches() );
+		$non_evicted_caches_before = $this->getNonEvictedCaches();
+
+		// meta is considered public if the key doesn't start win an underscore
+		$key = 'test_meta_key';
+
+		// we ensure the value is unique so that it properly triggers the updated_post_meta hook
+		// if the value were the same as the previous value the hook wouldn't fire and we wouldn't
+		// need to purge cache
+		$value = 'value' . uniqid( 'test_', true );
+
+		// update post meta on the published PAGE.
+		// if the meta doesn't exist yet, it will fire the "added_post_meta" hook
+		update_post_meta( $this->published_test_post_type->ID, $key, $value );
+
+		// this event SHOULD evict caches that contain the published PAGE
+		$evicted_caches = $this->getEvictedCaches();
+		$this->assertNotEmpty( $evicted_caches );
+
+		codecept_debug( [ 'evicted' => $evicted_caches ]);
+
+		$this->assertEqualSets( [
+			'singleTestPostType',
+			'listTestPostType',
+			'listContentNode',
+		], $evicted_caches );
+
+
+		$non_evicted_caches_after = $this->getNonEvictedCaches();
+		$this->assertNotSame( $non_evicted_caches_before, $non_evicted_caches_after );
+
+	}
 
 	public function testUpdateDisallowedPostMetaOnPost() {
 		$this->assertEmpty( $this->getEvictedCaches() );
@@ -1336,7 +965,6 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		$this->assertSame( $non_evicted_caches_before, $this->getNonEvictedCaches() );
 	}
 
-	// e
 	public function testUpdateDisallowedPostMetaOnCustomPostType() {
 		$this->assertEmpty( $this->getEvictedCaches() );
 		$non_evicted_caches_before = $this->getNonEvictedCaches();
@@ -1349,15 +977,251 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		$this->assertSame( $non_evicted_caches_before, $this->getNonEvictedCaches() );
 	}
 
-	// update post meta of published post
-	// delete post meta of published post
 
+	// delete post meta of published post
+	public function testDeleteAllowedPostMetaOnPost() {
+
+		// update post meta on the draft post
+		update_post_meta( $this->published_post->ID, 'test_meta', uniqid( null, true ) );
+
+		// the update post meta would have purged some caches, so we're going to repopulate the caches
+		$this->_populateCaches();
+
+		$this->assertEmpty( $this->getEvictedCaches() );
+		$non_evicted_caches_before = $this->getNonEvictedCaches();
+
+		// delete the private meta, should not evict any caches
+		delete_post_meta( $this->published_post->ID, 'test_meta' );
+
+		// this event should not evict any caches
+		$this->assertNotEmpty( $this->getEvictedCaches() );
+		$this->assertNotSame( $non_evicted_caches_before, $this->getNonEvictedCaches() );
+	}
+
+	public function testDeleteAllowedPostMetaOnPage() {
+
+		// setup the data
+		update_post_meta( $this->published_page->ID, 'test_meta', uniqid( null, true ) );
+
+		// the update post meta would have purged some caches, so we're going to repopulate the caches
+		$this->_populateCaches();
+
+		$this->assertEmpty( $this->getEvictedCaches() );
+		$non_evicted_caches_before = $this->getNonEvictedCaches();
+
+		// update post meta on the published page, should not evict cache
+		delete_post_meta( $this->published_page->ID, 'test_meta' );
+
+		$evicted_caches = $this->getEvictedCaches();
+
+		// this event SHOULD evict caches
+		$this->assertNotEmpty( $evicted_caches );
+
+		$this->assertEqualSets( [
+			'singlePage',
+			'listPage',
+			'listContentNode'
+		], $evicted_caches );
+	}
+
+	public function testDeleteAllowedPostMetaOnCustomPostType() {
+
+		// setup the data
+		update_post_meta( $this->published_test_post_type->ID, 'test_meta', uniqid( null, true ) );
+
+		// the update post meta would have purged some caches, so we're going to repopulate the caches
+		$this->_populateCaches();
+
+		$this->assertEmpty( $this->getEvictedCaches() );
+		$non_evicted_caches_before = $this->getNonEvictedCaches();
+
+		// delete post meta on the test post type, should not evict caches
+		delete_post_meta( $this->published_test_post_type->ID, 'test_meta' );
+
+		$evicted_caches = $this->getEvictedCaches();
+
+		// this event SHOULD evict caches
+		$this->assertNotEmpty( $evicted_caches );
+		$this->assertEqualSets( [
+			'singleTestPostType',
+			'listTestPostType',
+			'listContentNode'
+		], $evicted_caches );
+	}
+
+	public function testDeleteDisallowedPostMetaOnPost() {
+
+		// update post meta on the draft post
+		update_post_meta( $this->published_post->ID, '_private_meta', uniqid( null, true ) );
+
+		$this->assertEmpty( $this->getEvictedCaches() );
+		$non_evicted_caches_before = $this->getNonEvictedCaches();
+
+		// delete the private meta, should not evict any caches
+		delete_post_meta( $this->published_post->ID, '_private_meta' );
+
+		// this event should not evict any caches
+		$this->assertEmpty( $this->getEvictedCaches() );
+		$this->assertSame( $non_evicted_caches_before, $this->getNonEvictedCaches() );
+	}
+
+	public function testDeleteDisallowedPostMetaOnPage() {
+
+		// setup the data
+		update_post_meta( $this->published_page->ID, '_private_meta', uniqid( null, true ) );
+
+		$this->assertEmpty( $this->getEvictedCaches() );
+		$non_evicted_caches_before = $this->getNonEvictedCaches();
+
+		// update post meta on the published page, should not evict cache
+		delete_post_meta( $this->published_page->ID, '_private_meta' );
+
+		// this event should not evict any caches
+		$this->assertEmpty( $this->getEvictedCaches() );
+		$this->assertSame( $non_evicted_caches_before, $this->getNonEvictedCaches() );
+	}
+
+	public function testDeleteDisallowedPostMetaOnCustomPostType() {
+
+		// setup the data
+		update_post_meta( $this->published_test_post_type->ID, '_private_meta', uniqid( null, true ) );
+
+
+		$this->assertEmpty( $this->getEvictedCaches() );
+		$non_evicted_caches_before = $this->getNonEvictedCaches();
+
+		// delete post meta on the test post type, should not evict caches
+		delete_post_meta( $this->published_test_post_type->ID, '_private_meta' );
+
+		// this event should not evict any caches
+		$this->assertEmpty( $this->getEvictedCaches() );
+		$this->assertSame( $non_evicted_caches_before, $this->getNonEvictedCaches() );
+	}
 
 	// post of publicly queryable/show in graphql cpt is created as auto draft
+	public function testCreateDraftCustomPostTypePostDoesNotInvalidatePostCache() {
+
+		// all queries should be in the cache, non should be empty
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+		// create an auto draft post
+		self::factory()->post->create([
+			'post_status' => 'auto-draft',
+			'post_type' => 'test_post_type'
+		]);
+
+		// after creating an auto-draft post, there should be no caches that were emptied
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+	}
+
 	// post of publicly queryable/show in graphql cpt is published from draft
-	// scheduled post of publicly queryable/show in graphql cpt is published
+	public function testPublishingScheduledCustomPostTypePostWithoutAssociatedTerm() {
+
+		// ensure all queries have a cache
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+		// publish the scheduled post
+		wp_publish_post( $this->scheduled_post );
+
+		// get the evicted caches
+		$evicted_caches = $this->getEvictedCaches();
+
+		// when publishing a scheduled post, the listPost and listContentNode queries should have been cleared
+		$this->assertEqualSets([
+			'listPost',
+			'listContentNode',
+			'adminUserWithPostsConnection',
+			'editorUserWithPostsConnection'
+		], $evicted_caches );
+
+	}
+
+	public function testPublishingScheduledPostWithCustomTaxTermAssigned() {
+
+		// ensure all queries have a cache
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+		// publish the scheduled post type with associated term
+		wp_publish_post( $this->scheduled_custom_post_type_with_term->ID );
+
+		// check to see if the term is associated 👀
+		codecept_debug( [ 'associated_term' => wp_get_object_terms( $this->scheduled_custom_post_type_with_term->ID, 'test_taxonomy' ) ]);
+
+		// get the evicted caches _after_ publish
+		$evicted_caches = $this->getEvictedCaches();
+
+		codecept_debug( [ 'evicted' => $evicted_caches ] );
+
+		// when publishing a scheduled post of the test_post_type with an associated term,
+		// the listTestPostType and listContentNode queries should have been evicted
+		// but also the listTestTaxonomyTerm and singleTestTaxonomyTerm as the termCount
+		// needs to be updated on the terms
+		$this->assertEqualSets([
+			'listTestPostType',
+			'listContentNode',
+			'listTestTaxonomyTerm',
+			'singleTestTaxonomyTerm'
+		], $evicted_caches );
+
+
+	}
+
 	// published post of publicly queryable/show in graphql cpt is changed to draft
+	public function testPublishedPostOfTestPostTypeWithAssociatedTermIsChangedToDraft() {
+
+		// update a published post to draft status
+		self::factory()->post->update_object( $this->published_test_post_type_with_term->ID, [
+			'post_status' => 'draft',
+		] );
+
+		// assert that caches have been evicted
+		$evicted_caches = $this->getEvictedCaches();
+
+		codecept_debug( [ 'evicted' => $evicted_caches ]);
+		$non_evicted_caches = $this->getNonEvictedCaches();
+
+		// make assertions about the evicted caches
+		$this->assertNotEmpty( $evicted_caches );
+
+		// assert all the caches that should have been evicted
+		$this->assertEqualSets( [
+			// the post that was unpublished was part of the list, and should be evicted
+			'listTestPostType',
+			// the post was part of the content node list and should be evicted
+			'listContentNode',
+			// the post was associated with a test taxonomy term
+			'listTestTaxonomyTerm',
+			// the post was part of the content node list and should be evicted
+			'singleTestTaxonomyTerm'
+		], $evicted_caches );
+
+
+	}
+
 	// published post of publicly queryable/show in graphql cpt is changed to private
+	public function testPublishPostOfTestPostTypeChangedToPrivate() {
+		// no caches should be evicted to start
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+		// update a published post to draft status
+		self::factory()->post->update_object( $this->published_test_post_type->ID, [
+			'post_status' => 'private'
+		] );
+
+		// assert that caches have been evicted
+		$evicted_caches = $this->getEvictedCaches();
+		$this->assertNotEmpty( $evicted_caches );
+
+		codecept_debug( [ 'evicted' => $evicted_caches ]);
+
+		$this->assertEqualSets( [
+			'singleTestPostType',
+			'listTestPostType',
+			'listContentNode',
+		], $evicted_caches );
+
+	}
 	// published post of publicly queryable/show in graphql cpt is trashed
 	// published post of publicly queryable/show in graphql cpt is force deleted
 	// delete draft post of publicly queryable/show in graphql post type (doesn't evoke purge action)
