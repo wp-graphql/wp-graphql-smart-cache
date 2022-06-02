@@ -701,8 +701,6 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		$this->assertContains( 'listPage', $evicted_caches );
 
 
-
-
 		$this->assertNotEmpty( $non_evicted_caches );
 
 		// publishing a post not should evict the listPost cache
@@ -1249,7 +1247,6 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 
 	}
 
-
 	// update post meta of draft post does not evict cache
 	public function testUpdatePostMetaOfDraftPostDoesntEvictCache() {
 
@@ -1280,8 +1277,34 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 
 	}
 
-	// Deleting post
+	// update allowed (meta without underscore at the front) post meta on published post
 	public function testUpdateAllowedPostMetaOnPost() {
+
+		// there should be no evicted caches to start
+		$this->assertEmpty( $this->getEvictedCaches() );
+		$non_evicted_caches_before = $this->getNonEvictedCaches();
+
+		// meta is considered public if the key doesn't start win an underscore
+		$key = 'test_meta_key';
+
+		// we ensure the value is unique so that it properly triggers the updated_post_meta hook
+		// if the value were the same as the previous value the hook wouldn't fire and we wouldn't
+		// need to purge cache
+		$value = 'value' . uniqid( 'test_', true );
+
+		// update post meta on the published post.
+		// if the meta doesn't exist yet, it will fire the "added_post_meta" hook
+		update_post_meta( $this->published_post->ID, $key, $value );
+
+		// this event SHOULD evict caches that contain the published post
+		$evicted_caches = $this->getEvictedCaches();
+		$this->assertNotEmpty( $evicted_caches );
+
+		codecept_debug( [ 'evicted' => $evicted_caches ]);
+		$this->assertContains( 'singlePost', $evicted_caches );
+		$this->assertContains( 'listPost', $evicted_caches );
+
+		$this->assertNotSame( $non_evicted_caches_before, $this->getNonEvictedCaches() );
 
 	}
 
