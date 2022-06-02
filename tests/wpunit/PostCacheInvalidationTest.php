@@ -1266,6 +1266,66 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 	}
 
 	// delete post meta of draft post does not evoke purge action
+	public function testUpdatePostMetaOnDraftPost() {
+
+		$this->assertEmpty( $this->getEvictedCaches() );
+		$non_evicted_caches_before = $this->getNonEvictedCaches();
+
+		// update post meta on the draft post
+		update_post_meta( $this->draft_post->ID, 'test_key', uniqid( null, true ) );
+
+		// this event should not evict any caches
+		$this->assertEmpty( $this->getEvictedCaches() );
+		$this->assertSame( $non_evicted_caches_before, $this->getNonEvictedCaches() );
+
+	}
+
+	// Deleting post
+	public function testUpdateAllowedPostMetaOnPost() {
+
+	}
+
+	public function testUpdateAllowedPostMetaOnPage() {}
+
+	public function testUpdateAllowedPostMetaOnCustomPostType() {}
+
+	public function testUpdateDisallowedPostMetaOnPost() {
+		$this->assertEmpty( $this->getEvictedCaches() );
+		$non_evicted_caches_before = $this->getNonEvictedCaches();
+
+		// update post meta on the draft post
+		update_post_meta( $this->published_post->ID, '_private_meta', uniqid( null, true ) );
+
+		// this event should not evict any caches
+		$this->assertEmpty( $this->getEvictedCaches() );
+		$this->assertSame( $non_evicted_caches_before, $this->getNonEvictedCaches() );
+	}
+
+	public function testUpdateDisallowedPostMetaOnPage() {
+		$this->assertEmpty( $this->getEvictedCaches() );
+		$non_evicted_caches_before = $this->getNonEvictedCaches();
+
+		// update post meta on the draft post
+		update_post_meta( $this->published_page->ID, '_private_meta', uniqid( null, true ) );
+
+		// this event should not evict any caches
+		$this->assertEmpty( $this->getEvictedCaches() );
+		$this->assertSame( $non_evicted_caches_before, $this->getNonEvictedCaches() );
+	}
+
+	// e
+	public function testUpdateDisallowedPostMetaOnCustomPostType() {
+		$this->assertEmpty( $this->getEvictedCaches() );
+		$non_evicted_caches_before = $this->getNonEvictedCaches();
+
+		// update post meta on the draft post
+		update_post_meta( $this->published_test_post_type->ID, '_private_meta', uniqid( null, true ) );
+
+		// this event should not evict any caches
+		$this->assertEmpty( $this->getEvictedCaches() );
+		$this->assertSame( $non_evicted_caches_before, $this->getNonEvictedCaches() );
+	}
+
 	// update post meta of published post
 	// delete post meta of published post
 

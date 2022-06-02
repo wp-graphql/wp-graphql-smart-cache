@@ -29,17 +29,35 @@ use WPGraphQL\Request;
 
 class Collection extends Query {
 
-	// Nodes that are part of the current/in-progress/excuting query
+	/**
+	 * Nodes that are part of the current/in-progress/excuting query
+	 *
+	 * @var array
+	 */
 	public $nodes = [];
 
-	// whether the query is a query (not a mutation or subscription)
+	/**
+	 * whether the query is a query (not a mutation or subscription)
+	 *
+	 * @var boolean
+	 */
 	public $is_query;
 
-	// Types that are referenced in the query
+	/**
+	 * Types that are referenced in the query
+	 *
+	 * @var array
+	 */
 	public $type_names = [];
+
+	/**
+	 * @var array
+	 */
+	protected $runtime_nodes = [];
 
 	// initialize the cache collection
 	public function init() {
+
 		add_action( 'graphql_return_response', [ $this, 'save_query_mapping_cb' ], 10, 7 );
 		add_filter( 'pre_graphql_execute_request', [ $this, 'before_executing_query_cb' ], 10, 2 );
 		add_filter( 'graphql_dataloader_get_model', [ $this, 'data_loaded_process_cb' ], 10, 1 );
@@ -116,11 +134,9 @@ class Collection extends Query {
 	/**
 	 * Filter the model before returning.
 	 *
-	 * @param mixed              $model The Model to be returned by the loader
-	 * @param mixed              $entry The entry loaded by dataloader that was used to create the
-	 *                                  Model
-	 * @param mixed              $key   The Key that was used to load the entry
-	 * @param AbstractDataLoader $this  The AbstractDataLoader Instance
+	 * @param mixed $model The Model to be returned by the loader
+	 *
+	 * @return mixed
 	 */
 	public function data_loaded_process_cb( $model ) {
 		if ( isset( $model->id ) ) {
@@ -322,12 +338,12 @@ class Collection extends Query {
 	 * cache, but the publishing of the draft post that has a term associated with it
 	 * should purge the terms cache.
 	 *
-	 * @param int         $tt_id
-	 * @param WP_Taxonomy $taxonomy
+	 * @param int         $tt_id The Term Taxonomy ID of the term
+	 * @param string $taxonomy The name of the taxonomy the term belongs to
 	 *
 	 * @return void
 	 */
-	public function on_edited_term_taxonomy_cb( $tt_id, WP_Taxonomy $taxonomy ) {
+	public function on_edited_term_taxonomy_cb( $tt_id, $taxonomy ) {
 		if ( ! in_array( $taxonomy, \WPGraphQL::get_allowed_taxonomies(), true ) ) {
 			return;
 		}
@@ -363,7 +379,6 @@ class Collection extends Query {
 	 * @param Request The WPGraphQL Request object
 	 *
 	 * @return void
-	 * @throws SyntaxError
 	 */
 	public function save_query_mapping_cb(
 		$filtered_response,
@@ -490,6 +505,7 @@ class Collection extends Query {
 	}
 
 	/**
+	 * Listens for changes to the user object.
 	 *
 	 * @param array   $meta
 	 * @param WP_User $user   User object.
@@ -513,6 +529,8 @@ class Collection extends Query {
 	}
 
 	/**
+	 * Listens for changes to postmeta
+	 *
 	 * @param int    $meta_id    ID of updated metadata entry.
 	 * @param int    $post_id    Post ID.
 	 * @param string $meta_key   Metadata key.
