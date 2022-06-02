@@ -254,6 +254,7 @@ class Collection extends Query {
 		 *
 		 * @param bool $tracked whether the meta key is tracked for purging caches
 		 */
+		//phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 		$should_track = apply_filters( 'graphql_cache_should_track_meta_key', null, $meta_key, $meta_value, $object );
 
 		// If the filter has been applied return it
@@ -457,7 +458,7 @@ class Collection extends Query {
 			$urls = $this->store_content( $this->urls_key( $request_key ), $url_to_save );
 
 			//phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_print_r
-			 error_log( "Graphql Save Urls: $request_key " . print_r( $urls, 1 ) );
+			error_log( "Graphql Save Urls: $request_key " . print_r( $urls, 1 ) );
 		}
 
 		// Save/add the node ids for this query.  When one of these change in the future, we can purge the query
@@ -475,7 +476,7 @@ class Collection extends Query {
 
 		if ( is_array( $this->runtime_nodes ) ) {
 			//phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_print_r
-			 error_log( "Graphql Save Nodes: $request_key " . print_r( $this->runtime_nodes, 1 ) );
+			error_log( "Graphql Save Nodes: $request_key " . print_r( $this->runtime_nodes, 1 ) );
 		}
 	}
 
