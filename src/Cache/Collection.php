@@ -83,8 +83,13 @@ class Collection extends Query {
 		// user/author
 		add_filter( 'insert_user_meta', [ $this, 'on_user_change_cb' ], 10, 3 );
 
-		// meta For acf, which calls WP function update_metadata
+		// listen to updates to post meta
 		add_action( 'updated_post_meta', [ $this, 'on_postmeta_change_cb' ], 10, 4 );
+
+		// listen for when meta is inserted the first time
+		// the updated_post_meta hook only runs when meta is being updated,
+		// not when its being inserted (added) the first time
+		add_action( 'added_post_meta', [ $this, 'on_postmeta_change_cb' ], 10, 4 );
 
 		// before execution begins, determine the type names map
 		add_action( 'graphql_before_execute', [ $this, 'determine_query_types' ], 10, 1 );
@@ -287,6 +292,7 @@ class Collection extends Query {
 	 * @return void
 	 */
 	public function on_post_updated_cb( $post_id, WP_Post $post_after, WP_Post $post_before ) {
+
 		// if the post author hasn't changed, do nothing
 		if ( $post_after->post_author === $post_before->post_author ) {
 			return;
