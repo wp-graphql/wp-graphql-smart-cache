@@ -99,3 +99,36 @@ add_action(
 		$collection->init();
 	}
 );
+
+add_filter( 'graphql_wp_object_type_config', function($config, $object_type) {
+	$post_types = \WPGraphql::get_allowed_post_types();
+	$n = [];
+	foreach ( $post_types as $post_type ) {
+		$post_type_object = get_post_type_object( $post_type );
+		$n[] = strtolower( $post_type_object->graphql_single_name );
+	}
+	if ( isset( $config['name'] )  && in_array( strtolower( $config['name'] ), $n, true ) ) {
+		$config['model'] = 'WPGraphQL\Model\Post';
+	}
+	return $config;
+}, 10, 2);
+
+add_filter( 'graphql_wp_object_type_config', function($config, $object_type) {
+	$types = \WPGraphql::get_allowed_taxonomies();
+	$n = [];
+	foreach ( $types as $type ) {
+		$taxonomy = get_taxonomy( $type );
+		$n[] = strtolower( $taxonomy->graphql_single_name );
+	}
+	if ( isset( $config['name'] )  && in_array( strtolower( $config['name'] ), $n, true ) ) {
+		$config['model'] = 'WPGraphQL\Model\Term';
+	}
+	return $config;
+}, 10, 2);
+
+add_filter( 'graphql_wp_object_type_config', function($config, $object_type) {
+	if ( isset( $config['name'] ) && strtolower( $config['name'] ) === 'user' ) {
+		$config['model'] = 'WPGraphQL\Model\User';
+	}
+	return $config;
+}, 10, 2);

@@ -51,6 +51,13 @@ class Collection extends Query {
 	public $type_names = [];
 
 	/**
+	 * Models that are referenced in the query
+	 *
+	 * @var array
+	 */
+	public $model_names = [];
+
+	/**
 	 * @var array
 	 */
 	protected $runtime_nodes = [];
@@ -82,6 +89,7 @@ class Collection extends Query {
 
 		// user/author
 		add_filter( 'insert_user_meta', [ $this, 'on_user_change_cb' ], 10, 3 );
+		add_action( 'deleted_user', [ $this, 'on_user_deleted_cb' ], 10, 2 );
 
 		// listen to updates to post meta
 		add_action( 'updated_post_meta', [ $this, 'on_postmeta_change_cb' ], 10, 4 );
@@ -131,10 +139,18 @@ class Collection extends Query {
 		// if there's a query (either saved or part of the request params)
 		// get the GraphQL Types being asked for by the query
 		if ( ! empty( $query ) ) {
-			$this->type_names = $this->get_query_types( $request->schema, $query );
+			$this->type_names  = $this->get_query_types( $request->schema, $query );
+			$this->model_names = $this->get_query_models( $request->schema, $query );
+
 			// @todo: should this info be output as an extension?
 			// output the types as graphql debug info
-			graphql_debug( 'query_types', [ 'types' => $this->type_names ] );
+			graphql_debug(
+				'query_types_models',
+				[
+					'types'  => $this->type_names,
+					'models' => $this->model_names,
+				]
+			);
 		}
 	}
 
@@ -146,7 +162,8 @@ class Collection extends Query {
 	 * @return mixed
 	 */
 	public function data_loaded_process_cb( $model ) {
-		if ( isset( $model->id ) ) {
+		if ( isset( $model->id ) && in_array( get_class( $model ), $this->model_names, true ) ) {
+			// Is this model type part of the requested/returned data in the asked for query?
 			$this->runtime_nodes[] = $model->id;
 		}
 
@@ -328,6 +345,55 @@ class Collection extends Query {
 	}
 
 	/**
+	 * Given the Schema and a query string, return a list of GraphQL model names that are being asked for
+	 * by the query.
+	 *
+	 * @param Schema $schema The WPGraphQL Schema
+	 * @param string $query  The query string
+	 *
+	 * @return array
+	 * @throws SyntaxError|Exception
+	 */
+	public function get_query_models( $schema, $query ) {
+		if ( empty( $query ) || null === $schema ) {
+			return [];
+		}
+		try {
+			$ast = Parser::parse( $query );
+		} catch ( SyntaxError $error ) {
+			return [];
+		}
+		$type_map  = [];
+		$type_info = new TypeInfo( $schema );
+		$visitor   = [
+			'enter' => function ( $node, $key, $parent, $path, $ancestors ) use ( $type_info, &$type_map, $schema ) {
+				$type_info->enter( $node );
+				$type = $type_info->getType();
+				if ( ! $type ) {
+					return;
+				}
+
+				$named_type = Type::getNamedType( $type );
+
+				if ( ! isset( $named_type->config['model'] ) ) {
+					return;
+				}
+
+				$type_map[] = $named_type->config['model'];
+			},
+			'leave' => function ( $node, $key, $parent, $path, $ancestors ) use ( $type_info ) {
+				$type_info->leave( $node );
+			},
+		];
+
+		Visitor::visit( $ast, Visitor::visitWithTypeInfo( $type_info, $visitor ) );
+		$map = array_values( array_unique( array_filter( $type_map ) ) );
+
+		// @phpcs:ignore
+		return apply_filters( 'graphql_cache_collection_get_query_models', $map, $schema, $query, $type_info );
+	}
+
+	/**
 	 * Listen for updates to a post so we can purge caches relevant to the change
 	 *
 	 * @param int     $post_id The ID of the post being updated
@@ -337,7 +403,6 @@ class Collection extends Query {
 	 * @return void
 	 */
 	public function on_post_updated_cb( $post_id, WP_Post $post_after, WP_Post $post_before ) {
-
 		// if the post author hasn't changed, do nothing
 		if ( $post_after->post_author === $post_before->post_author ) {
 			return;
@@ -351,8 +416,6 @@ class Collection extends Query {
 			do_action( 'wpgraphql_cache_purge_nodes', 'list:' . $type_name, $type_name, $nodes );
 		}
 	}
-
-
 
 	/**
 	 * Listen for posts being deleted and purge relevant caches
@@ -473,11 +536,6 @@ class Collection extends Query {
 				$this->store_content( $type_name, $request_key );
 			}
 		}
-
-		if ( is_array( $this->runtime_nodes ) ) {
-			//phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_print_r
-			error_log( "Graphql Save Nodes: $request_key " . print_r( $this->runtime_nodes, 1 ) );
-		}
 	}
 
 	/**
@@ -578,6 +636,32 @@ class Collection extends Query {
 		}
 
 		return $meta;
+	}
+
+	/**
+	 *
+	 * @param int      $deleted_id       ID of the deleted user.
+	 * @param int|null $reassign ID of the user to reassign posts and links to.
+	 *                           Default null, for no reassignment.
+	 */
+	public function on_user_deleted_cb( $deleted_id, $reassign_id ) {
+		$id    = Relay::toGlobalId( 'user', (string) $deleted_id );
+		$nodes = $this->retrieve_nodes( $id );
+
+		// Delete the cached results associated with this key
+		if ( is_array( $nodes ) ) {
+			do_action( 'wpgraphql_cache_purge_nodes', 'user', $this->nodes_key( $id ), $nodes );
+		}
+
+		if ( $reassign_id ) {
+			$id    = Relay::toGlobalId( 'user', (string) $reassign_id );
+			$nodes = $this->retrieve_nodes( $id );
+
+			// Delete the cached results associated with this key
+			if ( is_array( $nodes ) ) {
+				do_action( 'wpgraphql_cache_purge_nodes', 'user', $this->nodes_key( $id ), $nodes );
+			}
+		}
 	}
 
 	/**
