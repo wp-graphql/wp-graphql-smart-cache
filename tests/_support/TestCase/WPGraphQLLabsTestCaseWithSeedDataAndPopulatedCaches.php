@@ -54,6 +54,11 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 	/**
 	 * @var WP_Post
 	 */
+	public $published_test_post_type_with_term;
+
+	/**
+	 * @var WP_Post
+	 */
 	public $draft_test_post_type;
 
 	/**
@@ -80,6 +85,16 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 	 * @var WP_Post
 	 */
 	public $scheduled_post_with_category;
+
+	/**
+	 * @var WP_Post
+	 */
+	public $scheduled_custom_post_type;
+
+	/**
+	 * @var WP_Post
+	 */
+	public $scheduled_custom_post_type_with_term;
 
 	/**
 	 * @var WP_Term
@@ -239,6 +254,44 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 			'post_category' => [ $this->category->term_id ]
 		]);
 
+		$this->scheduled_custom_post_type = self::factory()->post->create_and_get([
+			'post_type' => 'test_post_type',
+			'post_status' => 'future',
+			'post_title' => 'Test Custom Post Type Post',
+			'post_author' => $this->admin,
+			'post_date' => date( "Y-m-d H:i:s", strtotime( '+1 day' ) ),
+		]);
+
+		$this->scheduled_custom_post_type_with_term = self::factory()->post->create_and_get([
+			'post_type' => 'test_post_type',
+			'post_status' => 'future',
+			'post_title' => 'Test Custom Post Type Post',
+			'post_author' => $this->admin,
+			'post_date' => date( "Y-m-d H:i:s", strtotime( '+1 day' ) ),
+			'tax_input' => [
+				'test_taxonomy' => [ $this->test_taxonomy_term->slug ]
+			]
+		]);
+
+		// associate the scheduled type with the taxonomy term
+		// for whatever reason, tax_input above isn't working 😢🤷‍♂️
+		wp_set_object_terms( $this->scheduled_custom_post_type_with_term->ID, $this->test_taxonomy_term->term_id, 'test_taxonomy' );
+
+		$this->published_test_post_type_with_term = self::factory()->post->create_and_get([
+			'post_type' => 'test_post_type',
+			'post_status' => 'publish',
+			'post_title' => 'Test Custom Post Type Post with Term',
+			'post_author' => $this->admin,
+			'tax_input' => [
+				'test_taxonomy' => [ $this->test_taxonomy_term->slug ]
+			]
+		]);
+
+		// associate the scheduled type with the taxonomy term
+		// for whatever reason, tax_input above isn't working 😢🤷‍♂️
+		wp_set_object_terms( $this->published_test_post_type_with_term->ID, $this->test_taxonomy_term->term_id, 'test_taxonomy' );
+
+
 		// create a draft post
 		$this->draft_post = self::factory()->post->create_and_get([
 			'post_type' => 'post',
@@ -303,54 +356,12 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 		// purge all caches to clean up
 		$this->collection->purge_all();
 
-//		// ensure the caches are empty to start
-//		$this->assertEmpty( $this->collection->get( 'post' ) );
-//		$this->assertEmpty( $this->collection->get( 'list:post' ) );
-//
-//		$this->assertEmpty( $this->collection->get( 'term' ) );
-//		$this->assertEmpty( $this->collection->get( 'list:term' ) );
-//
-//		$this->assertEmpty( $this->collection->get( 'user' ) );
-//		$this->assertEmpty( $this->collection->get( 'list:user' ) );
-//
-//		$this->assertEmpty( $this->collection->get( 'comment' ) );
-//		$this->assertEmpty( $this->collection->get( 'list:comment' ) );
-//
-//		$this->assertEmpty( $this->collection->get( 'nav_menu' ) );
-//		$this->assertEmpty( $this->collection->get( 'list:nav_menu' ) );
-//
-//		$this->assertEmpty( $this->collection->get( 'menu_item' ) );
-//		$this->assertEmpty( $this->collection->get( 'list:menu_item' ) );
+		// clear the query results as they'll be populated again
+		// when the queries are executed and cached
+		$this->query_results = [];
 
-		// @todo: settings?
-
+		// execute and cache the queries
 		$this->executeAndCacheQueries();
-
-
-//		$this->assertNotEmpty( $this->query_results['listPost']['cacheKey'] );
-//		$this->assertNotEmpty( $this->collection->get( 'list:post' ) );
-//
-//		$this->assertNotEmpty( $this->collection->get( $this->query_results['singlePost']['cacheKey'] ) );
-//
-//		$this->assertNotEmpty( $this->collection->get( $this->query_results['singleTag']['cacheKey'] ) );
-//
-//		$this->assertNotEmpty( $this->collection->get( 'list:tag' ) );
-//		$this->assertNotEmpty( $this->collection->get( $this->query_results['listTag']['cacheKey'] ) );
-
-
-//		$this->assertNotEmpty( $this->collection->get( 'user' ) );
-//		$this->assertNotEmpty( $this->collection->get( 'list:user' ) );
-//
-//		$this->assertNotEmpty( $this->collection->get( 'comment' ) );
-//		$this->assertNotEmpty( $this->collection->get( 'list:comment' ) );
-//
-//		$this->assertNotEmpty( $this->collection->get( 'nav_menu' ) );
-//		$this->assertNotEmpty( $this->collection->get( 'list:nav_menu' ) );
-//
-//		$this->assertNotEmpty( $this->collection->get( 'menu_item' ) );
-//		$this->assertNotEmpty( $this->collection->get( 'list:menu_item' ) );
-
-		// @todo: settings?
 
 	}
 
