@@ -99,15 +99,23 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		wp_publish_post( $this->scheduled_post );
 
 		// get the evicted caches
-		$emptied_caches = $this->getEvictedCaches();
+		$evicted_caches = $this->getEvictedCaches();
 
-		// when publishing a scheduled post, the listPost and listContentNode queries should have been cleared
-		$this->assertContains( 'listPost', $emptied_caches );
-		$this->assertContains( 'listContentNode', $emptied_caches );
+		$this->assertEqualSets([
+			'listPost',
+			'listContentNode',
+			'adminUserWithPostsConnection',
 
-		// Ensure that other caches have not been emptied
-		$this->assertNotContains( 'listTag', $emptied_caches );
-		$this->assertNotContains( 'listCategory', $emptied_caches );
+			// @todo: in an ideal world, this wouldn't purge here
+			// as we published a post authored by the admin.
+			// this event, in an ideal world, shouldn't purge a
+			// query for posts authored by the editor user.
+			//
+			// right now, we're purging all lists of posts when a post is published,
+			// so this is correct behavior today, but I'd love to widdle down on this
+			// over time
+			'editorUserWithPostsConnection'
+		], $evicted_caches );
 
 	}
 
@@ -163,17 +171,27 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		// the listPost and listContentNode queries should have been cleared
 		// but also the listCategory and singleCategory as the termCount
 		// needs to be updated on the terms
-		$this->assertContains( 'listPost', $evicted_caches );
-		$this->assertContains( 'listContentNode', $evicted_caches );
-		$this->assertContains( 'listCategory', $evicted_caches );
-		$this->assertContains( 'singleCategory', $evicted_caches );
+		$this->assertEqualSets([
+			'listPost',
+			'listContentNode',
+			'listCategory',
+			'singleCategory',
+			'adminUserWithPostsConnection',
 
-		// ensure the other caches remain cached
-		$this->assertNotContains( 'singleTag', $evicted_caches );
-		$this->assertNotContains( 'listTag', $evicted_caches );
+			// @todo: ideally, this connection would not be evicted.
+			// It would be nice, in the future to be able to know
+			// a bit more about the from node that a connection is coming from
+			// and determine if the connection should indeed be purged.
+			// since we're querying a list of posts authored by the editor
+			// but publishing a post by another author,
+			// we (in an ideal world) shouldn't purge this connection query
+			//
+			// right now, we're purging all lists of posts when a post is published,
+			// so this is correct behavior today, but I'd love to widdle down on this
+			// over time
+			'editorUserWithPostsConnection',
+		], $evicted_caches );
 
-		// Ensure that other caches have not been emptied
-		$this->assertNotContains( 'listTag', $evicted_caches );
 
 	}
 
@@ -191,11 +209,16 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		// assert that caches have been evicted
 		$evicted_caches = $this->getEvictedCaches();
 		$this->assertNotEmpty( $evicted_caches );
-		$this->assertContains( 'singlePost', $evicted_caches );
-		$this->assertContains( 'listPost', $evicted_caches );
-		$this->assertContains( 'singleContentNode', $evicted_caches );
-		$this->assertContains( 'singleNodeById', $evicted_caches );
-		$this->assertContains( 'singleNodeByUri', $evicted_caches );
+
+		$this->assertEqualSets([
+			'singlePost',
+			'listPost',
+			'singleContentNode',
+			'singleNodeById',
+			'singleNodeByUri',
+			'adminUserWithPostsConnection',
+			'listContentNode',
+		], $evicted_caches );
 
 	}
 
@@ -1222,7 +1245,10 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		], $evicted_caches );
 
 	}
+
 	// published post of publicly queryable/show in graphql cpt is trashed
+
+
 	// published post of publicly queryable/show in graphql cpt is force deleted
 	// delete draft post of publicly queryable/show in graphql post type (doesn't evoke purge action)
 	// trashed post of publicly queryable/show in graphql post type
