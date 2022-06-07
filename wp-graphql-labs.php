@@ -14,6 +14,7 @@
 namespace WPGraphQL\Labs;
 
 use WPGraphQL\Labs\Cache\Collection;
+use WPGraphQL\Labs\Cache\Invalidation;
 use WPGraphQL\Labs\Cache\Results;
 use WPGraphQL\Labs\GraphiQL\GraphiQL;
 use WPGraphQL\Labs\Admin\Editor;
@@ -104,11 +105,18 @@ add_action(
 add_action(
 	'wp_loaded',
 	function () {
+
+		// override the query execution with cached results, if present
 		$results = new Results();
 		$results->init();
 
+		// Start collecting queries for cache
 		$collection = new Collection();
 		$collection->init();
+
+		// start listening to events that should invalidate caches
+		$invalidation = new Invalidation( $collection );
+		$invalidation->init();
 	}
 );
 
