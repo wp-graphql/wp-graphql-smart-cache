@@ -80,7 +80,7 @@ class UserCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
     // - purge user
     // - purge for each post (of each post type) transferred
     // - purge for the new author being assigned
-    public function testDeleteUserAndReassignPosts() {
+    public function testDeleteUserAndReassignPostsToUserWithNoPosts() {
         $user_id = self::factory()->user->create( [
             'role' => 'editor',
             'first_name' => 'foo',
@@ -90,18 +90,49 @@ class UserCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
         // Because we created the above user, start over cause we want to isolate the delete/reassign evictions
         $this->_populateCaches();
 
+		// delete the user and re-assign the posts to a new user
         wp_delete_user( $this->editor->ID, $user_id );
 
         codecept_debug( $this->getEvictedCaches() );
 
         // expect query for specific user, either the one being deleted or the assignment to be evicted
-
-        // caches that were emptied because the user was deleted and posts reassigned
-        // JasonBahl is a quiter in trying to be perfect in cache evicting on the specific changes. Mark wins.
         $evicted = $this->getEvictedCaches();
-        // TODO: make note why the listPost cache is purged and that is ok. Cause JBahl wants listPost not to purge cause that doesn't grok in his head.
-        $this->assertEqualSets( [ 'listPost', 'listContentNode', 'editorUserWithPostsConnection' ], $evicted );
+
+		// The only query that should have been evicted is
+	    // the editorUserWithPostsConnection
+        $this->assertEqualSets( [
+			'editorUserWithPostsConnection'
+        ], $evicted );
     }
+
+	public function testDeleteUserAndReassignPostsToUserWithOtherPublishedPosts() {
+
+		// delete the user and re-assign the posts to the admin user
+		wp_delete_user( $this->editor->ID, $this->admin->ID );
+
+		codecept_debug( $this->getEvictedCaches() );
+
+		// expect query for specific user, either the one being deleted or the assignment to be evicted
+		$evicted = $this->getEvictedCaches();
+
+		// The user->posts connection should be invalidated
+		// since the authors changed
+		$this->assertEqualSets( [
+			// this is invalidated because it's the user being deleted
+			'editorUserWithPostsConnection',
+
+			// this is invalidated because it's the user getting the reassigned posts
+			'adminUserWithPostsConnection',
+
+			// this is invalidated because the post that was re-assigned
+			// triggered the transition_post_status hook
+			'singleNodeById',
+
+			// this is invalidated because the post that was re-assigned
+			// triggered the transition_post_status hook
+			'singleNodeByUri'
+		], $evicted );
+	}
 
     // update user that has published posts
     public function testUpdateUserNameAndPurgeCache() {

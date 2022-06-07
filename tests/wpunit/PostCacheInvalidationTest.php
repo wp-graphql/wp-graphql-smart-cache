@@ -162,7 +162,7 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		// publish the post
 		wp_publish_post( $this->scheduled_post_with_category->ID );
 
-		codecept_debug( [ 'set_associated_term' => wp_get_object_terms( $this->scheduled_post_with_category->ID, 'category' ) ]);
+		//codecept_debug( [ 'set_associated_term' => wp_get_object_terms( $this->scheduled_post_with_category->ID, 'category' ) ]);
 
 		// get the evicted caches _after_ publish
 		$evicted_caches = $this->getEvictedCaches();
@@ -486,10 +486,10 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		$this->assertNotEmpty( $evicted_caches );
 		$this->assertNotEmpty( $non_evicted_caches );
 
-		codecept_debug( [
-			'evicted' => $evicted_caches,
-			'non' => $non_evicted_caches
-		]);
+		//codecept_debug( [
+//			'evicted' => $evicted_caches,
+//			'non' => $non_evicted_caches
+//		]);
 
 
 		$this->assertEqualSets([
@@ -660,10 +660,10 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		$this->assertNotEmpty( $evicted_caches );
 		$this->assertNotEmpty( $non_evicted_caches );
 
-		codecept_debug( [
-			'evicted' => $evicted_caches,
-			'non' => $non_evicted_caches
-		]);
+		//codecept_debug( [
+//			'evicted' => $evicted_caches,
+//			'non' => $non_evicted_caches
+//		]);
 
 		// publishing a page should evict the listContentNode cache
 		$this->assertContains( 'listContentNode', $evicted_caches );
@@ -877,7 +877,7 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		$evicted_caches = $this->getEvictedCaches();
 		$this->assertNotEmpty( $evicted_caches );
 
-		codecept_debug( [ 'evicted' => $evicted_caches ]);
+		//codecept_debug( [ 'evicted' => $evicted_caches ]);
 
 		$this->assertEqualSets( [
 			'listPost',
@@ -915,7 +915,7 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		$evicted_caches = $this->getEvictedCaches();
 		$this->assertNotEmpty( $evicted_caches );
 
-		codecept_debug( [ 'evicted' => $evicted_caches ]);
+		//codecept_debug( [ 'evicted' => $evicted_caches ]);
 
 		$this->assertEqualSets( [
 			'listPage',
@@ -950,7 +950,7 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		$evicted_caches = $this->getEvictedCaches();
 		$this->assertNotEmpty( $evicted_caches );
 
-		codecept_debug( [ 'evicted' => $evicted_caches ]);
+		//codecept_debug( [ 'evicted' => $evicted_caches ]);
 
 		$this->assertEqualSets( [
 			'singleTestPostType',
@@ -1169,12 +1169,12 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		wp_publish_post( $this->scheduled_custom_post_type_with_term->ID );
 
 		// check to see if the term is associated 👀
-		codecept_debug( [ 'associated_term' => wp_get_object_terms( $this->scheduled_custom_post_type_with_term->ID, 'test_taxonomy' ) ]);
+		//codecept_debug( [ 'associated_term' => wp_get_object_terms( $this->scheduled_custom_post_type_with_term->ID, 'test_taxonomy' ) ]);
 
 		// get the evicted caches _after_ publish
 		$evicted_caches = $this->getEvictedCaches();
 
-		codecept_debug( [ 'evicted' => $evicted_caches ] );
+		//codecept_debug( [ 'evicted' => $evicted_caches ] );
 
 		// when publishing a scheduled post of the test_post_type with an associated term,
 		// the listTestPostType and listContentNode queries should have been evicted
@@ -1201,7 +1201,7 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		// assert that caches have been evicted
 		$evicted_caches = $this->getEvictedCaches();
 
-		codecept_debug( [ 'evicted' => $evicted_caches ]);
+		//codecept_debug( [ 'evicted' => $evicted_caches ]);
 		$non_evicted_caches = $this->getNonEvictedCaches();
 
 		// make assertions about the evicted caches
@@ -1236,7 +1236,7 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		$evicted_caches = $this->getEvictedCaches();
 		$this->assertNotEmpty( $evicted_caches );
 
-		codecept_debug( [ 'evicted' => $evicted_caches ]);
+		//codecept_debug( [ 'evicted' => $evicted_caches ]);
 
 		$this->assertEqualSets( [
 			'singleTestPostType',

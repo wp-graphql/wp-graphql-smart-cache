@@ -20,10 +20,8 @@ use GraphQL\Type\Schema;
 use GraphQL\Utils\TypeInfo;
 use GraphQLRelay\Relay;
 use WP_Post;
-use WP_Taxonomy;
 use WP_User;
 use WPGraphQL\AppContext;
-use WPGraphQL\Data\Loader\AbstractDataLoader;
 use WPGraphQL\Labs\Document;
 use WPGraphQL\Request;
 
@@ -56,6 +54,13 @@ class Collection extends Query {
 	 * @var array
 	 */
 	public $model_names = [];
+
+	/**
+	 * Types in the query that are lists
+	 *
+	 * @var array
+	 */
+	public $list_types = [];
 
 	/**
 	 * @var array
@@ -139,16 +144,18 @@ class Collection extends Query {
 		// if there's a query (either saved or part of the request params)
 		// get the GraphQL Types being asked for by the query
 		if ( ! empty( $query ) ) {
+			$this->list_types = $this->get_query_list_types( $request->schema, $query );
 			$this->type_names  = $this->get_query_types( $request->schema, $query );
 			$this->model_names = $this->get_query_models( $request->schema, $query );
 
 			// @todo: should this info be output as an extension?
 			// output the types as graphql debug info
 			graphql_debug(
-				'query_types_models',
+				'query_types_and_models',
 				[
 					'types'  => $this->type_names,
 					'models' => $this->model_names,
+					'listTypes' => $this->list_types
 				]
 			);
 		}
@@ -164,7 +171,7 @@ class Collection extends Query {
 	public function data_loaded_process_cb( $model ) {
 		if ( isset( $model->id ) && in_array( get_class( $model ), $this->model_names, true ) ) {
 			// Is this model type part of the requested/returned data in the asked for query?
-			$this->runtime_nodes[] = $model->id;
+			$this->runtime_nodes[] = get_class( $model ) . ':' . $model->id;
 		}
 
 		return $model;
@@ -318,18 +325,13 @@ class Collection extends Query {
 
 				$named_type = Type::getNamedType( $type );
 
-				// determine if the field is returning a list of types
-				// or singular types
-				// @todo: this might still be too fragile. We might need to adjust for cases where we can have list_of( nonNull( type ) ), etc
-				$prefix = $named_type && ( Type::listOf( $named_type )->name === $type->name ) ? 'list:' : null;
-
 				if ( $named_type instanceof InterfaceType ) {
 					$possible_types = $schema->getPossibleTypes( $named_type );
 					foreach ( $possible_types as $possible_type ) {
-						$type_map[] = $prefix . strtolower( $possible_type );
+						$type_map[] = strtolower( $possible_type );
 					}
 				} elseif ( $named_type instanceof ObjectType ) {
-					$type_map[] = $prefix . strtolower( $named_type );
+					$type_map[] = strtolower( $named_type );
 				}
 			},
 			'leave' => function ( $node, $key, $parent, $path, $ancestors ) use ( $type_info ) {
@@ -375,11 +377,21 @@ class Collection extends Query {
 
 				$named_type = Type::getNamedType( $type );
 
-				if ( ! isset( $named_type->config['model'] ) ) {
-					return;
+				if ( $named_type instanceof InterfaceType ) {
+					$possible_types = $schema->getPossibleTypes( $named_type );
+					foreach ( $possible_types as $possible_type ) {
+						if ( ! isset( $possible_type->config['model'] ) ) {
+							continue;
+						}
+						$type_map[] =  $possible_type->config['model'];
+					}
+				} elseif ( $named_type instanceof ObjectType ) {
+					if ( ! isset( $named_type->config['model'] ) ) {
+						return;
+					}
+					$type_map[] = $named_type->config['model'];
 				}
 
-				$type_map[] = $named_type->config['model'];
 			},
 			'leave' => function ( $node, $key, $parent, $path, $ancestors ) use ( $type_info ) {
 				$type_info->leave( $node );
@@ -394,6 +406,69 @@ class Collection extends Query {
 	}
 
 	/**
+	 * Given the Schema and a query string, return a list of GraphQL Types that are being asked for
+	 * by the query.
+	 *
+	 * @param Schema $schema The WPGraphQL Schema
+	 * @param string $query  The query string
+	 *
+	 * @return array
+	 * @throws SyntaxError|Exception
+	 */
+	public function get_query_list_types( $schema, $query ) {
+		if ( empty( $query ) || null === $schema ) {
+			return [];
+		}
+		try {
+			$ast = Parser::parse( $query );
+		} catch ( SyntaxError $error ) {
+			return [];
+		}
+		$type_map  = [];
+		$type_info = new TypeInfo( $schema );
+		$visitor   = [
+			'enter' => function ( $node, $key, $parent, $path, $ancestors ) use ( $type_info, &$type_map, $schema ) {
+				$type_info->enter( $node );
+				$type = $type_info->getType();
+				if ( ! $type ) {
+					return;
+				}
+
+				$named_type = Type::getNamedType( $type );
+
+				// determine if the field is returning a list of types
+				// or singular types
+				// @todo: this might still be too fragile. We might need to adjust for cases where we can have list_of( nonNull( type ) ), etc
+				$is_list_type = $named_type && ( Type::listOf( $named_type )->name === $type->name );
+
+				if ( $named_type instanceof InterfaceType ) {
+					$possible_types = $schema->getPossibleTypes( $named_type );
+					foreach ( $possible_types as $possible_type ) {
+						// if the type is a list, store it
+						if ( $is_list_type ) {
+							$type_map[] = 'list:' . strtolower( $possible_type );
+						}
+					}
+				} elseif ( $named_type instanceof ObjectType ) {
+					// if the type is a list, store it
+					if ( $is_list_type ) {
+						$type_map[] = 'list:' . strtolower( $named_type );
+					}
+				}
+			},
+			'leave' => function ( $node, $key, $parent, $path, $ancestors ) use ( $type_info ) {
+				$type_info->leave( $node );
+			},
+		];
+
+		Visitor::visit( $ast, Visitor::visitWithTypeInfo( $type_info, $visitor ) );
+		$map = array_values( array_unique( array_filter( $type_map ) ) );
+
+		// @phpcs:ignore
+		return apply_filters( 'graphql_cache_collection_get_list_types', $map, $schema, $query, $type_info );
+	}
+
+	/**
 	 * Listen for updates to a post so we can purge caches relevant to the change
 	 *
 	 * @param int     $post_id The ID of the post being updated
@@ -403,6 +478,8 @@ class Collection extends Query {
 	 * @return void
 	 */
 	public function on_post_updated_cb( $post_id, WP_Post $post_after, WP_Post $post_before ) {
+		return;
+
 		// if the post author hasn't changed, do nothing
 		if ( $post_after->post_author === $post_before->post_author ) {
 			return;
@@ -411,9 +488,12 @@ class Collection extends Query {
 		$post_type_object = get_post_type_object( $post_after->post_type );
 		$type_name        = strtolower( $post_type_object->graphql_single_name );
 
-		$nodes = $this->get( 'list:' . $type_name );
-		if ( is_array( $nodes ) ) {
-			do_action( 'wpgraphql_cache_purge_nodes', 'list:' . $type_name, $type_name, $nodes );
+		$relay_id         = Relay::toGlobalId( 'post', $post_id );
+		$nodes            = $this->retrieve_nodes( $relay_id );
+
+		// Delete the cached results associated with this post/key
+		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
+			do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->nodes_key( $relay_id ), $nodes );
 		}
 	}
 
@@ -530,9 +610,9 @@ class Collection extends Query {
 		}
 
 		// For each connection resolver, store the url key
-		if ( ! empty( $this->type_names ) && is_array( $this->type_names ) ) {
-			$this->type_names = array_unique( $this->type_names );
-			foreach ( $this->type_names as $type_name ) {
+		if ( ! empty( $this->list_types ) && is_array( $this->list_types ) ) {
+			$this->list_types = array_unique( $this->list_types );
+			foreach ( $this->list_types as $type_name ) {
 				$this->store_content( $type_name, $request_key );
 			}
 		}
