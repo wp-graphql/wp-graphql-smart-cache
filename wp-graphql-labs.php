@@ -140,7 +140,7 @@ function graphql_add_model_to_type_config( $config, $type ) {
 	}
 
 	// if there's no model set, set it now
-	switch( strtolower( $config['name'] ) ) {
+	switch ( strtolower( $config['name'] ) ) {
 		case 'user':
 			$config['model'] = User::class;
 			break;
@@ -177,56 +177,61 @@ function graphql_add_model_to_type_config( $config, $type ) {
 }
 
 // Hook in when the GraphQL request is getting started
-add_action( 'init_graphql_request', function() {
+add_action(
+	'init_graphql_request',
+	function () {
+		$post_type_graphql_types = [];
+		$term_graphql_types      = [];
 
-	$post_type_graphql_types = [];
-	$term_graphql_types = [];
+		// determine the graphql types that represent post types
+		$post_types = \WPGraphql::get_allowed_post_types();
+		foreach ( $post_types as $post_type ) {
+			$post_type_object          = get_post_type_object( $post_type );
+			$post_type_graphql_types[] = strtolower( $post_type_object->graphql_single_name );
+		}
 
-	// determine the graphql types that represent post types
-	$post_types = \WPGraphql::get_allowed_post_types();
-	foreach ( $post_types as $post_type ) {
-		$post_type_object = get_post_type_object( $post_type );
-		$post_type_graphql_types[] = strtolower( $post_type_object->graphql_single_name );
+		// determine the graphql types that represent terms
+		$taxonomies = \WPGraphql::get_allowed_taxonomies();
+		foreach ( $taxonomies as $taxonomy_name ) {
+			$taxonomy             = get_taxonomy( $taxonomy_name );
+			$term_graphql_types[] = strtolower( $taxonomy->graphql_single_name );
+		}
+
+		// filter the model in for
+		add_filter(
+			'graphql_wp_object_type_config',
+			function ( $config, $object_type ) use ( $term_graphql_types, $post_type_graphql_types ) {
+
+				// if the model is already set, use it
+				if ( isset( $config['model'] ) ) {
+					return $config;
+				}
+
+				// if the $config has no name, return the config
+				if ( ! isset( $config['name'] ) ) {
+					return $config;
+				}
+
+				// if the config name matches one of the graphql types for posts, set the model
+				if ( in_array( strtolower( $config['name'] ), $post_type_graphql_types, true ) ) {
+					$config['model'] = Post::class;
+				}
+
+				// if the config name matches one of the graphql types for taxonomies, set the model
+				if ( in_array( strtolower( $config['name'] ), $term_graphql_types, true ) ) {
+					$config['model'] = Term::class;
+				}
+
+				return $config;
+			},
+			10,
+			2
+		);
+
+		add_filter( 'graphql_wp_interface_type_config', 'WPGraphQL\Labs\graphql_add_model_to_type_config', 10, 2 );
+		add_filter( 'graphql_wp_object_type_config', 'WPGraphQL\Labs\graphql_add_model_to_type_config', 10, 2 );
 	}
-
-	// determine the graphql types that represent terms
-	$taxonomies = \WPGraphql::get_allowed_taxonomies();
-	foreach ( $taxonomies as $taxonomy_name ) {
-		$taxonomy = get_taxonomy( $taxonomy_name );
-		$term_graphql_types[] = strtolower( $taxonomy->graphql_single_name );
-	}
-
-	// filter the model in for
-	add_filter( 'graphql_wp_object_type_config', function($config, $object_type) use ( $term_graphql_types, $post_type_graphql_types ) {
-
-		// if the model is already set, use it
-		if ( isset( $config['model'] ) ) {
-			return $config;
-		}
-
-		// if the $config has no name, return the config
-		if ( ! isset( $config['name'] ) ) {
-			return $config;
-		}
-
-		// if the config name matches one of the graphql types for posts, set the model
-		if ( in_array( strtolower( $config['name'] ), $post_type_graphql_types, true ) ) {
-			$config['model'] = Post::class;
-		}
-
-		// if the config name matches one of the graphql types for taxonomies, set the model
-		if ( in_array( strtolower( $config['name'] ), $term_graphql_types, true ) ) {
-			$config['model'] = Term::class;
-		}
-
-		return $config;
-	}, 10, 2);
-
-
-	add_filter( 'graphql_wp_interface_type_config', 'WPGraphQL\Labs\graphql_add_model_to_type_config', 10, 2 );
-	add_filter( 'graphql_wp_object_type_config', 'WPGraphQL\Labs\graphql_add_model_to_type_config', 10, 2);
-
-} );
+);
 
 
 

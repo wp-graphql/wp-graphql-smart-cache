@@ -25,7 +25,7 @@ use WPGraphQL\Request;
 class Collection extends Query {
 
 	/**
-	 * Nodes that are part of the current/in-progress/excuting query
+	 * Nodes that are part of the current/in-progress/executing query
 	 *
 	 * @var array
 	 */
@@ -102,7 +102,7 @@ class Collection extends Query {
 		// if there's a query (either saved or part of the request params)
 		// get the GraphQL Types being asked for by the query
 		if ( ! empty( $query ) ) {
-			$this->list_types = $this->get_query_list_types( $request->schema, $query );
+			$this->list_types  = $this->get_query_list_types( $request->schema, $query );
 			$this->type_names  = $this->get_query_types( $request->schema, $query );
 			$this->model_names = $this->get_query_models( $request->schema, $query );
 
@@ -111,9 +111,9 @@ class Collection extends Query {
 			graphql_debug(
 				'query_types_and_models',
 				[
-					'types'  => $this->type_names,
-					'models' => $this->model_names,
-					'listTypes' => $this->list_types
+					'types'     => $this->type_names,
+					'models'    => $this->model_names,
+					'listTypes' => $this->list_types,
 				]
 			);
 		}
@@ -121,7 +121,7 @@ class Collection extends Query {
 
 	public function before_executing_query_cb( $result, $request ) {
 		// Consider this the start of query execution. Clear if we had a list of saved nodes
-		$this->runtime_nodes    = [];
+		$this->runtime_nodes = [];
 
 		return $result;
 	}
@@ -215,7 +215,7 @@ class Collection extends Query {
 						if ( ! isset( $possible_type->config['model'] ) ) {
 							continue;
 						}
-						$type_map[] =  $possible_type->config['model'];
+						$type_map[] = $possible_type->config['model'];
 					}
 				} elseif ( $named_type instanceof ObjectType ) {
 					if ( ! isset( $named_type->config['model'] ) ) {
@@ -223,7 +223,6 @@ class Collection extends Query {
 					}
 					$type_map[] = $named_type->config['model'];
 				}
-
 			},
 			'leave' => function ( $node, $key, $parent, $path, $ancestors ) use ( $type_info ) {
 				$type_info->leave( $node );
@@ -391,8 +390,6 @@ class Collection extends Query {
 
 		return $this->get( $key );
 	}
-
-
 
 	/**
 	 * When a query response is being returned to the client, build map for each item and this

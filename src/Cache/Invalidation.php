@@ -3,6 +3,7 @@ namespace WPGraphQL\Labs\Cache;
 
 use GraphQLRelay\Relay;
 use WP_Post;
+use WP_User;
 use WPGraphQL\Model\Post;
 use WPGraphQL\Model\Term;
 use WPGraphQL\Model\User;
@@ -23,7 +24,7 @@ class Invalidation {
 	 *
 	 * @param Collection $collection
 	 */
-	public function __construct( Collection $collection) {
+	public function __construct( Collection $collection ) {
 		$this->collection = $collection;
 	}
 
@@ -42,17 +43,6 @@ class Invalidation {
 		// listen for posts to be deleted. Queries with deleted nodes should be purged.
 		add_action( 'deleted_post', [ $this, 'on_deleted_post_cb' ], 10, 2 );
 
-		// when a term is edited, purge caches for that term
-		// this action is called when term caches are updated on a delay.
-		// for example, if a scheduled post is assigned to a term,
-		// this won't be called when the post is initially inserted with the
-		// term assigned, but when the post is published
-		add_action( 'edited_term_taxonomy', [ $this, 'on_edited_term_taxonomy_cb' ], 10, 2 );
-
-		// user/author
-		add_filter( 'insert_user_meta', [ $this, 'on_user_change_cb' ], 10, 3 );
-		add_action( 'deleted_user', [ $this, 'on_user_deleted_cb' ], 10, 2 );
-
 		// listen to updates to post meta
 		add_action( 'updated_post_meta', [ $this, 'on_postmeta_change_cb' ], 10, 4 );
 
@@ -64,6 +54,19 @@ class Invalidation {
 		// listen for when meta is deleted
 		add_action( 'deleted_post_meta', [ $this, 'on_postmeta_change_cb' ], 10, 4 );
 
+		// when a term is edited, purge caches for that term
+		// this action is called when term caches are updated on a delay.
+		// for example, if a scheduled post is assigned to a term,
+		// this won't be called when the post is initially inserted with the
+		// term assigned, but when the post is published
+		add_action( 'edited_term_taxonomy', [ $this, 'on_edited_term_taxonomy_cb' ], 10, 2 );
+
+		// user/author
+		add_action( 'updated_user_meta', [ $this, 'on_user_meta_change_cb' ], 10, 4 );
+		add_action( 'added_user_meta', [ $this, 'on_user_meta_change_cb' ], 10, 4 );
+		add_action( 'deleted_user_meta', [ $this, 'on_user_meta_change_cb' ], 10, 4 );
+		add_action( 'profile_update', [ $this, 'on_user_profile_update_cb' ], 10, 2 );
+		add_action( 'deleted_user', [ $this, 'on_user_deleted_cb' ], 10, 2 );
 	}
 
 
@@ -125,11 +128,29 @@ class Invalidation {
 			return;
 		}
 
+		// evict caches for the before and after post author (purge their archive pages)
+		$new_author_id = Relay::toGlobalId( 'user', (string) $post_after->post_author );
+		$nodes         = $this->collection->retrieve_nodes( User::class . ':' . $new_author_id );
+
+		// Delete the cached results associated with this key
+		if ( is_array( $nodes ) ) {
+			do_action( 'wpgraphql_cache_purge_nodes', 'user', $this->collection->nodes_key( $new_author_id ), $nodes );
+		}
+
+		// evict caches for the before and after post author (purge their archive pages)
+		$prev_author_id = Relay::toGlobalId( 'user', (string) $post_before->post_author );
+		$nodes          = $this->collection->retrieve_nodes( User::class . ':' . $prev_author_id );
+
+		// Delete the cached results associated with this key
+		if ( is_array( $nodes ) ) {
+			do_action( 'wpgraphql_cache_purge_nodes', 'user', $this->collection->nodes_key( $prev_author_id ), $nodes );
+		}
+
 		$post_type_object = get_post_type_object( $post_after->post_type );
 		$type_name        = strtolower( $post_type_object->graphql_single_name );
 
-		$relay_id         = Relay::toGlobalId( 'post', $post_id );
-		$nodes            = $this->collection->retrieve_nodes( Post::class . ':'. $relay_id );
+		$relay_id = Relay::toGlobalId( 'post', $post_id );
+		$nodes    = $this->collection->retrieve_nodes( Post::class . ':' . $relay_id );
 
 		// Delete the cached results associated with this post/key
 		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
@@ -157,7 +178,7 @@ class Invalidation {
 		$post_type_object = get_post_type_object( $post->post_type );
 		$relay_id         = Relay::toGlobalId( 'post', $post->ID );
 		$type_name        = strtolower( $post_type_object->graphql_single_name );
-		$nodes            = $this->collection->retrieve_nodes( Post::class . ':'. $relay_id );
+		$nodes            = $this->collection->retrieve_nodes( Post::class . ':' . $relay_id );
 
 		// Delete the cached results associated with this post/key
 		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
@@ -173,7 +194,7 @@ class Invalidation {
 	 * cache, but the publishing of the draft post that has a term associated with it
 	 * should purge the terms cache.
 	 *
-	 * @param int         $tt_id The Term Taxonomy ID of the term
+	 * @param int    $tt_id The Term Taxonomy ID of the term
 	 * @param string $taxonomy The name of the taxonomy the term belongs to
 	 *
 	 * @return void
@@ -191,7 +212,7 @@ class Invalidation {
 
 		$relay_id  = Relay::toGlobalId( 'term', $term->term_id );
 		$type_name = strtolower( get_taxonomy( $taxonomy )->graphql_single_name );
-		$nodes     = $this->collection->retrieve_nodes( Term::class . ':'. $relay_id );
+		$nodes     = $this->collection->retrieve_nodes( Term::class . ':' . $relay_id );
 
 		// Delete the cached results associated with this post/key
 		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
@@ -267,7 +288,7 @@ class Invalidation {
 		// we need to purge any queries that have that
 		// specific node in it
 		if ( 'UPDATE' === $action_type || 'DELETE' === $action_type ) {
-			$nodes = $this->collection->retrieve_nodes( Post::class . ':'. $relay_id );
+			$nodes = $this->collection->retrieve_nodes( Post::class . ':' . $relay_id );
 			// Delete the cached results associated with this post/key
 			if ( is_array( $nodes ) && ! empty( $nodes ) ) {
 				do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->collection->nodes_key( $relay_id ), $nodes );
@@ -276,27 +297,47 @@ class Invalidation {
 	}
 
 	/**
-	 * Listens for changes to the user object.
+	 * Listen for changes to the user profile
 	 *
-	 * @param array   $meta
-	 * @param WP_User $user   User object.
-	 * @param bool    $update Whether the user is being updated rather than created.
+	 * @param int     $user_id       User ID.
+	 * @param WP_User $old_user_data Object containing user's data prior to update.
 	 */
-	public function on_user_change_cb( $meta, $user, $update ) {
-		if ( false === $update ) {
-			// if created, clear any cached connection lists for this type
-			do_action( 'wpgraphql_cache_purge_nodes', 'user', 'users', [] );
-		} else {
-			$id    = Relay::toGlobalId( 'user', (string) $user->ID );
-			$nodes = $this->collection->retrieve_nodes( User::class . ':'. $id );
+	public function on_user_profile_update_cb( $user_id, $old_user_data ) {
+		$id    = Relay::toGlobalId( 'user', (string) $user_id );
+		$nodes = $this->collection->retrieve_nodes( User::class . ':' . $id );
 
-			// Delete the cached results associated with this key
-			if ( is_array( $nodes ) ) {
-				do_action( 'wpgraphql_cache_purge_nodes', 'user', $this->collection->nodes_key( $id ), $nodes );
-			}
+		// Delete the cached results associated with this key
+		if ( is_array( $nodes ) ) {
+			do_action( 'wpgraphql_cache_purge_nodes', 'user', $this->collection->nodes_key( $id ), $nodes );
+		}
+	}
+
+	/**
+	 * Listens for changes to the user object and evicts caches related to that user.
+	 *
+	 * @param int    $meta_id     ID of updated metadata entry.
+	 * @param int    $object_id   ID of the object metadata is for.
+	 * @param string $meta_key    Metadata key.
+	 * @param mixed  $_meta_value Metadata value. Serialized if non-scalar.
+	 */
+	public function on_user_meta_change_cb( $meta_id, $object_id, $meta_key, $_meta_value ) {
+		$user = get_user_by( 'id', $object_id );
+
+		if ( ! $user ) {
+			return;
 		}
 
-		return $meta;
+		if ( ! $this->should_track_meta( $meta_key, $_meta_value, $user ) ) {
+			return;
+		}
+
+		$id    = Relay::toGlobalId( 'user', (string) $user->ID );
+		$nodes = $this->collection->retrieve_nodes( User::class . ':' . $id );
+
+		// Delete the cached results associated with this key
+		if ( is_array( $nodes ) ) {
+			do_action( 'wpgraphql_cache_purge_nodes', 'user', $this->collection->nodes_key( $id ), $nodes );
+		}
 	}
 
 	/**
@@ -307,7 +348,7 @@ class Invalidation {
 	 */
 	public function on_user_deleted_cb( $deleted_id, $reassign_id ) {
 		$id    = Relay::toGlobalId( 'user', (string) $deleted_id );
-		$nodes = $this->collection->retrieve_nodes( User::class . ':'. $id );
+		$nodes = $this->collection->retrieve_nodes( User::class . ':' . $id );
 
 		// Delete the cached results associated with this key
 		if ( is_array( $nodes ) ) {
@@ -315,12 +356,12 @@ class Invalidation {
 		}
 
 		if ( $reassign_id ) {
-			$reassign_relay_id    = Relay::toGlobalId( 'user', (string) $reassign_id );
-			$nodes = $this->collection->retrieve_nodes( User::class . ':'. $reassign_relay_id );
+			$reassign_relay_id = Relay::toGlobalId( 'user', (string) $reassign_id );
+			$nodes             = $this->collection->retrieve_nodes( User::class . ':' . $reassign_relay_id );
 
 			// Delete the cached results associated with this key
 			if ( is_array( $nodes ) ) {
-				do_action( 'wpgraphql_cache_purge_nodes', 'user', $this->collection->nodes_key( $id ), $nodes );
+				do_action( 'wpgraphql_cache_purge_nodes', 'user', $this->collection->nodes_key( $reassign_id ), $nodes );
 			}
 		}
 	}
@@ -359,13 +400,12 @@ class Invalidation {
 		$post_type_object = get_post_type_object( $post->post_type );
 		$type_name        = strtolower( $post_type_object->graphql_single_name );
 		$relay_id         = Relay::toGlobalId( 'post', $post->ID );
-		$nodes            = $this->collection->retrieve_nodes( Post::class . ':'. $relay_id );
+		$nodes            = $this->collection->retrieve_nodes( Post::class . ':' . $relay_id );
 
 		// Delete the cached results associated with this post/key
 		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
 			do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->collection->nodes_key( $relay_id ), $nodes );
 		}
-
 	}
 
 }

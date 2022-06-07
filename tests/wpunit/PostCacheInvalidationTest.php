@@ -805,7 +805,7 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		$this->assertEmpty( $this->getEvictedCaches() );
 
 		self::factory()->post->update_object( $this->published_post->ID, [
-			'post_author' => $this->editor
+			'post_author' => $this->editor->ID
 		]);
 
 		$evicted_caches = $this->getEvictedCaches();

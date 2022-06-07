@@ -144,41 +144,88 @@ class UserCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 
         // caches that were emptied because the user was deleted and posts reassigned
         $evicted = $this->getEvictedCaches();
-        $this->assertContains( 'listPost', $evicted );
-        $this->assertContains( 'listContentNode', $evicted );
-        $this->assertContains( 'editorUserWithPostsConnection', $evicted );
+
+		$this->assertEqualSets([
+			'editorUserWithPostsConnection'
+		], $evicted );
+
     }
 
     // update user meta (with allowed meta key)
     public function testUpdateAllowedUserMetaAndPurgeCache() {
-        $updated = update_user_meta( $this->editor->ID, 'foo_data', 'bar-biz-bang' );
-        $evicted = $this->getEvictedCaches();
+
+		// assert that there are no evicted caches to start
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+		// updating "allowed" user meta should purge the cache for queries containing that user
+		update_user_meta( $this->editor->ID, 'foo_data', 'bar-biz-bang' );
+
+		// get the evicted caches after the update user meta action
+		$evicted = $this->getEvictedCaches();
         codecept_debug( $this->getEvictedCaches() );
-        $this->assertContains( 'editorUserWithPostsConnection', $evicted );
+
+		$this->assertEqualSets([
+			// this should be purged because it was a query for the editor, which had meta changed
+			'editorUserWithPostsConnection'
+        ], $evicted );
     }
 
     // update user meta (with non-allowed meta key)
     public function testUpdateNonAllowedUserMetaAndPurgeCache() {
-        $updated = update_user_meta( $this->editor->ID, 'user_email', 'foo@example.com' );
-        $evicted = $this->getEvictedCaches();
-        codecept_debug( $this->getEvictedCaches() );
-        $this->assertContains( 'editorUserWithPostsConnection', $evicted );
+
+	    // assert that there are no evicted caches to start
+	    $this->assertEmpty( $this->getEvictedCaches() );
+
+		// private meta is meta that starts with an underscore
+	    // updating it shouldn't evict the cache
+        update_user_meta( $this->editor->ID, '_private_meta', 'foo@example.com' );
+
+		// assert that there are no evicted caches after private user meta is updated
+	    $this->assertEmpty( $this->getEvictedCaches() );
     }
 
     // delete user meta (with allowed meta key)
     public function testDeleteAllowedUserMetaAndPurgeCache() {
-        $updated = delete_user_meta( $this->editor->ID, 'foo_data' );
-        $evicted = $this->getEvictedCaches();
-        codecept_debug( $this->getEvictedCaches() );
-        $this->assertContains( 'editorUserWithPostsConnection', $evicted );
+
+		// add some meta to the user to start
+		update_user_meta( $this->editor->ID, 'foo_data', uniqid( null, true ) );
+
+		// re-populate the caches since we just ran an action that would evict caches
+		$this->_populateCaches();
+
+		// there should be no evicted caches to start
+        $this->assertEmpty( $this->getEvictedCaches() );
+
+		// delete the user meta
+		delete_user_meta( $this->editor->ID, 'foo_data' );
+
+		$evicted = $this->getEvictedCaches();
+
+        $this->assertEqualSets( [
+	        // this should have be evicted because the editor user's meta changed
+			'editorUserWithPostsConnection',
+        ], $evicted );
     }
 
     // delete user meta (with non-allowed meta key)
     public function testDeleteNonAllowedUserMetaAndPurgeCache() {
-        $updated = delete_user_meta( $this->editor->ID, 'user_email' );
-        $evicted = $this->getEvictedCaches();
-        codecept_debug( $this->getEvictedCaches() );
-        $this->assertContains( 'editorUserWithPostsConnection', $evicted );
+
+		// add some meta to the user to start
+	    update_user_meta( $this->editor->ID, '_private_meta', uniqid( null, true ) );
+
+	    // re-populate the caches since we just ran an action that would evict caches
+	    $this->_populateCaches();
+
+	    // there should be no evicted caches to start
+	    $this->assertEmpty( $this->getEvictedCaches() );
+
+	    // private meta is meta that starts with an underscore
+	    // deleiting it shouldn't evict the cache
+	    delete_user_meta( $this->editor->ID, '_private_meta' );
+
+	    $evicted = $this->getEvictedCaches();
+
+	    $this->assertEmpty( $evicted );
     }
 
 }
