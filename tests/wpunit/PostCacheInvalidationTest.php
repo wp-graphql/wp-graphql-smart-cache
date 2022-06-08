@@ -486,12 +486,6 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		$this->assertNotEmpty( $evicted_caches );
 		$this->assertNotEmpty( $non_evicted_caches );
 
-		//codecept_debug( [
-//			'evicted' => $evicted_caches,
-//			'non' => $non_evicted_caches
-//		]);
-
-
 		$this->assertEqualSets([
 			'listContentNode',
 			'listPost',
@@ -525,12 +519,16 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 
 		$evicted_caches = $this->getEvictedCaches();
 
-		$non_evicted_caches = $this->getNonEvictedCaches();
-
 		$this->assertNotEmpty( $evicted_caches );
 
 		$this->assertEqualSets([
+
+			// publishing a draft page should evict the list of pages
+			// as we want the newly published page in the list
 			'listPage',
+
+			// publishing a draft page should evict the list of content nodes
+			// as the newly published page should be in the list
 			'listContentNode'
 		], $evicted_caches );
 
@@ -819,7 +817,13 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 			'singleContentNode',
 			'listContentNode',
 			'singleNodeByUri',
-			'singleNodeById'
+			'singleNodeById',
+
+			// changing authors will evict caches for the new/old user
+			'listUser',
+
+			// changing authors will evict caches for the new/old user
+			'adminUserByDatabaseId'
 		], $evicted_caches );
 
 	}
@@ -1247,15 +1251,122 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 	}
 
 	// published post of publicly queryable/show in graphql cpt is trashed
+	public function testPublishedPostOfTestPostTypeIsTrashed() {
+
+		// no caches should be evicted to start
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+		// update a published post to draft status
+		self::factory()->post->update_object( $this->published_test_post_type->ID, [
+			'post_status' => 'trash'
+		] );
+
+		// assert that caches have been evicted
+		$evicted_caches = $this->getEvictedCaches();
+		$this->assertNotEmpty( $evicted_caches );
+
+		$this->assertEqualSets([
+			'singleTestPostType',
+			'listTestPostType',
+			'listContentNode',
+		], $evicted_caches );
+	}
 
 
 	// published post of publicly queryable/show in graphql cpt is force deleted
-	// delete draft post of publicly queryable/show in graphql post type (doesn't evoke purge action)
-	// trashed post of publicly queryable/show in graphql post type
+	public function testPublishedPostOfTestPostTypeIsForceDeleted() {
 
+		// no caches should be evicted to start
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+		wp_delete_post( $this->published_test_post_type->ID, true );
+
+		// assert that caches have been evicted
+		$evicted_caches = $this->getEvictedCaches();
+
+		$this->assertEqualSets([
+			'singleTestPostType',
+			'listTestPostType',
+			'listContentNode',
+		], $evicted_caches );
+	}
+
+	// delete draft post of publicly queryable/show in graphql post type (doesn't evoke purge action)
+	public function testDraftPostOfTestPostTypeIsForceDeleted() {
+
+		// no caches should be evicted to start
+		$non_evicted_caches_before_delete = $this->getNonEvictedCaches();
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+		// delete the draft post
+		// this shouldn't evict any caches as the draft post shouldn't
+		// be in the cache in the first place
+		wp_delete_post( $this->draft_test_post_type->ID, true );
+
+		// assert that caches have been evicted
+		// as a draft post shouldn't evict any caches
+		$this->assertEmpty( $this->getEvictedCaches() );
+		$this->assertSame( $non_evicted_caches_before_delete, $this->getNonEvictedCaches() );
+	}
+
+	// trashed post of publicly queryable/show in graphql post type
+	public function testTrashedPostOfTestPostTypeIsRestored() {
+
+		// ensure we have no evicted caches to start
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+		// trash a post
+		wp_trash_post( $this->draft_test_post_type->ID );
+
+		// trashing the draft post shouldn't evict any caches
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+		// publish the trashed post
+		wp_publish_post( $this->draft_test_post_type->ID );
+
+		$evicted_caches = $this->getEvictedCaches();
+		$non_evicted_caches = $this->getNonEvictedCaches();
+
+		$this->assertNotEmpty( $evicted_caches );
+		$this->assertNotEmpty( $non_evicted_caches );
+
+		$this->assertEqualSets([
+			'listContentNode',
+			'listTestPostType',
+		], $evicted_caches );
+
+	}
 
 	// post of non-gql post type cpt is created as auto draft
+	public function testPrivatePostTypePostIsCreatedAsAutoDraft() {
+
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+		self::factory()->post->create([
+			'post_type' => 'private_post_type',
+			'post_status' => 'draft'
+		]);
+
+		// creating a draft post should not evict any caches
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+	}
+
 	// post of private cpt is published from draft
+	public function testDraftPrivatePostTypeIsPublished() {
+
+		// evicted caches
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+		// publish a draft of a private post type
+		wp_publish_post( $this->draft_private_post_type );
+
+		// there should be no evicted caches because the post type is
+		// private and not publicly queryable, so therefore
+		// a publish event shouldn't invalidate the cache
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+	}
 	// scheduled post of private cpt is published
 	// published post of private cpt is changed to draft
 	// published post of private cpt is changed to private
