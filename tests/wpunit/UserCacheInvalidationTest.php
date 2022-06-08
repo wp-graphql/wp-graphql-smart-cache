@@ -67,13 +67,20 @@ class UserCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
     // delete user without re-assign (what should happen here?)
     // - call purge for each post the author was the author of?
     public function testDeleteUserAndPosts() {
+
+        // delete user
         wp_delete_user( $this->editor->ID );
 
         // caches that were emptied because the user and it's created posts were delete
         $evicted = $this->getEvictedCaches();
-        $this->assertContains( 'listPost', $evicted );
-        $this->assertContains( 'listContentNode', $evicted );
-        $this->assertContains( 'editorUserWithPostsConnection', $evicted );
+
+		$this->assertEqualSets([
+			'listPost',
+			'listContentNode',
+			'editorUserWithPostsConnection',
+			'listUser',
+			'singlePostByEditor'
+		], $evicted);
     }
 
     // delete user and re-assign posts
@@ -101,7 +108,13 @@ class UserCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		// The only query that should have been evicted is
 	    // the editorUserWithPostsConnection
         $this->assertEqualSets( [
-			'editorUserWithPostsConnection'
+
+			// since the editor user has posts assigned to it, we can expect this query to be purged
+			'editorUserWithPostsConnection',
+
+			// since the deleted user was part of the listUser results, we can
+	        // expect this query to be evicted
+	        'listUser'
         ], $evicted );
     }
 
@@ -130,7 +143,13 @@ class UserCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 
 			// this is invalidated because the post that was re-assigned
 			// triggered the transition_post_status hook
-			'singleNodeByUri'
+			'singleNodeByUri',
+
+			// users in the listUser results have changed, this should be evicted
+			'listUser',
+
+			// the admin user had posts assigned, and should be evicted
+			'adminUserByDatabaseId'
 		], $evicted );
 	}
 
@@ -146,7 +165,12 @@ class UserCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
         $evicted = $this->getEvictedCaches();
 
 		$this->assertEqualSets([
-			'editorUserWithPostsConnection'
+			// the editor user was updated, this should be evicted
+			'editorUserWithPostsConnection',
+
+			// the editor user was part of the listUser query so this query
+			// should be evicted
+			'listUser'
 		], $evicted );
 
     }
@@ -166,7 +190,11 @@ class UserCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 
 		$this->assertEqualSets([
 			// this should be purged because it was a query for the editor, which had meta changed
-			'editorUserWithPostsConnection'
+			'editorUserWithPostsConnection',
+
+			// the editor user was part of the listUser query so this query
+			// should be evicted
+			'listUser'
         ], $evicted );
     }
 
@@ -204,6 +232,10 @@ class UserCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
         $this->assertEqualSets( [
 	        // this should have be evicted because the editor user's meta changed
 			'editorUserWithPostsConnection',
+
+	        // the editor user was part of the listUser query so this query
+	        // should be evicted
+	        'listUser'
         ], $evicted );
     }
 
