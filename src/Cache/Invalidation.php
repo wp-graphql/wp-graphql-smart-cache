@@ -235,8 +235,9 @@ class Invalidation {
 			return;
 		}
 
-		// If the post type is not intentionally tracked, ignore it
-		if ( ! in_array( $post->post_type, \WPGraphQL::get_allowed_post_types(), true ) ) {
+		// If the post type is not a public post type
+		// that is set to show in GraphQL, ignore it
+		if ( ! in_array( $post->post_type, \WPGraphQL::get_allowed_post_types( 'names', [ 'public' => true ] ), true ) ) {
 			return;
 		}
 
