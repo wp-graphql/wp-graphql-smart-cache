@@ -394,6 +394,18 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 					'node:' . $this->toRelayId( 'post', $this->published_post->ID )
 				]
 			],
+			'singlePostByEditor' => [
+				'name' => 'singlePostByEditor',
+				'query' => $this->getSinglePostByDatabaseIdQuery(),
+				'variables' => [ 'id' => $this->published_post_by_editor->ID ],
+				'assertions' => [
+					$this->expectedField( 'post.__typename', 'Post' ),
+					$this->expectedField( 'post.databaseId', $this->published_post_by_editor->ID )
+				],
+				'expectedCacheKeys' => [
+					'node:' . $this->toRelayId( 'post', $this->published_post_by_editor->ID )
+				]
+			],
 			'listPage' => [
 				'name' => 'listPage',
 				'query' => $this->getListPageQuery(),
@@ -636,6 +648,50 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 					'list:post',
 					'node:' . $this->toRelayId( 'user', $this->editor->ID )
 				]
+			],
+			'adminUserByDatabaseId' => [
+				'name' => 'adminUserByDatabaseId',
+				'query' => $this->getSingleUserByDatabaseIdQuery(),
+				'variables' => [ 'id' => $this->admin->ID ],
+				'assertions' => [
+					$this->expectedField( 'user.__typename', 'User' ),
+					$this->expectedField( 'user.databaseId', $this->admin->ID ),
+				],
+				'expectedCacheKeys' => [
+					'node:' . $this->toRelayId( 'user', $this->admin->ID )
+				],
+
+			],
+			'listUser' => [
+				'name' => 'listUser',
+				'query' => $this->getListUserQuery(),
+				'variables' => null,
+				'assertions' => [
+					$this->expectedObject( 'users.nodes', [
+						'__typename' => 'User',
+						'databaseId' => $this->admin->ID,
+					]),
+					$this->expectedObject( 'users.nodes', [
+						'__typename' => 'User',
+						'databaseId' => $this->editor->ID,
+					])
+				],
+			],
+			'generalSettings' => [
+				'name' => 'generalSettings',
+				'query' => $this->getGeneralSettingsQuery(),
+			],
+			'writingSettings' => [
+				'name' => 'writingSettings',
+				'query' => $this->getWritingSettingsQuery(),
+			],
+			'discussionSettings' => [
+				'name' => 'discussionSettings',
+				'query' => $this->getDiscussionSettingsQuery(),
+ 			],
+			'allSettings' => [
+				'name' => 'allSettings',
+				'query' => $this->getAllSettingsQuery()
 			]
 //			@todo: I believe the WPGraphQL Model Layer might have some bugs to fix re: private taxonomies? 🤔
 //			'singlePrivateTaxonomyTerm' => [
@@ -672,14 +728,18 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 
 		foreach ( $queries as $query_name => $testable_query ) {
 
-			$name = $testable_query['name'];
-			$query = $testable_query['query'];
+			$name = isset( $testable_query['name'] ) ? $testable_query['name'] : $query_name;
+			$query = isset( $testable_query['query'] ) ? $testable_query['query'] : null;
 			$variables = isset( $testable_query['variables'] ) ? $testable_query['variables'] : null;
-			$assertions = $testable_query['assertions'];
+			$assertions = isset( $testable_query['assertions'] ) ? $testable_query['assertions'] : [];
 			$expectedCacheKeys = isset( $testable_query['expectedCacheKeys'] ) ? $testable_query['expectedCacheKeys'] : [];
 
+			if ( ! $query ) {
+				continue;
+			}
+
 			// build the cache key
-			$cache_key = $this->collection->build_key( null, $query, isset( $variables ) ? $variables : null );
+			$cache_key = $this->collection->build_key( null, $query, $variables );
 
 			// ensure there's no value already cached under the cache key
 			// $this->assertEmpty( $this->collection->get( $cache_key ) );
@@ -692,6 +752,7 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 
 			// we only want to do this if there are errors to surface
 			if ( array_key_exists( 'errors', $actual ) ) {
+				codecept_debug( [ 'actual' => $actual ]);
 				$this->assertArrayNotHasKey( 'errors', $actual );
 			}
 
@@ -703,13 +764,13 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 			// $this->assertSame( $actual, $this->collection->get( $cache_key ) );
 
 			// check any expected cache keys to ensure they're not empty
-			if ( ! empty( $expectedCacheKeys ) ) {
-				foreach ( $expectedCacheKeys as $expected_cache_key ) {
-
-					// $this->assertNotEmpty( $this->collection->get( $expected_cache_key ) );
-					// $this->assertContains( $cache_key, $this->collection->get( $expected_cache_key ) );
-				}
-			}
+//			if ( ! empty( $expectedCacheKeys ) ) {
+//				foreach ( $expectedCacheKeys as $expected_cache_key ) {
+//
+//					 $this->assertNotEmpty( $this->collection->get( $expected_cache_key ) );
+//					 $this->assertContains( $cache_key, $this->collection->get( $expected_cache_key ) );
+//				}
+//			}
 
 			$this->query_results[ $name ] = [
 				'name' => $name,
@@ -1120,12 +1181,9 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 		';
 	}
 
-	/**
-	 * @return string
-	 */
-	public function getUsersQuery() {
+	public function getListUserQuery() {
 		return '
-		query GetUsers {
+		{
 		  users {
 		    nodes {
 		      __typename
@@ -1216,7 +1274,6 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 		  generalSettings {
 		    dateFormat
 		    description
-		    email
 		    language
 		    startOfWeek
 		    timeFormat
@@ -1262,8 +1319,10 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 	public function getDiscussionSettingsQuery() {
 		return '
 		query GetDiscussionSettings {
-		  defaultCommentStatus
-		  defaultPingStatus
+			discussionSettings {
+		        defaultCommentStatus
+		        defaultPingStatus
+		    }
 		}
 		';
 	}
@@ -1279,7 +1338,6 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 		    discussionSettingsDefaultPingStatus
 		    generalSettingsDateFormat
 		    generalSettingsDescription
-		    generalSettingsEmail
 		    generalSettingsLanguage
 		    generalSettingsStartOfWeek
 		    generalSettingsTimeFormat
