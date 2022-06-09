@@ -44,7 +44,11 @@ class Results extends Query {
 	 * @return mixed|array|object|null  The response or null if not found in cache
 	 */
 	public function get_query_results_from_cache_cb( $result, $request ) {
-		if ( ! Settings::caching_enabled() ) {
+
+		// if caching is not enabled or the request is authenticated, bail early
+		// right now we're not supporting GraphQL cache for authenticated requests.
+		// Possibly in the future.
+		if ( ! Settings::caching_enabled() || is_user_logged_in() ) {
 			return $result;
 		}
 		$key = $this->the_results_key( $request->params->queryId, $request->params->query, $request->params->variables, $request->params->operation );
@@ -75,7 +79,10 @@ class Results extends Query {
 		$variables,
 		$request
 	) {
-		if ( ! Settings::caching_enabled() ) {
+		// if caching is not enabled or the request is authenticated, bail early
+		// right now we're not supporting GraphQL cache for authenticated requests.
+		// Possibly in the future.
+		if ( ! Settings::caching_enabled() || is_user_logged_in() ) {
 			return;
 		}
 

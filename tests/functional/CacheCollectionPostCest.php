@@ -39,7 +39,8 @@ class CacheCollectionPostCest {
 
 		// Get the stored information for the post node after we ran the graphql GET query.
 		// Verify the stored url matches our GET request
-		$transient_name = "_transient_gql_cache_node:$post_id";
+		// NOTE: the node is stored with the model class as a prefix
+		$transient_name = "_transient_gql_cache_node:WPGraphQL\Model\Post:$post_id";
 		$query_key = unserialize( $I->grabFromDatabase( 'wp_options', 'option_value', [ 'option_name' => $transient_name ] ) );
 		$query_key = $query_key[0];
 		codecept_debug( $query_key );
@@ -108,7 +109,7 @@ class CacheCollectionPostCest {
 
 		// Get the stored information for the node after we ran the graphql GET query.
 		// Verify the stored url matches our GET request
-		$transient_name = "_transient_gql_cache_node:$author_id";
+		$transient_name = "_transient_gql_cache_node:WPGraphQL\Model\User:$author_id";
 		$query_key = unserialize( $I->grabFromDatabase( 'wp_options', 'option_value', [ 'option_name' => $transient_name ] ) );
 		$query_key = $query_key[0];
 		codecept_debug( $query_key );

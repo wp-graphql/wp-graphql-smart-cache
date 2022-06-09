@@ -20,7 +20,7 @@ class Settings {
 		$option = function_exists( 'get_graphql_setting' ) ? \get_graphql_setting( 'cache_toggle', false, 'graphql_cache_section' ) : false;
 
 		// if there's no user logged in, and GraphQL Caching is enabled
-		return ( 'on' === $option ) && ! is_user_logged_in();
+		return ( 'on' === $option );
 	}
 
 	// Date/Time of the last time purge all happened through admin.
