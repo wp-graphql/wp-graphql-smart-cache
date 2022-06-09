@@ -232,6 +232,3 @@ add_action(
 		add_filter( 'graphql_wp_object_type_config', 'WPGraphQL\Labs\graphql_add_model_to_type_config', 10, 2 );
 	}
 );
-
-
-

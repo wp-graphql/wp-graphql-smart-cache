@@ -176,6 +176,14 @@ class Invalidation {
 		}
 
 		$post_type_object = get_post_type_object( $post->post_type );
+
+		// If the post type is not public and not publicly queryable
+		// don't track it
+		if ( false === $post_type_object->public && false === $post_type_object->publicly_queryable ) {
+			return;
+		}
+
+		$post_type_object = get_post_type_object( $post->post_type );
 		$relay_id         = Relay::toGlobalId( 'post', $post->ID );
 		$type_name        = strtolower( $post_type_object->graphql_single_name );
 		$nodes            = $this->collection->retrieve_nodes( Post::class . ':' . $relay_id );
@@ -237,7 +245,15 @@ class Invalidation {
 
 		// If the post type is not a public post type
 		// that is set to show in GraphQL, ignore it
-		if ( ! in_array( $post->post_type, \WPGraphQL::get_allowed_post_types( 'names', [ 'public' => true ] ), true ) ) {
+		if ( ! in_array( $post->post_type, \WPGraphQL::get_allowed_post_types(), true ) ) {
+			return;
+		}
+
+		$post_type_object = get_post_type_object( $post->post_type );
+
+		// If the post type is not public and not publicly queryable
+		// don't track it
+		if ( false === $post_type_object->public && false === $post_type_object->publicly_queryable ) {
 			return;
 		}
 
@@ -384,6 +400,14 @@ class Invalidation {
 
 		// if the post type is not tracked, ignore it
 		if ( ! in_array( $post->post_type, \WPGraphQL::get_allowed_post_types(), true ) ) {
+			return;
+		}
+
+		$post_type_object = get_post_type_object( $post->post_type );
+
+		// If the post type is not public and not publicly queryable
+		// don't track it
+		if ( false === $post_type_object->public && false === $post_type_object->publicly_queryable ) {
 			return;
 		}
 

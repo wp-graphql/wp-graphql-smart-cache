@@ -15,8 +15,12 @@ class Settings {
 
 	// Settings checkbox set to on to enable caching
 	public static function caching_enabled() {
+
+		// get the cache_toggle setting
 		$option = function_exists( 'get_graphql_setting' ) ? \get_graphql_setting( 'cache_toggle', false, 'graphql_cache_section' ) : false;
-		return ( 'on' === $option );
+
+		// if there's no user logged in, and GraphQL Caching is enabled
+		return ( 'on' === $option ) && ! is_user_logged_in();
 	}
 
 	// Date/Time of the last time purge all happened through admin.

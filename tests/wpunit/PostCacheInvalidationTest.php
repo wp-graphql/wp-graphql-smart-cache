@@ -14,37 +14,7 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		$this->assertTrue( true );
 	}
 
-	/**
-	 * Test behavior when an auto-draft post is created
-	 *
-	 * - given:
-	 *   - a query for a single pre-existing post is in the cache
-	 *   - a query for a list of posts is in the cache
-	 *   - a query for contentNodes is in the cache
-	 *   - a query for a page is in the cache
-	 *   - a query for a list of pages is in the cache
-	 *   - a query for a tag is in the cache
-	 *   - a query for a list of tags is in the cache
-	 *   - a query for a list of users is in the cache
-	 *   - a query for the author of the post is in the cache
-	 *
-	 * - when:
-	 *   - a scheduled post is published
-	 *
-	 * - assert:
-	 *   - query for list of posts remains cached
-	 *   - query for contentNodes remains cached
-	 *   - query for single pre-exising post remains cached
-	 *   - query for a page remains cached
-	 *   - query for list of pages remains cached
-	 *   - query for tag remains cached
-	 *   - query for list of tags remains cached
-	 *   - query for list of users remains cached
-	 *   - query for the author of the post remains cached
-	 *
-	 *
-	 * @throws Exception
-	 */
+
 	public function testCreateDraftPostDoesNotInvalidatePostCache() {
 
 		// all queries should be in the cache, non should be empty
@@ -60,36 +30,6 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 
 	}
 
-	/**
-	 * Test behavior when a scheduled post is published
-	 *
-	 * - given:
-	 *   - a query for a single pre-existing post is in the cache
-	 *   - a query for a list of posts is in the cache
-	 *   - a query for contentNodes is in the cache
-	 *   - a query for a page is in the cache
-	 *   - a query for a list of pages is in the cache
-	 *   - a query for a tag is in the cache
-	 *   - a query for a list of tags is in the cache
-	 *   - a query for a list of users is in the cache
-	 *   - a query for the author of the post is in the cache
-	 *
-	 * - when:
-	 *   - a scheduled post is published
-	 *
-	 * - assert:
-	 *   - query for list of posts is invalidated
-	 *   - query for contentNodes is invalidated
-	 *   - query for single pre-exising post remains cached
-	 *   - query for a page remains cached
-	 *   - query for list of pages remains cached
-	 *   - query for tag remains cached
-	 *   - query for list of tags remains cached
-	 *   - query for list of users remains cached
-	 *   - query for the author of the post remains cached
-	 *
-	 * @throws Exception
-	 */
 	public function testPublishingScheduledPostWithoutAssociatedTerm() {
 
 		// ensure all queries have a cache
@@ -459,7 +399,7 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		// be in the cache in the first place
 		wp_delete_post( $this->draft_post->ID, true );
 
-		// assert that caches have been evicted
+		// assert that no caches have been evicted
 		// as a draft post shouldn't evict any caches
 		$this->assertEmpty( $this->getEvictedCaches() );
 		$this->assertSame( $non_evicted_caches_before_delete, $this->getNonEvictedCaches() );
@@ -1367,10 +1307,226 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		$this->assertEmpty( $this->getEvictedCaches() );
 
 	}
+
 	// scheduled post of private cpt is published
+	// @todo
+
 	// published post of private cpt is changed to draft
+	public function testPublishedPrivatePostTypePostIsChangedToDraft() {
+
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+		// set the published private post to draft
+		self::factory()->post->update_object( $this->published_private_post_type->ID, [
+			'post_status' => 'draft'
+		]);
+
+		$evicted_caches = $this->getEvictedCaches();
+
+		// since a private post was updated, cache shouldn't have changed
+		// because it's not publicly queryable
+		$this->assertEmpty( $evicted_caches );
+
+	}
+
 	// published post of private cpt is changed to private
+	public function testPublishPostOfPrivatePostTypeChangedToPrivate() {
+		// no caches should be evicted to start
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+		// update a published post to draft status
+		self::factory()->post->update_object( $this->published_private_post_type->ID, [
+			'post_status' => 'private'
+		] );
+
+		// assert that caches remain unchanged.
+		// changing status of a private post type shouldn't evict caches
+		// as it's not publicly queryable
+		$this->assertEmpty( $this->getEvictedCaches() );
+	}
+
 	// published post of private cpt is trashed
+	public function testPublishPostOfPrivatePostTypeIsTrashed() {
+		// no caches should be evicted to start
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+		// update a published post of private post type to draft status
+		self::factory()->post->update_object( $this->published_private_post_type->ID, [
+			'post_status' => 'trash'
+		] );
+
+		// trashing a post of a private post type shouldn't evict any caches
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+	}
+
 	// published post of private cpt is force deleted
+	public function testPublishPostOfPrivatePostTypeIsForceDeleted() {
+		// no caches should be evicted to start
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+		wp_delete_post( $this->published_private_post_type->ID, true );
+
+		// force deleting a post of a private post type shouldn't evict any caches
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+	}
+
 	// delete draft post of private post type (doesnt evoke purge action)
+	public function testDraftPostOfPrivatePostTypeIsForceDeleted() {
+
+		// no caches should be evicted to start
+		$non_evicted_caches_before_delete = $this->getNonEvictedCaches();
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+		// delete the draft post
+		// this shouldn't evict any caches as the draft post shouldn't
+		// be in the cache in the first place
+		wp_delete_post( $this->draft_private_post_type->ID, true );
+
+		// assert that no caches have been evicted
+		// as a draft post shouldn't evict any caches
+		$this->assertEmpty( $this->getEvictedCaches() );
+		$this->assertSame( $non_evicted_caches_before_delete, $this->getNonEvictedCaches() );
+	}
+
+	// post of public=>false/publicly_queryable=>true post type cpt is created as auto draft
+	public function testPubliclyQueryablePostTypePostIsCreatedAsAutoDraft() {
+
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+		self::factory()->post->create([
+			'post_type' => 'publicly_queryable',
+			'post_status' => 'draft'
+		]);
+
+		// creating a draft should not evict any caches
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+	}
+
+	// post of public=>false/publicly_queryable=>true cpt is published from draft
+	public function testDraftPubliclyQueryablePostTypeIsPublished() {
+
+		// evicted caches
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+		// publish a draft of a public=>false/publicly_queryable=>true post type
+		wp_publish_post( $this->draft_publicly_queryable_post_type );
+
+
+		$this->assertEqualSets( [
+			// should be evicted to show the new post
+			'listPubliclyQueryablePostType',
+
+			// listContentNodes should be evicted because the publicly queryable
+			'listContentNode'
+		], $this->getEvictedCaches() );
+
+	}
+
+	// scheduled post of public=>false/publicly_queryable=>true cpt is published
+	// @todo
+
+	// published post of public=>false/publicly_queryable=>true cpt is changed to draft
+	public function testPublishedPubliclyQueryablePostTypePostIsChangedToDraft() {
+
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+		// set the published public=>false/publicly_queryable=>true post to draft
+		self::factory()->post->update_object( $this->published_publicly_queryable_post_type->ID, [
+			'post_status' => 'draft'
+		]);
+
+		$evicted_caches = $this->getEvictedCaches();
+
+		// since a public=>false/publicly_queryable=>true post was updated,
+		// cache should be evicted for list of content nodes
+		$this->assertEqualSets([
+			'listPubliclyQueryablePostType',
+
+			// listContentNodes should be evicted because the publicly queryable
+			'listContentNode'
+		], $evicted_caches );
+
+	}
+
+	// published post of public=>false/publicly_queryable=>true cpt is changed to private
+	public function testPublishPostOfPubliclyQueryablePostTypeChangedToPrivate() {
+		// no caches should be evicted to start
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+		// update a published post to draft status
+		self::factory()->post->update_object( $this->published_publicly_queryable_post_type->ID, [
+			'post_status' => 'private'
+		] );
+
+		$this->assertEqualSets( [
+
+			// should be evicted because the publicly queryable post would have been in the list
+			'listPubliclyQueryablePostType',
+
+			// should be evicted because the publicly queryable post would have been in the list
+			'listContentNode'
+		], $this->getEvictedCaches() );
+	}
+
+	// published post of public=>false/publicly_queryable=>true cpt is trashed
+	public function testPublishPostOfPubliclyQueryablePostTypeIsTrashed() {
+		// no caches should be evicted to start
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+		// update a published post of private post type to draft status
+		self::factory()->post->update_object( $this->published_publicly_queryable_post_type->ID, [
+			'post_status' => 'trash'
+		] );
+
+		// trashing a post of a private post type shouldn't evict any caches
+		$this->assertEqualSets( [
+
+			// should be evicted because the publicly queryable post would have been in the list
+			'listPubliclyQueryablePostType',
+
+			// should be evicted because the publicly queryable post would have been in the list
+			'listContentNode'
+		], $this->getEvictedCaches() );
+
+	}
+
+	// published post of public=>false/publicly_queryable=>true cpt is force deleted
+	public function testPublishPostOfPubliclyQueryablePostTypeIsForceDeleted() {
+		// no caches should be evicted to start
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+		wp_delete_post( $this->published_publicly_queryable_post_type->ID, true );
+
+		$this->assertEqualSets( [
+
+			// should be evicted because the publicly queryable post would have been in the list
+			'listPubliclyQueryablePostType',
+
+			// should be evicted because the publicly queryable post would have been in the list
+			'listContentNode'
+		], $this->getEvictedCaches() );
+
+	}
+
+	// delete draft post of public=>false/publicly_queryable=>true post type (doesnt evoke purge action)
+	public function testDraftPostOfPubliclyQueryablePostTypeIsForceDeleted() {
+
+		// no caches should be evicted to start
+		$non_evicted_caches_before_delete = $this->getNonEvictedCaches();
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+		// delete the draft post
+		// this shouldn't evict any caches as the draft post shouldn't
+		// be in the cache in the first place
+		wp_delete_post( $this->draft_publicly_queryable_post_type->ID, true );
+
+		// assert that no caches have been evicted
+		// as a draft post shouldn't evict any caches
+		$this->assertEmpty( $this->getEvictedCaches() );
+		$this->assertSame( $non_evicted_caches_before_delete, $this->getNonEvictedCaches() );
+	}
+
 }

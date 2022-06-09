@@ -74,6 +74,16 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 	/**
 	 * @var WP_Post
 	 */
+	public $published_publicly_queryable_post_type;
+
+	/**
+	 * @var WP_Post
+	 */
+	public $draft_publicly_queryable_post_type;
+
+	/**
+	 * @var WP_Post
+	 */
 	public $scheduled_post;
 
 	/**
@@ -167,6 +177,14 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 			'graphql_single_name' => 'PrivatePostType',
 			'graphql_plural_name' => 'PrivatePostTypes'
 		] );
+
+		register_post_type( 'publicly_queryable', [
+			'public' => false,
+			'publicly_queryable' => true,
+			'show_in_graphql' => true,
+			'graphql_single_name' => 'PubliclyQueryablePost',
+			'graphql_plural_name' => 'PubliclyQueryablePosts'
+		]);
 
 		register_taxonomy( 'private_taxonomy', [ 'private_post_type' ], [
 			'public' => false,
@@ -336,6 +354,18 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 			'post_author' => $this->admin->ID,
 		]);
 
+		$this->published_publicly_queryable_post_type = self::factory()->post->create_and_get([
+			'post_type' => 'publicly_queryable',
+			'post_status' => 'publish',
+			'post_author' => $this->admin->ID,
+		]);
+
+		$this->draft_publicly_queryable_post_type = self::factory()->post->create_and_get([
+			'post_type' => 'publicly_queryable',
+			'post_status' => 'draft',
+			'post_author' => $this->admin->ID,
+		]);
+
 //		$this->assertInstanceOf( \WP_User::class, $this->admin );
 //		$this->assertInstanceOf( \WP_Post::class, $this->published_post );
 //		$this->assertInstanceOf( \WP_Post::class, $this->draft_post );
@@ -467,6 +497,10 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 					$this->expectedField( 'privatePostTypes.nodes', [] )
 				],
 				'expectedCacheKeys' => null,
+			],
+			'listPubliclyQueryablePostType' => [
+				'name' => 'listPubliclyQueryablePostType',
+				'query' => 'query{publiclyQueryablePosts{nodes{databaseId __typename}}}'
 			],
 			'singlePrivatePostType' => [
 				'name' => 'singlePrivatePostType',
