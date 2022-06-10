@@ -147,6 +147,11 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 	public $empty_tag;
 
 	/**
+	 * @var WP_Term
+	 */
+	public $empty_test_taxonomy_term;
+
+	/**
 	 * Holds the results of the executed queries. For reference in assertions in tests.
 	 *
 	 * @var array
@@ -255,6 +260,11 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 		$this->test_taxonomy_term = self::factory()->term->create_and_get([
 			'taxonomy' => 'test_taxonomy',
 			'term' => 'Test Custom Tax Term'
+		]);
+
+		$this->empty_test_taxonomy_term = self::factory()->term->create_and_get([
+			'taxonomy' => 'test_taxonomy',
+			'term' => 'Empty Test Custom Tax Term'
 		]);
 
 		$this->private_taxonomy_term = self::factory()->term->create_and_get([
