@@ -18,7 +18,7 @@ class LookupCest {
 
 		$I->seeResponseContainsJson([
 			'errors' => [
-				'message' => sprintf( 'Query Not Found %s', $query_hash )
+				'message' => 'PersistedQueryNotFound'
 			]
 		]);
 	}
@@ -44,7 +44,7 @@ class LookupCest {
 
 		$I->seeResponseContainsJson([
 			'errors' => [
-				'message' => sprintf( 'Query Not Found %s', $query_hash )
+				'message' => 'PersistedQueryNotFound'
 			]
 		]);
 

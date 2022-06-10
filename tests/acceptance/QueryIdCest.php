@@ -7,7 +7,7 @@ class QueryIdCest
         $I->sendGet('graphql', [ 'queryId' => '1234' ] );
         $I->seeResponseContainsJson([
             'errors' => [
-                'message' => 'Query Not Found 1234'
+                'message' => 'PersistedQueryNotFound'
             ]
         ]);
     }
