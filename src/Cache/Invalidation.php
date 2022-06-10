@@ -34,7 +34,6 @@ class Invalidation {
 	 */
 	public function init() {
 
-
 		## POST ACTIONS
 
 		// listen for posts to transition statuses, so we know when to purge
@@ -58,8 +57,6 @@ class Invalidation {
 		// listen for when meta is deleted
 		add_action( 'deleted_post_meta', [ $this, 'on_postmeta_change_cb' ], 10, 4 );
 
-
-
 		## TERM ACTIONS
 
 		add_action( 'created_term', [ $this, 'on_created_term_cb' ], 10, 3 );
@@ -74,7 +71,6 @@ class Invalidation {
 		// this won't be called when the post is initially inserted with the
 		// term assigned, but when the post is published
 		add_action( 'edited_term_taxonomy', [ $this, 'on_edited_term_taxonomy_cb' ], 10, 2 );
-
 
 		## USER ACTIONS
 
@@ -219,7 +215,6 @@ class Invalidation {
 	 * @param string $taxonomy Taxonomy name.
 	 */
 	public function on_created_term_cb( $term_id, $tt_id, $taxonomy ) {
-
 		$tax_object = get_taxonomy( $taxonomy );
 
 		if ( false === $tax_object || ! in_array( $taxonomy, \WPGraphQL::get_allowed_taxonomies(), true ) ) {
@@ -232,14 +227,12 @@ class Invalidation {
 			return;
 		}
 
-		$type_name        = strtolower( $tax_object->graphql_single_name );
+		$type_name = strtolower( $tax_object->graphql_single_name );
 
 		$nodes = $this->collection->get( 'list:' . $type_name );
 		if ( is_array( $nodes ) ) {
 			do_action( 'wpgraphql_cache_purge_nodes', 'list:' . $type_name, $type_name, $nodes );
 		}
-
-
 	}
 
 	/**
@@ -261,8 +254,7 @@ class Invalidation {
 	 * @param string $taxonomy     Taxonomy name.
 	 * @param mixed  $deleted_term Deleted term object.
 	 */
-	public function on_deleted_term_cb( $term_id, $tt_id, $taxonomy, $deleted_term  ) {
-
+	public function on_deleted_term_cb( $term_id, $tt_id, $taxonomy, $deleted_term ) {
 		$tax_object = get_taxonomy( $taxonomy );
 
 		if ( false === $tax_object || ! $this->is_taxonomy_tracked( $taxonomy ) ) {
@@ -273,15 +265,14 @@ class Invalidation {
 			return;
 		}
 
-		$type_name        = strtolower( $tax_object->graphql_single_name );
+		$type_name = strtolower( $tax_object->graphql_single_name );
 
 		$relay_id = Relay::toGlobalId( 'term', $term_id );
-		$nodes = $this->collection->retrieve_nodes( Term::class . ':' . $relay_id );
+		$nodes    = $this->collection->retrieve_nodes( Term::class . ':' . $relay_id );
 		// Delete the cached results associated with this term/key
 		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
 			do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->collection->nodes_key( $relay_id ), $nodes );
 		}
-
 	}
 
 	/**
@@ -293,7 +284,6 @@ class Invalidation {
 	 * @param mixed $meta_value Metadata value. Serialized if non-scalar.
 	 */
 	public function on_updated_term_meta_cb( $meta_id, $object_id, $meta_key, $meta_value ) {
-
 		if ( empty( $term = get_term( $object_id ) ) || ! $term instanceof WP_Term ) {
 			return;
 		}
@@ -310,14 +300,13 @@ class Invalidation {
 		}
 
 		$type_name = strtolower( $tax_object->graphql_single_name );
-		$relay_id = Relay::toGlobalId( 'term', $term->term_id );
+		$relay_id  = Relay::toGlobalId( 'term', $term->term_id );
 
 		$nodes = $this->collection->retrieve_nodes( Term::class . ':' . $relay_id );
 		// Delete the cached results associated with this post/key
 		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
 			do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->collection->nodes_key( $relay_id ), $nodes );
 		}
-
 	}
 
 	/**
@@ -334,7 +323,6 @@ class Invalidation {
 	 * @return void
 	 */
 	public function on_edited_term_taxonomy_cb( $tt_id, $taxonomy ) {
-
 		if ( ! $this->is_taxonomy_tracked( $taxonomy ) ) {
 			return;
 		}
