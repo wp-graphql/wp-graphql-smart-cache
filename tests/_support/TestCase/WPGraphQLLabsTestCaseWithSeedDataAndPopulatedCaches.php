@@ -114,6 +114,11 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 	/**
 	 * @var WP_Term
 	 */
+	public $empty_category;
+
+	/**
+	 * @var WP_Term
+	 */
 	public $test_taxonomy_term;
 
 	/**
@@ -135,6 +140,11 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 	 * @var WP_Term
 	 */
 	public $tag;
+
+	/**
+	 * @var WP_Term
+	 */
+	public $empty_tag;
 
 	/**
 	 * Holds the results of the executed queries. For reference in assertions in tests.
@@ -226,10 +236,20 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 			'term' => 'Test Tag'
 		]);
 
+		$this->empty_tag = self::factory()->term->create_and_get([
+			'taxonomy' => 'post_tag',
+			'term' => 'Empty Tag'
+		]);
+
 		// create a test category
 		$this->category = self::factory()->term->create_and_get([
 			'taxonomy' => 'category',
 			'term' => 'Test Category'
+		]);
+
+		$this->empty_category = self::factory()->term->create_and_get([
+			'taxonomy' => 'category',
+			'term' => 'Empty Category'
 		]);
 
 		$this->test_taxonomy_term = self::factory()->term->create_and_get([
@@ -726,7 +746,8 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 			'allSettings' => [
 				'name' => 'allSettings',
 				'query' => $this->getAllSettingsQuery()
-			]
+			],
+
 //			@todo: I believe the WPGraphQL Model Layer might have some bugs to fix re: private taxonomies? 🤔
 //			'singlePrivateTaxonomyTerm' => [
 //				'name' => 'singlePrivateTaxonomyTerm',
