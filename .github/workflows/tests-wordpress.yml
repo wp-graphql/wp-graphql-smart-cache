@@ -58,6 +58,3 @@ jobs:
           WP_VERSION: ${{ matrix.wordpress }}
           PHP_VERSION: ${{ matrix.php }}
           SUITES: use value from .env
-
-      - name: Run php code sniffer
-        run: ./vendor/bin/phpcs
