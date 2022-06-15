@@ -115,3 +115,16 @@ If the queryId is not found in the system an error message will be returned in t
     ],
 }
 ```
+
+## Enable caching results
+
+Log into wp-admin for the WP service.
+
+Select the GraphQL Settings tab.
+
+![Settings tab](./docs/images/wp-graphql-settings.png).
+-
+Check the box to enable results caching.
+
+![The checkbox to enable the results cache](./docs/images/wp-graphql-labs-settings-cache.png).
+
