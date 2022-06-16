@@ -97,6 +97,12 @@ class Invalidation {
 		add_action( 'updated_post_meta', [ $this, 'on_menu_item_change_cb' ], 10, 4 );
 		add_action( 'added_post_meta', [ $this, 'on_menu_item_change_cb' ], 10, 4 );
 		add_action( 'deleted_post_meta', [ $this, 'on_menu_item_change_cb' ], 10, 4 );
+
+		## MEDIA ACTIONS
+
+		add_action( 'add_attachment', [ $this, 'on_add_attachment_cb' ], 10, 1 );
+		add_action( 'wp_save_image_editor_file', [ $this, 'on_save_image_file_cb' ], 10, 5 );
+		add_action( 'wp_save_image_file', [ $this, 'on_save_image_file_cb' ], 10, 5 );
 	}
 
 
@@ -248,7 +254,7 @@ class Invalidation {
 
 		$nodes = $this->collection->get( 'list:' . $type_name );
 		if ( is_array( $nodes ) ) {
-			do_action( 'wpgraphql_cache_purge_nodes', 'list:' . $type_name, $type_name, $nodes );
+			do_action( 'wpgraphql_cache_purge_nodes', 'list:' . $type_name, 'list:' . $type_name, $nodes );
 		}
 	}
 
@@ -563,7 +569,6 @@ class Invalidation {
 		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
 			do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->collection->nodes_key( $relay_id ), $nodes );
 		}
-
 	}
 
 	/**
@@ -734,14 +739,57 @@ class Invalidation {
 			return;
 		}
 
-		$relay_id         = Relay::toGlobalId( 'post', $post->ID );
-		$nodes            = $this->collection->retrieve_nodes( MenuItem::class . ':' . $relay_id );
+		$relay_id = Relay::toGlobalId( 'post', $post->ID );
+		$nodes    = $this->collection->retrieve_nodes( MenuItem::class . ':' . $relay_id );
 
 		// Delete the cached results associated with this post/key
 		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
 			do_action( 'wpgraphql_cache_purge_nodes', 'post', $this->collection->nodes_key( $relay_id ), $nodes );
 		}
+	}
 
+	function on_add_attachment_cb( $attachment_id ) {
+
+		$attachment = get_post( $attachment_id );
+
+		if ( ! $attachment || 'attachment' !== $attachment->post_type ) {
+			return;
+		}
+
+		$nodes = $this->collection->get( 'list:mediaitem' );
+		if ( is_array( $nodes ) ) {
+			do_action( 'wpgraphql_cache_purge_nodes', 'ist:mediaitem', 'list:mediaitem', $nodes );
+		}
+
+	}
+
+	/**
+	 * Evicts cache when image files are uploaded
+	 *
+	 * @param string $dummy      Unused.
+	 * @param string $filename   Filename.
+	 * @param string $image      Unused.
+	 * @param string $mime_type  Unused.
+	 * @param int    $post_id    Post ID.
+	 */
+	public function on_save_image_file_cb( $dummy, $filename, $image, $mime_type, $post_id ) {
+		$this->on_edit_attachment_cb( $post_id );
+	}
+
+	public function on_edit_attachment_cb( $attachment_id ) {
+		$attachment = get_post( $attachment_id );
+
+		if ( ! $attachment || 'attachment' !== $attachment->post_type ) {
+			return;
+		}
+
+		$relay_id = Relay::toGlobalId( 'post', $attachment_id );
+		$nodes    = $this->collection->retrieve_nodes( Post::class . ':' . $relay_id );
+
+		// Delete the cached results associated with this post/key
+		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
+			do_action( 'wpgraphql_cache_purge_nodes', 'post', $this->collection->nodes_key( $relay_id ), $nodes );
+		}
 	}
 
 }

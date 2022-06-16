@@ -268,6 +268,10 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 			'term' => 'Test Category'
 		]);
 
+		$filename = WPGRAPHQL_LABS_PLUGIN_DIR . '/tests/_data/images/test.png';
+		$image_id = self::factory()->attachment->create_upload_object( $filename );
+		$this->mediaItem = get_post( $image_id );
+
 		$this->empty_category = self::factory()->term->create_and_get([
 			'taxonomy' => 'category',
 			'term' => 'Empty Category'
@@ -841,6 +845,17 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 				'variables' => [
 					'id' => $this->child_menu_item->ID
 				]
+			],
+			'singleMediaItem' => [
+				'name' => 'singleMediaItem',
+				'query' => $this->getSingleMenuItemByDatabaseIdQuery(),
+				'variables' => [
+					'id' => $this->mediaItem->ID
+				],
+			],
+			'listMediaItem' => [
+				'name' => 'listMediaItem',
+				'query' => $this->getListMediaItemQuery(),
 			]
 
 //			@todo: I believe the WPGraphQL Model Layer might have some bugs to fix re: private taxonomies? 🤔
@@ -1496,6 +1511,30 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 		    writingSettingsDefaultCategory
 		    writingSettingsDefaultPostFormat
 		    writingSettingsUseSmilies
+		  }
+		}
+		';
+	}
+
+	public function getListMediaItemQuery() {
+		return '
+		query GetListMediaItems {
+		  mediaItems {
+		    nodes {
+		      __typename
+		      databaseId
+		    }
+		  }
+		}
+		';
+	}
+
+	public function getSingleMediaItemQueryByDatabaseId() {
+		return '
+		query GetSingleMediaItem($id:ID!) {
+		  mediaItem(id:$id idType:DATABASE_ID) {
+		    __typename
+		    databaseId
 		  }
 		}
 		';
