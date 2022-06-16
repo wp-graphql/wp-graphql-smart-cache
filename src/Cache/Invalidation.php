@@ -5,6 +5,8 @@ use GraphQLRelay\Relay;
 use WP_Post;
 use WP_Term;
 use WP_User;
+use WPGraphQL\Model\Menu;
+use WPGraphQL\Model\MenuItem;
 use WPGraphQL\Model\Post;
 use WPGraphQL\Model\Term;
 use WPGraphQL\Model\User;
@@ -80,6 +82,21 @@ class Invalidation {
 		add_action( 'deleted_user_meta', [ $this, 'on_user_meta_change_cb' ], 10, 4 );
 		add_action( 'profile_update', [ $this, 'on_user_profile_update_cb' ], 10, 2 );
 		add_action( 'deleted_user', [ $this, 'on_user_deleted_cb' ], 10, 2 );
+
+		## MENU ACTIONS
+
+		add_filter( 'pre_set_theme_mod_nav_menu_locations', [ $this, 'on_set_nav_menu_locations_cb' ], 10, 2 );
+		add_action( 'wp_update_nav_menu', [ $this, 'on_update_nav_menu_cb' ], 10, 1 );
+
+		add_action( 'added_term_meta', [ $this, 'on_updated_menu_meta_cb' ], 10, 4 );
+		add_action( 'updated_term_meta', [ $this, 'on_updated_menu_meta_cb' ], 10, 4 );
+		add_action( 'deleted_term_meta', [ $this, 'on_updated_menu_meta_cb' ], 10, 4 );
+
+		// @todo: evict caches when meta on menu items are changed. This happens outside *_post_meta hooks as nav_menu_item is a "different" type of post type
+
+		add_action( 'updated_post_meta', [ $this, 'on_menu_item_change_cb' ], 10, 4 );
+		add_action( 'added_post_meta', [ $this, 'on_menu_item_change_cb' ], 10, 4 );
+		add_action( 'deleted_post_meta', [ $this, 'on_menu_item_change_cb' ], 10, 4 );
 	}
 
 
@@ -118,7 +135,7 @@ class Invalidation {
 		}
 
 		// If the meta key starts with an underscore, don't track it
-		if ( strpos( $meta_key, '_' ) === 0 ) {
+		if ( 0 === strpos( $meta_key, '_' ) ) {
 			return false;
 		}
 
@@ -546,6 +563,185 @@ class Invalidation {
 		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
 			do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->collection->nodes_key( $relay_id ), $nodes );
 		}
+
+	}
+
+	/**
+	 * Determines whether a menu is considered public and should be tracked
+	 * by the activity monitor
+	 *
+	 * @param int $menu_id ID of the menu
+	 *
+	 * @return bool
+	 */
+	public function is_menu_public( $menu_id ) {
+		$locations         = get_theme_mod( 'nav_menu_locations' );
+		$assigned_menu_ids = ! empty( $locations ) ? array_values( $locations ) : [];
+
+		if ( empty( $assigned_menu_ids ) ) {
+			return false;
+		}
+
+		if ( in_array( $menu_id, $assigned_menu_ids, true ) ) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Callback for menu locations theme mod. When menu locations are set/unset.
+	 *
+	 * @param array $value The old value of the nav menu locations
+	 * @param mixed|array|bool $old_value The new value of the nav menu locations
+	 *
+	 * @return array
+	 */
+	public function on_set_nav_menu_locations_cb( $value, $old_value ) {
+		$old_locations = ! empty( $old_value ) && is_array( $old_value ) ? $old_value : [];
+		$new_locations = ! empty( $value ) && is_array( $value ) ? $value : [];
+
+		// If old locations are same as new locations, do nothing
+		if ( $old_locations === $new_locations ) {
+			return $value;
+		}
+
+		// Trigger an action for each added location
+		$added = array_diff( $new_locations, $old_locations );
+		if ( ! empty( $added ) ) {
+			foreach ( $added as $location => $added_menu_id ) {
+				if ( ! empty( $menu = get_term_by( 'id', (int) $added_menu_id, 'nav_menu' ) ) && $menu instanceof WP_Term ) {
+					$type_name = 'menu';
+
+					// purge list of menus
+					$nodes = $this->collection->get( 'list:' . $type_name );
+					if ( is_array( $nodes ) ) {
+						do_action( 'wpgraphql_cache_purge_nodes', 'list:' . $type_name, $type_name, $nodes );
+					}
+				}
+			}
+		}
+
+		// Trigger an action for each location deleted
+		$removed = array_diff( $old_locations, $new_locations );
+		if ( ! empty( $removed ) ) {
+			foreach ( $removed as $location => $removed_menu_id ) {
+				$type_name = 'menu';
+				$relay_id  = Relay::toGlobalId( 'term', $removed_menu_id );
+				$nodes     = $this->collection->retrieve_nodes( Menu::class . ':' . $relay_id );
+
+				// Delete the cached results associated with this post/key
+				if ( is_array( $nodes ) && ! empty( $nodes ) ) {
+					do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->collection->nodes_key( $relay_id ), $nodes );
+				}
+			}
+		}
+
+		return $value;
+	}
+
+	/**
+	 * Evict caches when nav menus are updated
+	 *
+	 * @param int   $menu_id The ID of the menu being updated
+	 *
+	 * @return void
+	 */
+	public function on_update_nav_menu_cb( $menu_id ) {
+		if ( ! $this->is_menu_public( $menu_id ) ) {
+			return;
+		}
+
+		$menu = get_term_by( 'id', absint( $menu_id ), 'nav_menu' );
+
+		// menus have a term:id relay global ID, as they use the term loader
+		$type_name = 'term';
+		$relay_id  = Relay::toGlobalId( $type_name, $menu->term_id );
+		$nodes     = $this->collection->retrieve_nodes( Menu::class . ':' . $relay_id );
+
+		// Delete the cached results associated with this post/key
+		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
+			do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->collection->nodes_key( $relay_id ), $nodes );
+		}
+	}
+
+	/**
+	 * Evict caches when terms are updated
+	 *
+	 * @param int $meta_id ID of updated metadata entry.
+	 * @param int $object_id ID of the object metadata is for.
+	 * @param string $meta_key Metadata key.
+	 * @param mixed $meta_value Metadata value. Serialized if non-scalar.
+	 *
+	 * @return void
+	 */
+	public function on_updated_menu_meta_cb( $meta_id, $object_id, $meta_key, $meta_value ) {
+
+		// if the object id isn't a valid term
+		if ( empty( $term = get_term( $object_id ) ) || ! $term instanceof WP_Term ) {
+			return;
+		}
+
+		// If nav_menu isn't the taxonomy, proceed
+		if ( 'nav_menu' !== $term->taxonomy ) {
+			return;
+		}
+
+		// if the menu isn't public do nothing
+		if ( ! $this->is_menu_public( $term->term_id ) ) {
+			return;
+		}
+
+		if ( false === $this->should_track_meta( $meta_key, $meta_value, $term ) ) {
+			return;
+		}
+
+		$type_name = 'menu';
+		$relay_id  = Relay::toGlobalId( 'term', $term->term_id );
+
+		$nodes = $this->collection->retrieve_nodes( Menu::class . ':' . $relay_id );
+		// Delete the cached results associated with this post/key
+		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
+			do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->collection->nodes_key( $relay_id ), $nodes );
+		}
+	}
+
+	/**
+	 * Listens for changes to meta for menu items
+	 *
+	 * @todo wire this up to an action. {updated/added/deleted}_post_meta isn't fired when ACF stores data on menu items
+	 *
+	 * @param int    $meta_id    ID of updated metadata entry.
+	 * @param int    $post_id    Post ID.
+	 * @param string $meta_key   Metadata key.
+	 * @param mixed  $meta_value Metadata value. This will be a PHP-serialized string
+	 *                           representation of the value if the value is an array, an object,
+	 *                           or itself a PHP-serialized string.
+	 */
+	public function on_menu_item_change_cb( $meta_id, $post_id, $meta_key, $meta_value ) {
+
+		// get the post object being modified
+		$post = get_post( $post_id );
+
+		// if the post type is not nav menu item, ignore it
+		if ( 'nav_menu_item' !== $post->post_type ) {
+			return;
+		}
+
+		// if the meta key isn't tracked, ignore it
+		//phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
+		if ( false === $this->should_track_meta( $meta_key, $meta_value, $post ) ) {
+			return;
+		}
+
+		$relay_id         = Relay::toGlobalId( 'post', $post->ID );
+		$nodes            = $this->collection->retrieve_nodes( MenuItem::class . ':' . $relay_id );
+
+		// Delete the cached results associated with this post/key
+		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
+			do_action( 'wpgraphql_cache_purge_nodes', 'post', $this->collection->nodes_key( $relay_id ), $nodes );
+		}
+
 	}
 
 }
