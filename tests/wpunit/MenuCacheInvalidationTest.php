@@ -207,20 +207,14 @@ class MenuCacheInvalidationTest extends WPGraphQLLabsTestCaseWithSeedDataAndPopu
 	public function testUpdateMetaOnMenuItemOfMenuAssignedToALocationEvictsCache() {
 
 		// set some initial meta
-		update_post_meta( $this->menu_item_1->ID, 'meta_key', uniqid( 'origin', true ) );
-
-		codecept_debug( [
-			'listMenu' => $this->graphql([
-				'query' => $this->getListMenuItemsQuery()
-			])
-		]);
+		update_post_meta( $this->menu_item_1->ID, 'some_key', uniqid( 'origin', true ) );
 
 		// reset the caches
 		$this->_populateCaches();
 
 		$this->assertEmpty( $this->getEvictedCaches() );
 
-		update_post_meta( $this->menu_item_1->ID, 'meta_key', uniqid( 'update:', true ) );
+		update_post_meta( $this->menu_item_1->ID, 'some_key', uniqid( 'update:', true ) );
 
 		$evicted = $this->getEvictedCaches();
 
@@ -264,6 +258,7 @@ class MenuCacheInvalidationTest extends WPGraphQLLabsTestCaseWithSeedDataAndPopu
 
 			// deleting meta on a menuItem that was in the listMenu results should evict the query
 			'listMenuItem'
+
 		], $evicted );
 
 	}

@@ -825,7 +825,7 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 				'query' => $this->getListMenusQuery()
 			],
 			'listMenuItem' => [
-				'name' => 'singleMenuItem',
+				'name' => 'listMenuItem',
 				'query' => $this->getListMenuItemsQuery(),
 			],
 			'singleMenuItem' => [

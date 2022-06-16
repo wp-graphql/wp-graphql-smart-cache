@@ -171,6 +171,7 @@ class Editor {
 
 		$max_age = new MaxAge();
 		$value   = $max_age->get( $post->ID );
+		$value   = absint( $value ) ? $value : 0;
 		$html    = sprintf( '<input type="text" id="graphql_query_maxage" name="graphql_query_maxage" value="%s" />', $value );
 		$html   .= '<br><label for="graphql_query_maxage">Max-Age HTTP header. Integer value.</label>';
 		echo wp_kses(
