@@ -56,6 +56,5 @@ class AdminSettingsCacheCest
 		$I->click('Save Changes');
 		$I->seeInField("//input[@type='text' and @name='graphql_cache_section[purge_all_timestamp]']", gmdate('D, d M Y H:i T' ) );
 		$I->dontSeeCheckboxIsChecked("//input[@type='checkbox' and @name='graphql_cache_section[purge_all]']");
-
 	}
 }
