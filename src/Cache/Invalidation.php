@@ -101,6 +101,8 @@ class Invalidation {
 		## MEDIA ACTIONS
 
 		add_action( 'add_attachment', [ $this, 'on_add_attachment_cb' ], 10, 1 );
+		add_action( 'edit_attachment', [ $this, 'on_edit_attachment_cb' ], 10, 1 );
+		add_action( 'delete_attachment', [ $this, 'on_delete_attachment' ], 10, 1 );
 		add_action( 'wp_save_image_editor_file', [ $this, 'on_save_image_file_cb' ], 10, 5 );
 		add_action( 'wp_save_image_file', [ $this, 'on_save_image_file_cb' ], 10, 5 );
 	}
@@ -748,6 +750,13 @@ class Invalidation {
 		}
 	}
 
+	/**
+	 * When an attachment is created, purge lists of media
+	 *
+	 * @param int $attachment_id
+	 *
+	 * @return void
+	 */
 	function on_add_attachment_cb( $attachment_id ) {
 
 		$attachment = get_post( $attachment_id );
@@ -788,7 +797,23 @@ class Invalidation {
 
 		// Delete the cached results associated with this post/key
 		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
-			do_action( 'wpgraphql_cache_purge_nodes', 'post', $this->collection->nodes_key( $relay_id ), $nodes );
+			do_action( 'wpgraphql_cache_purge_nodes', 'mediaitem', $this->collection->nodes_key( $relay_id ), $nodes );
+		}
+	}
+
+	public function on_delete_attachment( $attachment_id ) {
+		$attachment = get_post( $attachment_id );
+
+		if ( ! $attachment || 'attachment' !== $attachment->post_type ) {
+			return;
+		}
+
+		$relay_id = Relay::toGlobalId( 'post', $attachment_id );
+		$nodes    = $this->collection->retrieve_nodes( Post::class . ':' . $relay_id );
+
+		// Delete the cached results associated with this post/key
+		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
+			do_action( 'wpgraphql_cache_purge_nodes', 'mediaitem', $this->collection->nodes_key( $relay_id ), $nodes );
 		}
 	}
 

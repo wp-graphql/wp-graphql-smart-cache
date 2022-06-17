@@ -848,7 +848,7 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 			],
 			'singleMediaItem' => [
 				'name' => 'singleMediaItem',
-				'query' => $this->getSingleMenuItemByDatabaseIdQuery(),
+				'query' => $this->getSingleMediaItemQueryByDatabaseId(),
 				'variables' => [
 					'id' => $this->mediaItem->ID
 				],

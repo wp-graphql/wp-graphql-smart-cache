@@ -37,6 +37,7 @@ class MediaItemCacheInvalidationTest extends WPGraphQLLabsTestCaseWithSeedDataAn
 			'listMediaItem',
 
 			// should media items be content nodes? 🤔
+
 			'listContentNode'
 		], $evicted_caches );
 
@@ -45,13 +46,51 @@ class MediaItemCacheInvalidationTest extends WPGraphQLLabsTestCaseWithSeedDataAn
 	// update media item
 	public function testUpdateMediaItemEvictsCache() {
 
+		$this->assertEmpty( $this->getEvictedCaches() );
+
 		// updating a media item should evict cache for single media item and list media items
+		wp_update_post([ 'ID' => $this->mediaItem->ID, 'post_content' => 'test...' ]);
+
+		$evicted = $this->getEvictedCaches();
+
+		$this->assertNotEmpty( $evicted );
+
+		codecept_debug( [
+			'id' => $this->mediaItem->ID,
+			'listMediaItem' => $this->query_results['listMediaItem'],
+			'singleMediaItem' => $this->query_results['singleMediaItem']
+		]);
+
+		$this->assertEqualSets([
+			// updating a media item should evict the single query for it
+			'singleMediaItem',
+
+			// should evict the list that had the item in it
+			'listMediaItem'
+		], $evicted );
+
 	}
 
 	// delete media item
 	public function testDeleteMediaItem() {
 
 		// evict cache for single media item, list media item
+
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+		wp_delete_attachment($this->mediaItem->ID);
+
+		$evicted = $this->getEvictedCaches();
+
+		$this->assertNotEmpty( $evicted );
+		$this->assertEqualSets([
+			// deleting a media item should evict the single query for it
+			'singleMediaItem',
+
+			// should evict the list that had the item in it
+			'listMediaItem'
+		], $evicted );
+
 	}
 
 	// update media item meta
