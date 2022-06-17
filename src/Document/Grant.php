@@ -173,7 +173,7 @@ class Grant {
 	public function add_validation_rules_cb( $validation_rules, $request ) {
 		// Check the grant mode. If public for all, don't add this rule.
 		$setting = get_graphql_setting( self::GLOBAL_SETTING_NAME, self::GLOBAL_DEFAULT, 'graphql_persisted_queries_section' );
-		if ( self::GLOBAL_PUBLIC !== $setting ) {
+		if ( self::GLOBAL_PUBLIC !== $setting && ! is_user_logged_in() ) {
 			$validation_rules['allow_deny_query_document'] = new AllowDenyQueryDocument( $setting );
 		}
 
