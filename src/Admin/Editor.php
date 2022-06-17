@@ -28,6 +28,8 @@ class Editor {
 		add_filter( sprintf( 'manage_%s_posts_columns', Document::TYPE_NAME ), [ $this, 'add_description_column_to_admin_cb' ], 10, 1 );
 		add_action( sprintf( 'manage_%s_posts_custom_column', Document::TYPE_NAME ), [ $this, 'fill_excerpt_content_cb' ], 10, 2 );
 		add_filter( sprintf( 'manage_edit-%s_sortable_columns', Document::TYPE_NAME ), [ $this, 'make_excerpt_column_sortable_in_admin_cb' ], 10, 1 );
+
+		add_filter( 'wp_editor_settings', [ $this, 'wp_editor_settings' ], 10, 2 );
 	}
 
 	/**
@@ -226,4 +228,13 @@ class Editor {
 		return $columns;
 	}
 
+	public function wp_editor_settings( $settings, $editor_id ) {
+		if ( 'content' === $editor_id && Document::TYPE_NAME === get_current_screen()->post_type ) {
+			$settings['tinymce']       = false;
+			$settings['quicktags']     = false;
+			$settings['media_buttons'] = false;
+		}
+
+		return $settings;
+	}
 }
