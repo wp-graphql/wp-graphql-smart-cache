@@ -4,6 +4,7 @@ namespace TestCase\WPGraphQLLabs\TestCase;
 use Exception;
 use Tests\WPGraphQL\TestCase\WPGraphQLTestCase;
 use WP_Comment;
+use WP_Nav_Menu_Item;
 use WP_Post;
 use WP_Term;
 use WP_User;
@@ -158,6 +159,21 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 	 */
 	public $query_results;
 
+	/**
+	 * @var WP_Term
+	 */
+	public $menu;
+
+	/**
+	 * @var WP_Nav_Menu_Item
+	 */
+	public $menu_item_1;
+
+	/**
+	 * @var WP_Nav_Menu_Item
+	 */
+	public $child_menu_item;
+
 	public function setUp(): void {
 		parent::setUp();
 
@@ -251,6 +267,10 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 			'taxonomy' => 'category',
 			'term' => 'Test Category'
 		]);
+
+		$filename = WPGRAPHQL_LABS_PLUGIN_DIR . '/tests/_data/images/test.png';
+		$image_id = self::factory()->attachment->create_upload_object( $filename );
+		$this->mediaItem = get_post( $image_id );
 
 		$this->empty_category = self::factory()->term->create_and_get([
 			'taxonomy' => 'category',
@@ -395,6 +415,46 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 			'post_status' => 'draft',
 			'post_author' => $this->admin->ID,
 		]);
+
+		$this->menu = self::factory()->term->create_and_get([
+			'name' => 'test menu',
+			'taxonomy' => 'nav_menu'
+		]);
+
+		$this->menu_item_1 = self::factory()->post->create_and_get([
+			'post_type' => 'nav_menu_item',
+			'post_status' => 'publish'
+		]);
+
+		$this->child_menu_item = self::factory()->post->create_and_get([
+			'post_type' => 'nav_menu_item',
+			'post_status' => 'publish'
+		]);
+
+		// set the parent menu item
+		wp_update_nav_menu_item( $this->menu->term_id, $this->menu_item_1->ID, [
+			'menu-item-title' => 'Test Item',
+			'menu-item-object'    => 'post',
+			'menu-item-object-id' => $this->published_post->ID,
+			'menu-item-status'    => 'publish',
+			'menu-item-type'      => 'post_type',
+		]);
+
+		// set a child menu item
+		wp_update_nav_menu_item( $this->menu->term_id, $this->child_menu_item->ID, [
+			'menu-item-title' => 'Child Item',
+			'menu-item-object'    => 'page',
+			'menu-item-object-id' => $this->published_page->ID,
+			'menu-item-status'    => 'publish',
+			'menu-item-type'      => 'post_type',
+			'menu-item-parent-id'    => $this->menu_item_1->ID
+		]);
+
+		// register a menu location
+		register_nav_menu( 'default-location', 'Test Menu Location' );
+
+		// add the menu to a default location
+		set_theme_mod( 'nav_menu_locations', [ 'default-location' => (int) $this->menu->term_id ] );
 
 //		$this->assertInstanceOf( \WP_User::class, $this->admin );
 //		$this->assertInstanceOf( \WP_Post::class, $this->published_post );
@@ -757,6 +817,46 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 				'name' => 'allSettings',
 				'query' => $this->getAllSettingsQuery()
 			],
+			'singleMenu' => [
+				'name' => 'singleMenu',
+				'query' => $this->getSingleMenuByDatabaseIdQuery(),
+				'variables' => [
+					'id' => (int) $this->menu->term_id
+				]
+			],
+			'listMenu' => [
+				'name' => 'listMenu',
+				'query' => $this->getListMenusQuery()
+			],
+			'listMenuItem' => [
+				'name' => 'listMenuItem',
+				'query' => $this->getListMenuItemsQuery(),
+			],
+			'singleMenuItem' => [
+				'name' => 'singleMenuItem',
+				'query' => $this->getSingleMenuItemByDatabaseIdQuery(),
+				'variables' => [
+					'id' => $this->menu_item_1->ID,
+				]
+			],
+			'singleChildMenuItem' => [
+				'name' => 'singleChildMenuItem',
+				'query' => $this->getSingleMenuItemByDatabaseIdQuery(),
+				'variables' => [
+					'id' => $this->child_menu_item->ID
+				]
+			],
+			'singleMediaItem' => [
+				'name' => 'singleMediaItem',
+				'query' => $this->getSingleMediaItemQueryByDatabaseId(),
+				'variables' => [
+					'id' => $this->mediaItem->ID
+				],
+			],
+			'listMediaItem' => [
+				'name' => 'listMediaItem',
+				'query' => $this->getListMediaItemQuery(),
+			]
 
 //			@todo: I believe the WPGraphQL Model Layer might have some bugs to fix re: private taxonomies? 🤔
 //			'singlePrivateTaxonomyTerm' => [
@@ -1194,7 +1294,6 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 		  menus {
 		    nodes {
 		      __typename
-		      id
 		      databaseId
 		    }
 		  }
@@ -1226,6 +1325,7 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 		    nodes {
 		      __typename
 		      databaseId
+		      parentDatabaseId
 		    }
 		  }
 		}
@@ -1241,6 +1341,7 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 		  menuItem(id:$id idType: DATABASE_ID) {
 		    __typename
 		    databaseId
+		    parentDatabaseId
 		  }
 		}
 		';
@@ -1410,6 +1511,30 @@ class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestC
 		    writingSettingsDefaultCategory
 		    writingSettingsDefaultPostFormat
 		    writingSettingsUseSmilies
+		  }
+		}
+		';
+	}
+
+	public function getListMediaItemQuery() {
+		return '
+		query GetListMediaItems {
+		  mediaItems {
+		    nodes {
+		      __typename
+		      databaseId
+		    }
+		  }
+		}
+		';
+	}
+
+	public function getSingleMediaItemQueryByDatabaseId() {
+		return '
+		query GetSingleMediaItem($id:ID!) {
+		  mediaItem(id:$id idType:DATABASE_ID) {
+		    __typename
+		    databaseId
 		  }
 		}
 		';

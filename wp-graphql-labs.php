@@ -44,6 +44,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 require __DIR__ . '/vendor/autoload.php';
 
+if ( ! defined( 'WPGRAPHQL_LABS_PLUGIN_DIR' ) ) {
+	define( 'WPGRAPHQL_LABS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+}
+
 /**
  * Set the graphql-php server persistent query loader during server config setup.
  * When a queryId is found on the request, the call back is invoked to look up the query string.

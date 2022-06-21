@@ -276,13 +276,13 @@ class Collection extends Query {
 					$possible_types = $schema->getPossibleTypes( $named_type );
 					foreach ( $possible_types as $possible_type ) {
 						// if the type is a list, store it
-						if ( $is_list_type ) {
+						if ( $is_list_type && 0 !== strpos( $possible_type, '__' ) ) {
 							$type_map[] = 'list:' . strtolower( $possible_type );
 						}
 					}
 				} elseif ( $named_type instanceof ObjectType ) {
 					// if the type is a list, store it
-					if ( $is_list_type ) {
+					if ( $is_list_type && 0 !== strpos( $named_type, '__' ) ) {
 						$type_map[] = 'list:' . strtolower( $named_type );
 					}
 				}

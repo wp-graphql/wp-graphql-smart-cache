@@ -775,7 +775,7 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 		$non_evicted_caches_before = $this->getNonEvictedCaches();
 
 		// update meta on a draft post
-		update_post_meta( $this->draft_post, 'meta_key', uniqid( null, true ) );
+		update_post_meta( $this->draft_post->ID, 'meta_key', uniqid( null, true ) );
 
 		// there should be no evicted cache after updating meta of a draft post
 		$this->assertEmpty( $this->getEvictedCaches() );

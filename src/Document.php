@@ -8,8 +8,6 @@
 namespace WPGraphQL\Labs;
 
 use WPGraphQL\Labs\Admin\Settings;
-use WPGraphQL\Labs\AdminErrors;
-use WPGraphQL\Labs\Utils;
 use GraphQL\Error\SyntaxError;
 use GraphQL\Server\RequestError;
 
@@ -44,7 +42,8 @@ class Document {
 					'name'          => __( 'GraphQLQueries', 'wp-graphql-labs' ),
 					'singular_name' => __( 'GraphQLQuery', 'wp-graphql-labs' ),
 				],
-				'public'              => true,
+				'public'              => false,
+				'publicly_queryable'  => true,
 				'show_ui'             => Settings::show_in_admin(),
 				'taxonomies'          => [
 					self::ALIAS_TAXONOMY_NAME,
