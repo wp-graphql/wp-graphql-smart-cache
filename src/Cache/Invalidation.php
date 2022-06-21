@@ -758,7 +758,6 @@ class Invalidation {
 	 * @return void
 	 */
 	function on_add_attachment_cb( $attachment_id ) {
-
 		$attachment = get_post( $attachment_id );
 
 		if ( ! $attachment || 'attachment' !== $attachment->post_type ) {
@@ -769,7 +768,6 @@ class Invalidation {
 		if ( is_array( $nodes ) ) {
 			do_action( 'wpgraphql_cache_purge_nodes', 'ist:mediaitem', 'list:mediaitem', $nodes );
 		}
-
 	}
 
 	/**
