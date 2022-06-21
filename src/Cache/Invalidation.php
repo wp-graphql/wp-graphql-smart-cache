@@ -757,7 +757,7 @@ class Invalidation {
 	 *
 	 * @return void
 	 */
-	function on_add_attachment_cb( $attachment_id ) {
+	public function on_add_attachment_cb( $attachment_id ) {
 		$attachment = get_post( $attachment_id );
 
 		if ( ! $attachment || 'attachment' !== $attachment->post_type ) {
