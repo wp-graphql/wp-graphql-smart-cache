@@ -231,7 +231,7 @@ class Invalidation {
 
 		$nodes = $this->collection->get( 'list:' . $type_name );
 		if ( is_array( $nodes ) ) {
-			do_action( 'wpgraphql_cache_purge_nodes', 'list:' . $type_name, $type_name, $nodes );
+			do_action( 'wpgraphql_cache_purge_nodes', 'list:' . $type_name, 'list:' . $type_name, $nodes );
 		}
 	}
 
@@ -412,7 +412,7 @@ class Invalidation {
 		if ( 'CREATE' === $action_type ) {
 			$nodes = $this->collection->get( 'list:' . $type_name );
 			if ( is_array( $nodes ) ) {
-				do_action( 'wpgraphql_cache_purge_nodes', 'list:' . $type_name, $type_name, $nodes );
+				do_action( 'wpgraphql_cache_purge_nodes', 'list:' . $type_name, 'list:' . $type_name, $nodes );
 			}
 		}
 
@@ -423,7 +423,7 @@ class Invalidation {
 			$nodes = $this->collection->retrieve_nodes( Post::class . ':' . $relay_id );
 			// Delete the cached results associated with this post/key
 			if ( is_array( $nodes ) && ! empty( $nodes ) ) {
-				do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->collection->nodes_key( $relay_id ), $nodes );
+				do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->collection->nodes_key( Post::class . ':' . $relay_id ), $nodes );
 			}
 		}
 	}
