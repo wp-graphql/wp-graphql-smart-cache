@@ -171,9 +171,8 @@ class UserCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 			// listUser query so this query should be evicted
 			'listUser',
 
-			// this is invalidated because the post that was re-assigned
-			// triggered the transition_post_status hook
-			'singleNodeByUri',
+			// This is invalidated because the editor was deleted and its post was re-assigned
+			'singlePostByEditor',
 
 
 		], $evicted );
