@@ -10,7 +10,6 @@ services:
     image: wp-graphql-labs:latest-wp${WP_VERSION}-php${PHP_VERSION}
     volumes:
       - '.:/var/www/html/wp-content/plugins/wp-graphql-labs'
-      - './wp-content/plugins/wp-graphql:/var/www/html/wp-content/plugins/wp-graphql'
     env_file:
       - .env.dist
     environment:
