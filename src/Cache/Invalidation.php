@@ -504,7 +504,6 @@ class Invalidation {
 	 *                           Default null, for no reassignment.
 	 */
 	public function on_user_deleted_cb( $deleted_id, $reassign_id ) {
-
 		global $wpdb;
 
 		$id    = Relay::toGlobalId( 'user', (string) $deleted_id );
@@ -533,15 +532,14 @@ class Invalidation {
 			if ( ! empty( $reassigned_post_ids ) ) {
 				foreach ( $reassigned_post_ids as $reassigned_post_id ) {
 					$reassign_post_relay_id = Relay::toGlobalId( 'post', (string) $reassigned_post_id );
-					$nodes             = $this->collection->retrieve_nodes( Post::class . ':' . $reassign_post_relay_id );
+					$nodes                  = $this->collection->retrieve_nodes( Post::class . ':' . $reassign_post_relay_id );
 
 					// Delete the cached results associated with this key
 					if ( is_array( $nodes ) ) {
-						do_action( 'wpgraphql_cache_purge_nodes', 'post', $this->collection->nodes_key( Post::class . ':' . $reassign_post_relay_id  ), $nodes );
+						do_action( 'wpgraphql_cache_purge_nodes', 'post', $this->collection->nodes_key( Post::class . ':' . $reassign_post_relay_id ), $nodes );
 					}
 				}
 			}
-
 		}
 	}
 
