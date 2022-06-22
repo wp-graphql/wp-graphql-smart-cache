@@ -151,7 +151,7 @@ class Invalidation {
 	}
 
 	/**
-	 * Listen for updates to a post so we can purge caches relevant to the change
+	 * Listen for updates to a pos, so we can evict caches relevant to the change
 	 *
 	 * @param int     $post_id The ID of the post being updated
 	 * @param WP_Post $post_after The Post Object after the update
@@ -504,6 +504,9 @@ class Invalidation {
 	 *                           Default null, for no reassignment.
 	 */
 	public function on_user_deleted_cb( $deleted_id, $reassign_id ) {
+
+		global $wpdb;
+
 		$id    = Relay::toGlobalId( 'user', (string) $deleted_id );
 		$nodes = $this->collection->retrieve_nodes( User::class . ':' . $id );
 
@@ -520,6 +523,25 @@ class Invalidation {
 			if ( is_array( $nodes ) ) {
 				do_action( 'wpgraphql_cache_purge_nodes', 'user', $this->collection->nodes_key( $reassign_id ), $nodes );
 			}
+
+			// get the ids of the posts the user was the author of
+			// this query runs inside the wp_delete_user function
+			// but is not directly hookable/filterable
+			// so we do it here to collect the IDs of the posts
+			// that were re-assigned so that we can evict related caches properly
+			$reassigned_post_ids = $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_author = %d", $reassign_id ) );
+			if ( ! empty( $reassigned_post_ids ) ) {
+				foreach ( $reassigned_post_ids as $reassigned_post_id ) {
+					$reassign_post_relay_id = Relay::toGlobalId( 'post', (string) $reassigned_post_id );
+					$nodes             = $this->collection->retrieve_nodes( Post::class . ':' . $reassign_post_relay_id );
+
+					// Delete the cached results associated with this key
+					if ( is_array( $nodes ) ) {
+						do_action( 'wpgraphql_cache_purge_nodes', 'post', $this->collection->nodes_key( Post::class . ':' . $reassign_post_relay_id  ), $nodes );
+					}
+				}
+			}
+
 		}
 	}
 
