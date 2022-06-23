@@ -2,9 +2,6 @@ name: Build plugin zip file
 on:
   release:
     types: [ published ]
-  pull_request:
-    branches:
-      - main
 jobs:
   tag:
     runs-on: ubuntu-latest
@@ -28,3 +25,7 @@ jobs:
         with:
           name: wp-graphql-labs
           path: plugin-build/wp-graphql-labs.zip
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v1
+        with:
+          files: plugin-build/wp-graphql-labs.zip
