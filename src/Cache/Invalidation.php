@@ -151,7 +151,12 @@ class Invalidation {
 	}
 
 	/**
-	 * Purge by individual key/id
+	 * For the provided key, load the collected data elements from memory and trigger the purge action for said key,
+	 * prodiving the list of nodes.
+	 *
+	 * The key represents either an individual url request, a list of nodes, list of types, etc.
+	 *
+	 * @param $key An identifiers for data stored in memory.
 	 */
 	public function purge( $key ) {
 		$nodes = $this->collection->get( $key );
@@ -161,7 +166,14 @@ class Invalidation {
 	}
 
 	/**
-	 * Delete the list of nodes/content/lists associated with the id
+	 * The 'runtime nodes' for a graphql queries are collected and stored into memory when requested by a client.
+	 * This function allows those runtime nodes to be loaded from memory and invalidated.
+	 *
+	 * See the Collection class runtime_nodes.
+	 *
+	 * @param $node_type The runtime node class name
+	 * @param $id_prefix The type name specific to the id to form the "global ID" that is unique among all types
+	 * @param $id The node entity identifier
 	 */
 	public function purge_nodes( $node_type, $id_prefix, $id ) {
 		$relay_id = Relay::toGlobalId( $id_prefix, $id );
