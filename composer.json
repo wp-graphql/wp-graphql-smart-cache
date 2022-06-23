@@ -46,18 +46,23 @@
       "php ./vendor/bin/phpcbf"
     ]
   },
-  "archive": {
-    "exclude": [
-      "*.yml",
-      "*.zip",
-      ".env*",
-      "docker/",
-      "!vendor/",
-      "tests/",
-      "!.wordpress-org/",
-      "wp-content/"
-    ]
-  },
+	"archive": {
+		"exclude": [
+			"*.yml",
+			"*.zip",
+			".env*",
+			"!.wordpress-org/",
+			"!build",
+			"docker/",
+			"docs/",
+			"node_modules/",
+			"packages",
+			"plugin-build/",
+			"tests/",
+			"!vendor/",
+			"wp-content/"
+		]
+	},
   "config": {
       "allow-plugins": {
           "dealerdirect/phpcodesniffer-composer-installer": true
