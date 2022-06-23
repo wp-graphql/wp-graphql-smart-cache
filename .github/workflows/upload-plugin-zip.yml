@@ -1,0 +1,31 @@
+name: Build plugin zip file
+on:
+  release:
+    types: [ published ]
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.0
+          tools: composer
+      - name: Install PHP dependencies
+        run: |
+          composer install --no-dev --optimize-autoloader
+      - name: Create Artifact
+        run: |
+          mkdir plugin-build
+          composer archive -vvv --format=zip --file="plugin-build/wp-graphql-labs"
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: wp-graphql-labs
+          path: plugin-build/wp-graphql-labs.zip
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v1
+        with:
+          files: plugin-build/wp-graphql-labs.zip
