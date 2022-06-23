@@ -155,7 +155,7 @@ class Invalidation {
 	 */
 	public function purge( $key ) {
 		$nodes = $this->collection->get( $key );
-		if ( is_array( $nodes ) ) {
+		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
 			do_action( 'wpgraphql_cache_purge_nodes', $key, $nodes );
 		}
 	}
@@ -413,7 +413,7 @@ class Invalidation {
 		// specific node in it
 		if ( 'UPDATE' === $action_type || 'DELETE' === $action_type ) {
 			// Delete the cached results associated with this post/key
-			$this->purge_nodes( Post::class, 'post', $relay_id );
+			$this->purge_nodes( Post::class, 'post', $post->ID );
 		}
 	}
 
