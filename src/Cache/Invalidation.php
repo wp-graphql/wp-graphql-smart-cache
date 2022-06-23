@@ -151,7 +151,38 @@ class Invalidation {
 	}
 
 	/**
-	 * Listen for updates to a pos, so we can evict caches relevant to the change
+	 * For the provided key, load the collected data elements from memory and trigger the purge action for said key,
+	 * prodiving the list of nodes.
+	 *
+	 * The key represents either an individual url request, a list of nodes, list of types, etc.
+	 *
+	 * @param $key An identifiers for data stored in memory.
+	 */
+	public function purge( $key ) {
+		$nodes = $this->collection->get( $key );
+		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
+			do_action( 'wpgraphql_cache_purge_nodes', $key, $nodes );
+		}
+	}
+
+	/**
+	 * The 'runtime nodes' for a graphql queries are collected and stored into memory when requested by a client.
+	 * This function allows those runtime nodes to be loaded from memory and invalidated.
+	 *
+	 * See the Collection class runtime_nodes.
+	 *
+	 * @param $node_type The runtime node class name
+	 * @param $id_prefix The type name specific to the id to form the "global ID" that is unique among all types
+	 * @param $id The node entity identifier
+	 */
+	public function purge_nodes( $node_type, $id_prefix, $id ) {
+		$relay_id = Relay::toGlobalId( $id_prefix, $id );
+		$node_id  = $node_type . ':' . $relay_id;
+		$this->purge( $this->collection->node_key( $node_id ) );
+	}
+
+	/**
+	 * Listen for updates to a post so we can purge caches relevant to the change
 	 *
 	 * @param int     $post_id The ID of the post being updated
 	 * @param WP_Post $post_after The Post Object after the update
@@ -167,33 +198,13 @@ class Invalidation {
 		}
 
 		// evict caches for the before and after post author (purge their archive pages)
-		$new_author_id = Relay::toGlobalId( 'user', (string) $post_after->post_author );
-		$nodes         = $this->collection->retrieve_nodes( User::class . ':' . $new_author_id );
-
-		// Delete the cached results associated with this key
-		if ( is_array( $nodes ) ) {
-			do_action( 'wpgraphql_cache_purge_nodes', 'user', $this->collection->nodes_key( $new_author_id ), $nodes );
-		}
+		$this->purge_nodes( User::class, 'user', $post_after->post_author );
 
 		// evict caches for the before and after post author (purge their archive pages)
-		$prev_author_id = Relay::toGlobalId( 'user', (string) $post_before->post_author );
-		$nodes          = $this->collection->retrieve_nodes( User::class . ':' . $prev_author_id );
-
-		// Delete the cached results associated with this key
-		if ( is_array( $nodes ) ) {
-			do_action( 'wpgraphql_cache_purge_nodes', 'user', $this->collection->nodes_key( $prev_author_id ), $nodes );
-		}
-
-		$post_type_object = get_post_type_object( $post_after->post_type );
-		$type_name        = strtolower( $post_type_object->graphql_single_name );
-
-		$relay_id = Relay::toGlobalId( 'post', $post_id );
-		$nodes    = $this->collection->retrieve_nodes( Post::class . ':' . $relay_id );
+		$this->purge_nodes( User::class, 'user', $post_before->post_author );
 
 		// Delete the cached results associated with this post/key
-		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
-			do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->collection->nodes_key( $relay_id ), $nodes );
-		}
+		$this->purge_nodes( Post::class, 'post', $post_id );
 	}
 
 	/**
@@ -221,15 +232,8 @@ class Invalidation {
 			return;
 		}
 
-		$post_type_object = get_post_type_object( $post->post_type );
-		$relay_id         = Relay::toGlobalId( 'post', $post->ID );
-		$type_name        = strtolower( $post_type_object->graphql_single_name );
-		$nodes            = $this->collection->retrieve_nodes( Post::class . ':' . $relay_id );
-
 		// Delete the cached results associated with this post/key
-		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
-			do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->collection->nodes_key( $relay_id ), $nodes );
-		}
+		$this->purge_nodes( Post::class, 'post', $post->ID );
 	}
 
 	/**
@@ -253,11 +257,7 @@ class Invalidation {
 		}
 
 		$type_name = strtolower( $tax_object->graphql_single_name );
-
-		$nodes = $this->collection->get( 'list:' . $type_name );
-		if ( is_array( $nodes ) ) {
-			do_action( 'wpgraphql_cache_purge_nodes', 'list:' . $type_name, 'list:' . $type_name, $nodes );
-		}
+		$this->purge( 'list:' . $type_name );
 	}
 
 	/**
@@ -290,14 +290,8 @@ class Invalidation {
 			return;
 		}
 
-		$type_name = strtolower( $tax_object->graphql_single_name );
-
-		$relay_id = Relay::toGlobalId( 'term', $term_id );
-		$nodes    = $this->collection->retrieve_nodes( Term::class . ':' . $relay_id );
 		// Delete the cached results associated with this term/key
-		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
-			do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->collection->nodes_key( $relay_id ), $nodes );
-		}
+		$this->purge_nodes( Term::class, 'term', $term_id );
 	}
 
 	/**
@@ -324,14 +318,8 @@ class Invalidation {
 			return;
 		}
 
-		$type_name = strtolower( $tax_object->graphql_single_name );
-		$relay_id  = Relay::toGlobalId( 'term', $term->term_id );
-
-		$nodes = $this->collection->retrieve_nodes( Term::class . ':' . $relay_id );
 		// Delete the cached results associated with this post/key
-		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
-			do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->collection->nodes_key( $relay_id ), $nodes );
-		}
+		$this->purge_nodes( Term::class, 'term', $term->term_id );
 	}
 
 	/**
@@ -358,14 +346,8 @@ class Invalidation {
 			return;
 		}
 
-		$relay_id  = Relay::toGlobalId( 'term', $term->term_id );
-		$type_name = strtolower( get_taxonomy( $taxonomy )->graphql_single_name );
-		$nodes     = $this->collection->retrieve_nodes( Term::class . ':' . $relay_id );
-
 		// Delete the cached results associated with this post/key
-		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
-			do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->collection->nodes_key( $relay_id ), $nodes );
-		}
+		$this->purge_nodes( Term::class, 'term', $term->term_id );
 	}
 
 	/**
@@ -435,21 +417,15 @@ class Invalidation {
 		// we need to purge lists of the type
 		// as the created node might affect the list
 		if ( 'CREATE' === $action_type ) {
-			$nodes = $this->collection->get( 'list:' . $type_name );
-			if ( is_array( $nodes ) ) {
-				do_action( 'wpgraphql_cache_purge_nodes', 'list:' . $type_name, 'list:' . $type_name, $nodes );
-			}
+			$this->purge( 'list:' . $type_name );
 		}
 
 		// if we update or delete a post
 		// we need to purge any queries that have that
 		// specific node in it
 		if ( 'UPDATE' === $action_type || 'DELETE' === $action_type ) {
-			$nodes = $this->collection->retrieve_nodes( Post::class . ':' . $relay_id );
 			// Delete the cached results associated with this post/key
-			if ( is_array( $nodes ) && ! empty( $nodes ) ) {
-				do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->collection->nodes_key( Post::class . ':' . $relay_id ), $nodes );
-			}
+			$this->purge_nodes( Post::class, 'post', $post->ID );
 		}
 	}
 
@@ -460,13 +436,8 @@ class Invalidation {
 	 * @param WP_User $old_user_data Object containing user's data prior to update.
 	 */
 	public function on_user_profile_update_cb( $user_id, $old_user_data ) {
-		$id    = Relay::toGlobalId( 'user', (string) $user_id );
-		$nodes = $this->collection->retrieve_nodes( User::class . ':' . $id );
-
 		// Delete the cached results associated with this key
-		if ( is_array( $nodes ) ) {
-			do_action( 'wpgraphql_cache_purge_nodes', 'user', $this->collection->nodes_key( $id ), $nodes );
-		}
+		$this->purge_nodes( User::class, 'user', $user_id );
 	}
 
 	/**
@@ -488,13 +459,8 @@ class Invalidation {
 			return;
 		}
 
-		$id    = Relay::toGlobalId( 'user', (string) $user->ID );
-		$nodes = $this->collection->retrieve_nodes( User::class . ':' . $id );
-
 		// Delete the cached results associated with this key
-		if ( is_array( $nodes ) ) {
-			do_action( 'wpgraphql_cache_purge_nodes', 'user', $this->collection->nodes_key( $id ), $nodes );
-		}
+		$this->purge_nodes( User::class, 'user', $user->ID );
 	}
 
 	/**
@@ -506,38 +472,23 @@ class Invalidation {
 	public function on_user_deleted_cb( $deleted_id, $reassign_id ) {
 		global $wpdb;
 
-		$id    = Relay::toGlobalId( 'user', (string) $deleted_id );
-		$nodes = $this->collection->retrieve_nodes( User::class . ':' . $id );
-
-		// Delete the cached results associated with this key
-		if ( is_array( $nodes ) ) {
-			do_action( 'wpgraphql_cache_purge_nodes', 'user', $this->collection->nodes_key( $id ), $nodes );
-		}
+		$this->purge_nodes( User::class, 'user', $deleted_id );
 
 		if ( $reassign_id ) {
-			$reassign_relay_id = Relay::toGlobalId( 'user', (string) $reassign_id );
-			$nodes             = $this->collection->retrieve_nodes( User::class . ':' . $reassign_relay_id );
-
-			// Delete the cached results associated with this key
-			if ( is_array( $nodes ) ) {
-				do_action( 'wpgraphql_cache_purge_nodes', 'user', $this->collection->nodes_key( $reassign_id ), $nodes );
-			}
+			$this->purge_nodes( User::class, 'user', $reassign_id );
 
 			// get the ids of the posts the user was the author of
 			// this query runs inside the wp_delete_user function
 			// but is not directly hookable/filterable
 			// so we do it here to collect the IDs of the posts
 			// that were re-assigned so that we can evict related caches properly
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$reassigned_post_ids = $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_author = %d", $reassign_id ) );
 			if ( ! empty( $reassigned_post_ids ) ) {
 				foreach ( $reassigned_post_ids as $reassigned_post_id ) {
 					$reassign_post_relay_id = Relay::toGlobalId( 'post', (string) $reassigned_post_id );
-					$nodes                  = $this->collection->retrieve_nodes( Post::class . ':' . $reassign_post_relay_id );
 
-					// Delete the cached results associated with this key
-					if ( is_array( $nodes ) ) {
-						do_action( 'wpgraphql_cache_purge_nodes', 'post', $this->collection->nodes_key( Post::class . ':' . $reassign_post_relay_id ), $nodes );
-					}
+					$this->purge_nodes( Post::class, 'post', $reassign_post_relay_id );
 				}
 			}
 		}
@@ -582,15 +533,8 @@ class Invalidation {
 			return;
 		}
 
-		$post_type_object = get_post_type_object( $post->post_type );
-		$type_name        = strtolower( $post_type_object->graphql_single_name );
-		$relay_id         = Relay::toGlobalId( 'post', $post->ID );
-		$nodes            = $this->collection->retrieve_nodes( Post::class . ':' . $relay_id );
-
 		// Delete the cached results associated with this post/key
-		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
-			do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->collection->nodes_key( $relay_id ), $nodes );
-		}
+		$this->purge_nodes( Post::class, 'post', $post->ID );
 	}
 
 	/**
@@ -636,31 +580,14 @@ class Invalidation {
 		// Trigger an action for each added location
 		$added = array_diff( $new_locations, $old_locations );
 		if ( ! empty( $added ) ) {
-			foreach ( $added as $location => $added_menu_id ) {
-				if ( ! empty( $menu = get_term_by( 'id', (int) $added_menu_id, 'nav_menu' ) ) && $menu instanceof WP_Term ) {
-					$type_name = 'menu';
-
-					// purge list of menus
-					$nodes = $this->collection->get( 'list:' . $type_name );
-					if ( is_array( $nodes ) ) {
-						do_action( 'wpgraphql_cache_purge_nodes', 'list:' . $type_name, $type_name, $nodes );
-					}
-				}
-			}
+			$this->purge( 'list:menu' );
 		}
 
 		// Trigger an action for each location deleted
 		$removed = array_diff( $old_locations, $new_locations );
 		if ( ! empty( $removed ) ) {
 			foreach ( $removed as $location => $removed_menu_id ) {
-				$type_name = 'menu';
-				$relay_id  = Relay::toGlobalId( 'term', $removed_menu_id );
-				$nodes     = $this->collection->retrieve_nodes( Menu::class . ':' . $relay_id );
-
-				// Delete the cached results associated with this post/key
-				if ( is_array( $nodes ) && ! empty( $nodes ) ) {
-					do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->collection->nodes_key( $relay_id ), $nodes );
-				}
+				$this->purge_nodes( Menu::class, 'term', $removed_menu_id );
 			}
 		}
 
@@ -682,14 +609,7 @@ class Invalidation {
 		$menu = get_term_by( 'id', absint( $menu_id ), 'nav_menu' );
 
 		// menus have a term:id relay global ID, as they use the term loader
-		$type_name = 'term';
-		$relay_id  = Relay::toGlobalId( $type_name, $menu->term_id );
-		$nodes     = $this->collection->retrieve_nodes( Menu::class . ':' . $relay_id );
-
-		// Delete the cached results associated with this post/key
-		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
-			do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->collection->nodes_key( $relay_id ), $nodes );
-		}
+		$this->purge_nodes( Menu::class, 'term', $menu->term_id );
 	}
 
 	/**
@@ -723,14 +643,7 @@ class Invalidation {
 			return;
 		}
 
-		$type_name = 'menu';
-		$relay_id  = Relay::toGlobalId( 'term', $term->term_id );
-
-		$nodes = $this->collection->retrieve_nodes( Menu::class . ':' . $relay_id );
-		// Delete the cached results associated with this post/key
-		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
-			do_action( 'wpgraphql_cache_purge_nodes', $type_name, $this->collection->nodes_key( $relay_id ), $nodes );
-		}
+		$this->purge_nodes( Menu::class, 'term', $term->term_id );
 	}
 
 	/**
@@ -761,13 +674,7 @@ class Invalidation {
 			return;
 		}
 
-		$relay_id = Relay::toGlobalId( 'post', $post->ID );
-		$nodes    = $this->collection->retrieve_nodes( MenuItem::class . ':' . $relay_id );
-
-		// Delete the cached results associated with this post/key
-		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
-			do_action( 'wpgraphql_cache_purge_nodes', 'post', $this->collection->nodes_key( $relay_id ), $nodes );
-		}
+		$this->purge_nodes( MenuItem::class, 'post', $post->ID );
 	}
 
 	/**
@@ -784,10 +691,7 @@ class Invalidation {
 			return;
 		}
 
-		$nodes = $this->collection->get( 'list:mediaitem' );
-		if ( is_array( $nodes ) ) {
-			do_action( 'wpgraphql_cache_purge_nodes', 'ist:mediaitem', 'list:mediaitem', $nodes );
-		}
+		$this->purge( 'list:mediaitem' );
 	}
 
 	/**
@@ -810,13 +714,7 @@ class Invalidation {
 			return;
 		}
 
-		$relay_id = Relay::toGlobalId( 'post', $attachment_id );
-		$nodes    = $this->collection->retrieve_nodes( Post::class . ':' . $relay_id );
-
-		// Delete the cached results associated with this post/key
-		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
-			do_action( 'wpgraphql_cache_purge_nodes', 'mediaitem', $this->collection->nodes_key( $relay_id ), $nodes );
-		}
+		$this->purge_nodes( Post::class, 'post', $attachment_id );
 	}
 
 	public function on_delete_attachment( $attachment_id ) {
@@ -826,13 +724,7 @@ class Invalidation {
 			return;
 		}
 
-		$relay_id = Relay::toGlobalId( 'post', $attachment_id );
-		$nodes    = $this->collection->retrieve_nodes( Post::class . ':' . $relay_id );
-
-		// Delete the cached results associated with this post/key
-		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
-			do_action( 'wpgraphql_cache_purge_nodes', 'mediaitem', $this->collection->nodes_key( $relay_id ), $nodes );
-		}
+		$this->purge_nodes( Post::class, 'post', $attachment_id );
 	}
 
 }
