@@ -156,7 +156,7 @@ class Invalidation {
 	 *
 	 * The key represents either an individual url request, a list of nodes, list of types, etc.
 	 *
-	 * @param $key An identifiers for data stored in memory.
+	 * @param string $key An identifiers for data stored in memory.
 	 */
 	public function purge( $key ) {
 		$nodes = $this->collection->get( $key );
@@ -171,9 +171,9 @@ class Invalidation {
 	 *
 	 * See the Collection class runtime_nodes.
 	 *
-	 * @param $node_type The runtime node class name
-	 * @param $id_prefix The type name specific to the id to form the "global ID" that is unique among all types
-	 * @param $id The node entity identifier
+	 * @param string $node_type The runtime node class name
+	 * @param string $id_prefix The type name specific to the id to form the "global ID" that is unique among all types
+	 * @param mixed|string|int $id The node entity identifier
 	 */
 	public function purge_nodes( $node_type, $id_prefix, $id ) {
 		$relay_id = Relay::toGlobalId( $id_prefix, $id );
@@ -466,7 +466,7 @@ class Invalidation {
 	/**
 	 *
 	 * @param int      $deleted_id       ID of the deleted user.
-	 * @param int|null $reassign ID of the user to reassign posts and links to.
+	 * @param int|null $reassign_id ID of the user to reassign posts and links to.
 	 *                           Default null, for no reassignment.
 	 */
 	public function on_user_deleted_cb( $deleted_id, $reassign_id ) {
@@ -486,9 +486,7 @@ class Invalidation {
 			$reassigned_post_ids = $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_author = %d", $reassign_id ) );
 			if ( ! empty( $reassigned_post_ids ) ) {
 				foreach ( $reassigned_post_ids as $reassigned_post_id ) {
-					$reassign_post_relay_id = Relay::toGlobalId( 'post', (string) $reassigned_post_id );
-
-					$this->purge_nodes( Post::class, 'post', $reassign_post_relay_id );
+					$this->purge_nodes( Post::class, 'post', $reassigned_post_id );
 				}
 			}
 		}
