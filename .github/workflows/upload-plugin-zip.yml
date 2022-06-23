@@ -2,6 +2,9 @@ name: Build plugin zip file
 on:
   release:
     types: [ published ]
+  pull_request:
+    branches:
+      - main
 jobs:
   tag:
     runs-on: ubuntu-latest
