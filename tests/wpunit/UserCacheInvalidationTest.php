@@ -94,7 +94,7 @@ class UserCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
             'last_name' => 'bar',
         ] );
 
-        // Because we created the above user, start over cause we want to isolate the delete/reassign evictions
+        // Because we created the above user, start over because we want to isolate the delete/reassign evictions
         $this->_populateCaches();
 
 		// delete the user and re-assign the posts to a new user
@@ -114,14 +114,39 @@ class UserCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 
 			// since the deleted user was part of the listUser results, we can
 	        // expect this query to be evicted
-	        'listUser'
+	        'listUser',
+
+	        // the list of posts should include the post that was authored by the editor and re-assigned
+	        'listPost',
+
+			// the post authored by the editor was in this list, so this list should be evicted
+	        'listContentNode',
+
+			// the editor was deleted so the cache for the post authored by the editor should be evicted
+	        'singlePostByEditor'
+
         ], $evicted );
+
     }
 
 	public function testDeleteUserAndReassignPostsToUserWithOtherPublishedPosts() {
 
-		// delete the user and re-assign the posts to the admin user
-		wp_delete_user( $this->editor->ID, $this->admin->ID );
+		$user_with_one_post = self::factory()->user->create_and_get([
+			'role' => 'administrator',
+		]);
+
+		$post_by_user_with_one_post = self::factory()->post->create_and_get([
+			'post_type' => 'post',
+			'post_status' => 'publish',
+			'post_title' => 'test',
+			'post_author' => $user_with_one_post->ID
+		]);
+
+		// since we just created some new mock data, lets refresh the caches
+		$this->_populateCaches();
+
+		// delete the user and re-assign the posts to the $post_by_user_with_one_post user
+		wp_delete_user( $this->editor->ID, $post_by_user_with_one_post->ID );
 
 		codecept_debug( $this->getEvictedCaches() );
 
@@ -134,22 +159,22 @@ class UserCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraph
 			// this is invalidated because it's the user being deleted
 			'editorUserWithPostsConnection',
 
-			// this is invalidated because it's the user getting the reassigned posts
-			'adminUserWithPostsConnection',
+			// the posts being reassigned were in the listContentNode
+			// results so this should be evicted
+			'listContentNode',
 
-			// this is invalidated because the post that was re-assigned
-			// triggered the transition_post_status hook
-			'singleNodeById',
+			// the posts being re-assigned were in the listPost results
+			// so this should be evicted
+			'listPost',
 
-			// this is invalidated because the post that was re-assigned
-			// triggered the transition_post_status hook
-			'singleNodeByUri',
-
-			// users in the listUser results have changed, this should be evicted
+			// the editor user (that's being deleted) was part of the
+			// listUser query so this query should be evicted
 			'listUser',
 
-			// the admin user had posts assigned, and should be evicted
-			'adminUserByDatabaseId'
+			// This is invalidated because the editor was deleted and its post was re-assigned
+			'singlePostByEditor',
+
+
 		], $evicted );
 	}
 
