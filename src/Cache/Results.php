@@ -27,16 +27,20 @@ class Results extends Query {
 	protected $cached_result;
 
 	public function init() {
-
 		$this->cached_result = false;
 
 		add_filter( 'pre_graphql_execute_request', [ $this, 'get_query_results_from_cache_cb' ], 10, 2 );
 		add_action( 'graphql_return_response', [ $this, 'save_query_results_to_cache_cb' ], 10, 7 );
 		add_action( 'wpgraphql_cache_purge_nodes', [ $this, 'purge_nodes_cb' ], 10, 2 );
-		add_filter( 'graphql_request_results', [
-			$this,
-			'add_cache_key_to_response_extensions',
-		], 10, 1 );
+		add_filter(
+			'graphql_request_results',
+			[
+				$this,
+				'add_cache_key_to_response_extensions',
+			],
+			10,
+			1
+		);
 
 		parent::init();
 	}
@@ -74,9 +78,9 @@ class Results extends Query {
 		// construct the message to return
 		$message = [
 			'graphqlObjectCache' => [
-				'message' => __( 'This response is cached by WPGraphQL Smart Cache', 'wp-graphql-smart-cache' ),
+				'message'  => __( 'This response is cached by WPGraphQL Smart Cache', 'wp-graphql-smart-cache' ),
 				'cacheKey' => $this->cache_key,
-			]
+			],
 		];
 
 		if ( is_array( $response ) ) {
@@ -87,7 +91,6 @@ class Results extends Query {
 
 		// return the modified response with the graphqlSmartCache message in the extensions output
 		return $response;
-
 	}
 
 	/**
@@ -113,7 +116,6 @@ class Results extends Query {
 		}
 
 		$this->cached_result = $this->get( $key );
-
 
 		return ( false === $this->cached_result ) ? null : $this->cached_result;
 	}
