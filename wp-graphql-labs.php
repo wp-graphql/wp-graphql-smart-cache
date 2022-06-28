@@ -16,7 +16,6 @@ namespace WPGraphQL\Labs;
 use WPGraphQL\Labs\Cache\Collection;
 use WPGraphQL\Labs\Cache\Invalidation;
 use WPGraphQL\Labs\Cache\Results;
-use WPGraphQL\Labs\GraphiQL\GraphiQL;
 use WPGraphQL\Labs\Admin\Editor;
 use WPGraphQL\Labs\Admin\Settings;
 use WPGraphQL\Labs\Document\Description;
@@ -61,17 +60,6 @@ add_action(
 	},
 	10,
 	1
-);
-
-/**
- * Initialize the functionality for interacting with persisted queries using the GraphiQL IDE.
- */
-add_action(
-	'admin_init',
-	function () {
-		$graphiql = new GraphiQL();
-		$graphiql->init();
-	}
 );
 
 add_action(
