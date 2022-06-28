@@ -111,7 +111,7 @@ class Settings {
 					'graphql_cache_section',
 					[
 						'title' => __( 'Object Cache', 'wp-graphql-labs' ),
-						'desc'  => __( 'Use local object or transient cache to save entire GraphQL query results.', 'wp-graphql-labs' ),
+						'desc'  => __( 'Use local object or transient cache to save entire GraphQL query results, for improved speed and performance.', 'wp-graphql-labs' ),
 					]
 				);
 
@@ -119,8 +119,8 @@ class Settings {
 					'graphql_cache_section',
 					[
 						'name'    => 'cache_toggle',
-						'label'   => __( 'Enable results caching for improved speed', 'wp-graphql-labs' ),
-						'desc'    => __( 'Toggle to enable caching of graphql query results', 'wp-graphql-labs' ),
+						'label'   => __( 'GraphQL Object Cache', 'wp-graphql-labs' ),
+						'desc'    => __( 'Store and return results of GraphQL Queries in the Object cache until they have expired (see below) or a related action has evicted the cached response.', 'wp-graphql-labs' ),
 						'type'    => 'checkbox',
 						'default' => 'off',
 					]
@@ -130,9 +130,9 @@ class Settings {
 					'graphql_cache_section',
 					[
 						'name'              => 'global_ttl',
-						'label'             => __( 'Cache expiration time', 'wp-graphql-labs' ),
+						'label'             => __( 'Object Cache Expiration', 'wp-graphql-labs' ),
 						// translators: the global cache ttl default value
-						'desc'              => sprintf( __( 'Global GraphQL cache expiration time in seconds. Integer value, greater or equal to zero. Default %s.', 'wp-graphql-labs' ), Results::GLOBAL_DEFAULT_TTL ),
+						'desc'              => sprintf( __( 'Time, in seconds, to store the result in cache for an individual GraphQL request. Cached results will be evicted after this amount of time, if not before by a related data eviction. Value should be an integer, greater or equal to zero. Default %s (%s minutes).', 'wp-graphql-labs' ), Results::GLOBAL_DEFAULT_TTL, (Results::GLOBAL_DEFAULT_TTL/60) ),
 						'type'              => 'number',
 						'sanitize_callback' => function ( $value ) {
 							if ( $value < 0 || ! is_numeric( $value ) ) {
@@ -147,8 +147,8 @@ class Settings {
 					'graphql_cache_section',
 					[
 						'name'              => 'purge_all',
-						'label'             => __( 'Purge The Cache?', 'wp-graphql-labs' ),
-						'desc'              => __( 'Select this box and click the save button.', 'wp-graphql-labs' ),
+						'label'             => __( 'Purge GraphQL Object Cache', 'wp-graphql-labs' ),
+						'desc'              => __( 'Select this box and click the save button to purge all responses stored in the GraphQL Object Cache.', 'wp-graphql-labs' ),
 						'type'              => 'checkbox',
 						'default'           => 'off',
 						'sanitize_callback' => function ( $value ) {
