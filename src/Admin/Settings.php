@@ -43,24 +43,8 @@ class Settings {
 				register_graphql_settings_section(
 					'graphql_persisted_queries_section',
 					[
-						'title' => __( 'Network Cache', 'wp-graphql-smart-cache' ),
-						'desc'  => __( 'These settings apply to GraphQL queries coming over HTTP requests.', 'wp-graphql-smart-cache' ),
-					]
-				);
-
-				register_graphql_settings_field(
-					'graphql_persisted_queries_section',
-					[
-						'name'              => 'global_max_age',
-						'label'             => __( 'Access-Control-Max-Age Header', 'wp-graphql-smart-cache' ),
-						'desc'              => __( 'Global Max-Age HTTP header. Integer value, greater or equal to zero.', 'wp-graphql-smart-cache' ),
-						'type'              => 'number',
-						'sanitize_callback' => function ( $value ) {
-							if ( $value < 0 || ! is_numeric( $value ) ) {
-								return 0;
-							}
-							return intval( $value );
-						},
+						'title' => __( 'Saved Queries', 'wp-graphql-smart-cache' ),
+						'desc'  => __( 'Saved/Persisted GraphQL Queries', 'wp-graphql-smart-cache' ),
 					]
 				);
 
@@ -99,8 +83,8 @@ class Settings {
 					'graphql_persisted_queries_section',
 					[
 						'name'    => 'editor_display',
-						'label'   => __( 'Display saved queries in admin editor', 'wp-graphql-smart-cache' ),
-						'desc'    => __( 'Toggle to show saved queries in wp-admin left side menu', 'wp-graphql-smart-cache' ),
+						'label'   => __( 'Display saved query documents in admin editor', 'wp-graphql-smart-cache' ),
+						'desc'    => __( 'Toggle to show saved query documents in the wp-admin left side menu', 'wp-graphql-smart-cache' ),
 						'type'    => 'checkbox',
 						'default' => 'off',
 					]
@@ -110,8 +94,24 @@ class Settings {
 				register_graphql_settings_section(
 					'graphql_cache_section',
 					[
-						'title' => __( 'Object Cache', 'wp-graphql-smart-cache' ),
-						'desc'  => __( 'Use local object or transient cache to save entire GraphQL query results, for improved speed and performance.', 'wp-graphql-smart-cache' ),
+						'title' => __( 'Cache', 'wp-graphql-smart-cache' ),
+						'desc'  => __( 'Caching and other settings related to improved performance of GraphQL queries.', 'wp-graphql-smart-cache' ),
+					]
+				);
+
+				register_graphql_settings_field(
+					'graphql_cache_section',
+					[
+						'name'              => 'global_max_age',
+						'label'             => __( 'Access-Control-Max-Age Header', 'wp-graphql-smart-cache' ),
+						'desc'              => __( 'Global Max-Age HTTP header. Integer value, greater or equal to zero.', 'wp-graphql-smart-cache' ),
+						'type'              => 'number',
+						'sanitize_callback' => function ( $value ) {
+							if ( $value < 0 || ! is_numeric( $value ) ) {
+								return 0;
+							}
+							return intval( $value );
+						},
 					]
 				);
 
@@ -119,8 +119,8 @@ class Settings {
 					'graphql_cache_section',
 					[
 						'name'    => 'cache_toggle',
-						'label'   => __( 'GraphQL Object Cache', 'wp-graphql-smart-cache' ),
-						'desc'    => __( 'Store and return results of GraphQL Queries in the Object cache until they have expired (see below) or a related action has evicted the cached response.', 'wp-graphql-smart-cache' ),
+						'label'   => __( 'Use Object Cache', 'wp-graphql-smart-cache' ),
+						'desc'    => __( 'Use local object or transient cache to save entire GraphQL query results, for improved speed and performance. Store and return results of GraphQL Queries in the Object cache until they have expired (see below) or a related action has evicted the cached response.', 'wp-graphql-smart-cache' ),
 						'type'    => 'checkbox',
 						'default' => 'off',
 					]
@@ -147,8 +147,8 @@ class Settings {
 					'graphql_cache_section',
 					[
 						'name'              => 'purge_all',
-						'label'             => __( 'Purge GraphQL Object Cache', 'wp-graphql-smart-cache' ),
-						'desc'              => __( 'Select this box and click the save button to purge all responses stored in the GraphQL Object Cache.', 'wp-graphql-smart-cache' ),
+						'label'             => __( 'Purge Now!', 'wp-graphql-smart-cache' ),
+						'desc'              => __( 'Purge GraphQL Cache. Select this box and click the save button to purge all responses stored in the GraphQL Cache.', 'wp-graphql-smart-cache' ),
 						'type'              => 'checkbox',
 						'default'           => 'off',
 						'sanitize_callback' => function ( $value ) {
