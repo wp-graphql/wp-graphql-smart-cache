@@ -43,7 +43,6 @@ class Document {
 					'singular_name' => __( 'GraphQLQuery', 'wp-graphql-smart-cache' ),
 				],
 				'public'              => false,
-				'publicly_queryable'  => true,
 				'show_ui'             => Settings::show_in_admin(),
 				'taxonomies'          => [
 					self::ALIAS_TAXONOMY_NAME,
