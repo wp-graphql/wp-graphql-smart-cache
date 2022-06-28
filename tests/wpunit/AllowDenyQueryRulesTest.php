@@ -1,7 +1,7 @@
 <?php
 /**
  * Test the allow/deny selection for individual query grant access.
- * 
+ *
  * 		$option['graphql_persisted_queries_section'] = [
  *			'grant_mode' => 'public',
  *		];
@@ -26,7 +26,7 @@ class AllowDenyQueryRulesTest extends \Codeception\TestCase\WPTestCase {
 
 	/**
 	 * Set a persisted query with id.
-	 * 
+	 *
 	 * @param query_sting The graphql query
 	 * @param grant Grant allow, deny, default, false
 	 *
@@ -96,25 +96,25 @@ class AllowDenyQueryRulesTest extends \Codeception\TestCase\WPTestCase {
 		$query_string = 'query setAsDenied { __typename }';
 		$query_id = $this->_createAPersistedQuery( $query_string, Grant::DENY );
 		$result = graphql( [ 'query' => $query_string ] );
-		$this->_assertError( $result, 'This persisted query document has been blocked.' );
+		$this->_assertError( $result, 'This query document has been blocked.' );
 
 		// Verify default query doesn't work
 		$query_string = 'query setAsDefault { __typename }';
 		$query_id = $this->_createAPersistedQuery( $query_string, Grant::USE_DEFAULT );
 		$result = graphql( [ 'query' => $query_string ] );
-		$this->_assertError( $result, 'This persisted query document has been blocked.' );
+		$this->_assertError( $result, 'This query document has been blocked.' );
 
 		// Verify no selection doesn't work
 		$query_string = 'query setAsNone { __typename }';
 		$query_id = $this->_createAPersistedQuery( $query_string, Grant::NOT_SELECTED_DEFAULT );
 		$result = graphql( [ 'query' => $query_string ] );
-		$this->_assertError( $result, 'This persisted query document has been blocked.' );
+		$this->_assertError( $result, 'This query document has been blocked.' );
 
 		// Verify a non-persisted query doesn't work
 		$post_id = $this->tester->factory()->post->create();
 		$non_persisted_query = 'query notPersisted { __typename }';
 		$result = graphql( [ 'query' => $non_persisted_query ] );
-		$this->_assertError( $result, 'Not Found. Only specific persisted queries allowed.' );
+		$this->_assertError( $result, 'Not Found. Only pre-defined queries are allowed.' );
 	}
 
 	public function testWhenGlobalDenySomeIsSet() {
@@ -131,7 +131,7 @@ class AllowDenyQueryRulesTest extends \Codeception\TestCase\WPTestCase {
 		$query_string = 'query setAsDenied { __typename }';
 		$query_id = $this->_createAPersistedQuery( $query_string, Grant::DENY );
 		$result = graphql( [ 'query' => $query_string ] );
-		$this->_assertError( $result, 'This persisted query document has been blocked.' );
+		$this->_assertError( $result, 'This query document has been blocked.' );
 
 		// Verify default query works
 		$query_string = 'query setAsDefault { __typename }';
