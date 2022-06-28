@@ -1,6 +1,6 @@
 <?php
 
-namespace WPGraphQL\Labs;
+namespace WPGraphQL\SmartCache;
 
 use SebastianBergmann\Timer\Timer;
 use SebastianBergmann\Timer\Duration;

@@ -5,7 +5,7 @@
  * invalidated for nodes, queries, urls.
  */
 
-namespace WPGraphQL\Labs\Cache;
+namespace WPGraphQL\SmartCache\Cache;
 
 use Exception;
 use GraphQL\Error\SyntaxError;
@@ -19,7 +19,7 @@ use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Schema;
 use GraphQL\Utils\TypeInfo;
 use WPGraphQL\AppContext;
-use WPGraphQL\Labs\Document;
+use WPGraphQL\SmartCache\Document;
 use WPGraphQL\Request;
 
 class Collection extends Query {

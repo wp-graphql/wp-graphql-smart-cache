@@ -1,9 +1,9 @@
 <?php
-namespace WPGraphQL\Labs;
+namespace WPGraphQL\SmartCache;
 
-use WPGraphQL\Labs\Cache\Collection;
+use WPGraphQL\SmartCache\Cache\Collection;
 
-class UserCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches {
+class UserCacheInvalidationTest extends \TestCase\WPGraphQLSmartCache\TestCase\WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches {
 
     public $collection;
 

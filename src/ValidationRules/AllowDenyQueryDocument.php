@@ -1,6 +1,6 @@
 <?php
 
-namespace WPGraphQL\Labs\ValidationRules;
+namespace WPGraphQL\SmartCache\ValidationRules;
 
 use GraphQL\Error\Error;
 use GraphQL\Language\AST\NodeKind;
@@ -8,14 +8,14 @@ use GraphQL\Language\AST\DocumentNode;
 use GraphQL\Validator\Rules\ValidationRule;
 use GraphQL\Validator\ValidationContext;
 
-use WPGraphQL\Labs\Document;
-use WPGraphQL\Labs\Document\Grant;
-use WPGraphQL\Labs\Utils;
+use WPGraphQL\SmartCache\Document;
+use WPGraphQL\SmartCache\Document\Grant;
+use WPGraphQL\SmartCache\Utils;
 
 /**
  * Class AllowOrDenyQuery
  *
- * @package WPGraphQL\Labs\Rules
+ * @package WPGraphQL\SmartCache\Rules
  */
 class AllowDenyQueryDocument extends ValidationRule {
 
@@ -85,11 +85,11 @@ class AllowDenyQueryDocument extends ValidationRule {
 	}
 
 	public static function deniedDocumentMessage() {
-		return __( 'This query document has been blocked.', 'wp-graphql-labs' );
+		return __( 'This query document has been blocked.', 'wp-graphql-smart-cache' );
 	}
 
 	public static function notFoundDocumentMessage() {
-		return __( 'Not Found. Only pre-defined queries are allowed.', 'wp-graphql-labs' );
+		return __( 'Not Found. Only pre-defined queries are allowed.', 'wp-graphql-smart-cache' );
 	}
 
 }

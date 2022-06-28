@@ -2,15 +2,15 @@
 /**
  * Content
  *
- * @package Wp_Graphql_Labs
+ * @package Wp_Graphql_Smart_Cache
  */
 
-namespace WPGraphQL\Labs\Admin;
+namespace WPGraphQL\SmartCache\Admin;
 
-use WPGraphQL\Labs\AdminErrors;
-use WPGraphQL\Labs\Document;
-use WPGraphQL\Labs\Document\Grant;
-use WPGraphQL\Labs\Document\MaxAge;
+use WPGraphQL\SmartCache\AdminErrors;
+use WPGraphQL\SmartCache\Document;
+use WPGraphQL\SmartCache\Document\Grant;
+use WPGraphQL\SmartCache\Document\MaxAge;
 use GraphQL\Error\SyntaxError;
 use GraphQL\Server\RequestError;
 
@@ -200,10 +200,10 @@ class Editor {
 		$post = get_post();
 		if ( $post && Document::TYPE_NAME === $post->post_type ) {
 			if ( 'Excerpt' === $string ) {
-				return __( 'Description', 'wp-graphql-labs' );
+				return __( 'Description', 'wp-graphql-smart-cache' );
 			}
 			if ( 'Excerpts are optional hand-crafted summaries of your content that can be used in your theme. <a href="%s">Learn more about manual excerpts</a>.' === $string ) {
-				return __( 'Add the query description.', 'wp-graphql-labs' );
+				return __( 'Add the query description.', 'wp-graphql-smart-cache' );
 			}
 		}
 		return $string;
@@ -214,7 +214,7 @@ class Editor {
 	 */
 	public function add_description_column_to_admin_cb( $columns ) {
 		// Use 'description' as the text the user sees
-		$columns['excerpt'] = __( 'Description', 'wp-graphql-labs' );
+		$columns['excerpt'] = __( 'Description', 'wp-graphql-smart-cache' );
 		return $columns;
 	}
 

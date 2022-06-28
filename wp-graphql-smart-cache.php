@@ -1,26 +1,26 @@
 <?php
 /**
- * Plugin Name:     WP GraphQL Labs
- * Plugin URI:      PLUGIN SITE HERE
- * Description:     Development projects for WP Graphql for WordPress
+ * Plugin Name:     WP GraphQL Smart Cache
+ * Plugin URI:      https://github.com/wp-graphql/wp-graphql-smart-cache
+ * Description:     Smart Caching and Cache Invalidation for WPGraphQL
  * Author:          WPGraphQL
  * Author URI:      http://www.wpgraphql.com
  * Domain Path:     /languages
  * Version:         0.1.0-alpha
  *
- * Persisted Queries and Caching
+ * Persisted Queries and Caching for WPGraphQL
  */
 
-namespace WPGraphQL\Labs;
+namespace WPGraphQL\SmartCache;
 
-use WPGraphQL\Labs\Cache\Collection;
-use WPGraphQL\Labs\Cache\Invalidation;
-use WPGraphQL\Labs\Cache\Results;
-use WPGraphQL\Labs\Admin\Editor;
-use WPGraphQL\Labs\Admin\Settings;
-use WPGraphQL\Labs\Document\Description;
-use WPGraphQL\Labs\Document\Grant;
-use WPGraphQL\Labs\Document\MaxAge;
+use WPGraphQL\SmartCache\Cache\Collection;
+use WPGraphQL\SmartCache\Cache\Invalidation;
+use WPGraphQL\SmartCache\Cache\Results;
+use WPGraphQL\SmartCache\Admin\Editor;
+use WPGraphQL\SmartCache\Admin\Settings;
+use WPGraphQL\SmartCache\Document\Description;
+use WPGraphQL\SmartCache\Document\Grant;
+use WPGraphQL\SmartCache\Document\MaxAge;
 use WPGraphQL\Model\Avatar;
 use WPGraphQL\Model\Comment;
 use WPGraphQL\Model\Plugin;
@@ -55,7 +55,7 @@ add_action(
 	'graphql_server_config',
 	function ( \GraphQL\Server\ServerConfig $config ) {
 		$config->setPersistentQueryLoader(
-			[ '\WPGraphQL\Labs\Document\Loader', 'by_query_id' ]
+			[ '\WPGraphQL\SmartCache\Document\Loader', 'by_query_id' ]
 		);
 	},
 	10,
@@ -220,7 +220,7 @@ add_action(
 			2
 		);
 
-		add_filter( 'graphql_wp_interface_type_config', 'WPGraphQL\Labs\graphql_add_model_to_type_config', 10, 2 );
-		add_filter( 'graphql_wp_object_type_config', 'WPGraphQL\Labs\graphql_add_model_to_type_config', 10, 2 );
+		add_filter( 'graphql_wp_interface_type_config', 'WPGraphQL\SmartCache\graphql_add_model_to_type_config', 10, 2 );
+		add_filter( 'graphql_wp_object_type_config', 'WPGraphQL\SmartCache\graphql_add_model_to_type_config', 10, 2 );
 	}
 );

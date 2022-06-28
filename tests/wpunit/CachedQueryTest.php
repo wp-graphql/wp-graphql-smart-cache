@@ -2,10 +2,10 @@
 
 namespace WPGraphQL\Cache;
 
-use WPGraphQL\Labs\Cache\Query;
-use WPGraphQL\Labs\Cache\Results;
-use WPGraphQL\Labs\Document;
-use WPGraphQL\Labs\Utils;
+use WPGraphQL\SmartCache\Cache\Query;
+use WPGraphQL\SmartCache\Cache\Results;
+use WPGraphQL\SmartCache\Document;
+use WPGraphQL\SmartCache\Utils;
 
 /**
  * Test the content class
@@ -231,7 +231,7 @@ class CachedQueryTest extends \Codeception\TestCase\WPTestCase {
 			}
 		}";
 
-		// Thought, capture a before and after time around the graphql query. Add the ttl seconds to each and make sure the 
+		// Thought, capture a before and after time around the graphql query. Add the ttl seconds to each and make sure the
 		// transient timeout is between the two inclusively.
 		$results_object = new Results();
 		$key = $results_object->the_results_key( null, $query );

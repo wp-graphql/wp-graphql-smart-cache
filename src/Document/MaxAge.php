@@ -2,14 +2,14 @@
 /**
  * The max age admin and filter for individual query documents.
  *
- * @package Wp_Graphql_Labs
+ * @package Wp_Graphql_Smart_Cache
  */
 
-namespace WPGraphQL\Labs\Document;
+namespace WPGraphQL\SmartCache\Document;
 
-use WPGraphQL\Labs\Admin\Settings;
-use WPGraphQL\Labs\Document;
-use WPGraphQL\Labs\Utils;
+use WPGraphQL\SmartCache\Admin\Settings;
+use WPGraphQL\SmartCache\Document;
+use WPGraphQL\SmartCache\Utils;
 use GraphQL\Server\RequestError;
 
 class MaxAge {
@@ -23,16 +23,16 @@ class MaxAge {
 			self::TAXONOMY_NAME,
 			Document::TYPE_NAME,
 			[
-				'description'        => __( 'HTTP Access-Control-Max-Age Header for a saved GraphQL document', 'wp-graphql-labs' ),
+				'description'        => __( 'HTTP Access-Control-Max-Age Header for a saved GraphQL document', 'wp-graphql-smart-cache' ),
 				'labels'             => [
-					'name' => __( 'Max-Age Header', 'wp-graphql-labs' ),
+					'name' => __( 'Max-Age Header', 'wp-graphql-smart-cache' ),
 				],
 				'hierarchical'       => false,
 				'show_admin_column'  => true,
 				'show_in_menu'       => Settings::show_in_admin(),
 				'show_in_quick_edit' => false,
 				'meta_box_cb'        => [
-					'WPGraphQL\Labs\Admin\Editor',
+					'WPGraphQL\SmartCache\Admin\Editor',
 					'maxage_input_box_cb',
 				],
 				'show_in_graphql'    => false,
@@ -46,7 +46,7 @@ class MaxAge {
 				$register_type_name = ucfirst( Document::GRAPHQL_NAME );
 				$config             = [
 					'type'        => 'Int',
-					'description' => __( 'HTTP Access-Control-Max-Age Header for a saved GraphQL document', 'wp-graphql-labs' ),
+					'description' => __( 'HTTP Access-Control-Max-Age Header for a saved GraphQL document', 'wp-graphql-smart-cache' ),
 				];
 
 				register_graphql_field( 'Create' . $register_type_name . 'Input', 'max_age_header', $config );
@@ -134,7 +134,7 @@ class MaxAge {
 	public function save( $post_id, $value ) {
 		if ( ! $this->valid( $value ) ) {
 			// Translators: The placeholder is the max-age-header input value
-			throw new RequestError( sprintf( __( 'Invalid max age header value "%s". Must be greater than or equal to zero', 'wp-graphql-labs' ), $value ) );
+			throw new RequestError( sprintf( __( 'Invalid max age header value "%s". Must be greater than or equal to zero', 'wp-graphql-smart-cache' ), $value ) );
 		}
 
 		return wp_set_post_terms( $post_id, $value, self::TAXONOMY_NAME );

@@ -2,12 +2,12 @@
 /**
  * Save the persisted query description text in the post type excpert field.
  *
- * @package Wp_Graphql_Labs
+ * @package Wp_Graphql_Smart_Cache
  */
 
-namespace WPGraphQL\Labs\Document;
+namespace WPGraphQL\SmartCache\Document;
 
-use WPGraphQL\Labs\Document;
+use WPGraphQL\SmartCache\Document;
 
 class Description {
 
@@ -19,7 +19,7 @@ class Description {
 				$register_type_name = ucfirst( Document::GRAPHQL_NAME );
 				$config             = [
 					'type'        => 'String',
-					'description' => __( 'Description for the saved GraphQL document', 'wp-graphql-labs' ),
+					'description' => __( 'Description for the saved GraphQL document', 'wp-graphql-smart-cache' ),
 				];
 
 				register_graphql_field( 'Create' . $register_type_name . 'Input', 'description', $config );

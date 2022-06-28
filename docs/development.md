@@ -1,4 +1,4 @@
-The wp-graphql-labs plugin.
+The wp-graphql-smart-cache plugin.
 
 Local development with docker to build the app and a local running WordPress. As well as run the test suites.
 
@@ -18,7 +18,7 @@ One option is to use a docker image to run php/composer:
 
 # Docker App Image
 
-This section describes how to setup and run this plugin, WP and the wp-graphql plugin locally with docker.  It requires building the images at least once, which can take a few moments the first time. 
+This section describes how to setup and run this plugin, WP and the wp-graphql plugin locally with docker.  It requires building the images at least once, which can take a few moments the first time.
 
 ## Build
 
@@ -42,7 +42,7 @@ Build using wp-graphql image from docker hub registry, instead of building your 
 
 Use this command if you want to build a specific image. If you ran the docker-compose command above, this is not necessary.
 
-    docker build -f docker/Dockerfile -t wp-graphql-labs:latest-wp5.6-php7.4 --build-arg WP_VERSION=5.6 --build-arg PHP_VERSION=8.0
+    docker build -f docker/Dockerfile -t wp-graphql-smart-cache:latest-wp5.6-php7.4 --build-arg WP_VERSION=5.6 --build-arg PHP_VERSION=8.0
 
 ## Run
 
@@ -70,7 +70,7 @@ Use this command to stop the running app and database.
 
 ## Attach local wp-graphql plugin
 
-Add this to volumes section in docker-compose.yml if you have a copy of the wp-graphql plugin you'd like to use in the running app. 
+Add this to volumes section in docker-compose.yml if you have a copy of the wp-graphql plugin you'd like to use in the running app.
 
       - './local-wp-graphql:/var/www/html/wp-content/plugins/wp-graphql'
 
@@ -80,7 +80,7 @@ Use this section to run the plugin codeception test suites.
 
 ## Build
 
-Use one of the following commands to build the test docker image. 
+Use one of the following commands to build the test docker image.
 
 ### docker-compose
 
@@ -88,9 +88,9 @@ If you ran the docker-compose build command, above, this step is not necessary a
 
 ### docker
 
-    WP_VERSION=5.9 PHP_VERSION=8.0 docker build -f docker/Dockerfile.testing -t wp-graphql-labs-testing:latest-wp5.7.2-php7.4 --build-arg WP_VERSION=5.9 --build-arg PHP_VERSION=8.0 --build-arg DOCKER_REGISTRY=ghcr.io/wp-graphql/ .
+    WP_VERSION=5.9 PHP_VERSION=8.0 docker build -f docker/Dockerfile.testing -t wp-graphql-smart-cache-testing:latest-wp5.7.2-php7.4 --build-arg WP_VERSION=5.9 --build-arg PHP_VERSION=8.0 --build-arg DOCKER_REGISTRY=ghcr.io/wp-graphql/ .
 
-    docker build -f docker/Dockerfile.testing -t wp-graphql-labs-testing:latest-wp5.7.2-php7.4 --build-arg WP_VERSION=5.9 --build-arg PHP_VERSION=8.0 --build-arg DOCKER_REGISTRY=ghcr.io/wp-graphql/ .
+    docker build -f docker/Dockerfile.testing -t wp-graphql-smart-cache-testing:latest-wp5.7.2-php7.4 --build-arg WP_VERSION=5.9 --build-arg PHP_VERSION=8.0 --build-arg DOCKER_REGISTRY=ghcr.io/wp-graphql/ .
 
 ## Run
 

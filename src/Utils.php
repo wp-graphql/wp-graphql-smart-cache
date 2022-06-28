@@ -2,10 +2,10 @@
 /**
  * Content
  *
- * @package Wp_Graphql_Labs
+ * @package Wp_Graphql_Smart_Cache
  */
 
-namespace WPGraphQL\Labs;
+namespace WPGraphQL\SmartCache;
 
 class Utils {
 

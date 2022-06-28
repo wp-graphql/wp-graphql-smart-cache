@@ -1,6 +1,6 @@
 <?php
 
-namespace WPGraphQL\Labs;
+namespace WPGraphQL\SmartCache;
 
 class MutationCreateDocumentTest extends \Codeception\TestCase\WPTestCase {
 

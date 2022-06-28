@@ -1,8 +1,8 @@
 <?php
 
-namespace WPGraphQL\Labs;
+namespace WPGraphQL\SmartCache;
 
-use WPGraphQL\Labs\Storage\Transient;
+use WPGraphQL\SmartCache\Storage\Transient;
 
 class StorageTransientTest extends \Codeception\TestCase\WPTestCase {
 

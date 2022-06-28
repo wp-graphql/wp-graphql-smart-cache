@@ -1,6 +1,6 @@
 <?php
 
-namespace WPGraphQL\Labs;
+namespace WPGraphQL\SmartCache;
 
 class MutationDeleteDocumentTest extends \Codeception\TestCase\WPTestCase {
 

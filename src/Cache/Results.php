@@ -4,9 +4,9 @@
  * If not cached, when return results to client, save results to transient cache for future requests.
  */
 
-namespace WPGraphQL\Labs\Cache;
+namespace WPGraphQL\SmartCache\Cache;
 
-use WPGraphQL\Labs\Admin\Settings;
+use WPGraphQL\SmartCache\Admin\Settings;
 
 class Results extends Query {
 
