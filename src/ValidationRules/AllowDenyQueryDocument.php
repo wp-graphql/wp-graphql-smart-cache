@@ -85,11 +85,11 @@ class AllowDenyQueryDocument extends ValidationRule {
 	}
 
 	public static function deniedDocumentMessage() {
-		return __( 'This persisted query document has been blocked.', 'wp-graphql-labs' );
+		return __( 'This query document has been blocked.', 'wp-graphql-labs' );
 	}
 
 	public static function notFoundDocumentMessage() {
-		return __( 'Not Found. Only specific persisted queries allowed.', 'wp-graphql-labs' );
+		return __( 'Not Found. Only pre-defined queries are allowed.', 'wp-graphql-labs' );
 	}
 
 }
