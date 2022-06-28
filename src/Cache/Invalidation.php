@@ -1,5 +1,5 @@
 <?php
-namespace WPGraphQL\Labs\Cache;
+namespace WPGraphQL\SmartCache\Cache;
 
 use GraphQLRelay\Relay;
 use WP_Post;

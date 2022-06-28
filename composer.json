@@ -1,12 +1,12 @@
 {
-    "name": "wp-graphql/wp-graphql-labs",
-    "description": "Lab Work for wp-graphql",
+    "name": "wp-graphql/wp-graphql-smart-cache",
+    "description": "Smart Caching and Cache Invalidation for WPGraphQL",
     "type": "wordpress-plugin",
     "autoload": {
         "psr-4": {
             "WPGraphQL\\PersistedQueries\\": "src/",
             "WPGraphQL\\Cache\\": "src/Cache",
-            "WPGraphQL\\Labs\\": "src"
+            "WPGraphQL\\SmartCache\\": "src"
         }
     },
     "autoload-dev": {
@@ -14,7 +14,7 @@
         "tests/_data/config.php"
       ],
       "psr-4": {
-        "TestCase\\WPGraphQLLabs\\": "tests/_support/"
+        "TestCase\\WPGraphQLSmartCache\\": "tests/_support/"
       }
     },
     "require-dev": {

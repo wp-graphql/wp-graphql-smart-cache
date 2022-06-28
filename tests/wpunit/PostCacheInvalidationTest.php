@@ -1,6 +1,6 @@
 <?php
 
-class PostCacheInvalidationTest extends \TestCase\WPGraphQLLabs\TestCase\WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches {
+class PostCacheInvalidationTest extends \TestCase\WPGraphQLSmartCache\TestCase\WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches {
 
 	public function setUp(): void {
 		parent::setUp();

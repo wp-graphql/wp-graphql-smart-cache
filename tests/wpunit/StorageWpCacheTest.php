@@ -1,8 +1,8 @@
 <?php
 
-namespace WPGraphQL\Labs;
+namespace WPGraphQL\SmartCache;
 
-use WPGraphQL\Labs\Storage\WpCache;
+use WPGraphQL\SmartCache\Storage\WpCache;
 
 class StorageWpCacheTest extends \Codeception\TestCase\WPTestCase {
 

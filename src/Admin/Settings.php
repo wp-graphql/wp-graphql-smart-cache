@@ -1,9 +1,9 @@
 <?php
 
-namespace WPGraphQL\Labs\Admin;
+namespace WPGraphQL\SmartCache\Admin;
 
-use WPGraphQL\Labs\Cache\Results;
-use WPGraphQL\Labs\Document\Grant;
+use WPGraphQL\SmartCache\Cache\Results;
+use WPGraphQL\SmartCache\Document\Grant;
 
 class Settings {
 
@@ -43,8 +43,8 @@ class Settings {
 				register_graphql_settings_section(
 					'graphql_persisted_queries_section',
 					[
-						'title' => __( 'Network Cache', 'wp-graphql-labs' ),
-						'desc'  => __( 'These settings apply to GraphQL queries coming over HTTP requests.', 'wp-graphql-labs' ),
+						'title' => __( 'Network Cache', 'wp-graphql-smart-cache' ),
+						'desc'  => __( 'These settings apply to GraphQL queries coming over HTTP requests.', 'wp-graphql-smart-cache' ),
 					]
 				);
 
@@ -52,8 +52,8 @@ class Settings {
 					'graphql_persisted_queries_section',
 					[
 						'name'              => 'global_max_age',
-						'label'             => __( 'Access-Control-Max-Age Header', 'wp-graphql-labs' ),
-						'desc'              => __( 'Global Max-Age HTTP header. Integer value, greater or equal to zero.', 'wp-graphql-labs' ),
+						'label'             => __( 'Access-Control-Max-Age Header', 'wp-graphql-smart-cache' ),
+						'desc'              => __( 'Global Max-Age HTTP header. Integer value, greater or equal to zero.', 'wp-graphql-smart-cache' ),
 						'type'              => 'number',
 						'sanitize_callback' => function ( $value ) {
 							if ( $value < 0 || ! is_numeric( $value ) ) {
@@ -68,8 +68,8 @@ class Settings {
 					'graphql_persisted_queries_section',
 					[
 						'name'              => Grant::GLOBAL_SETTING_NAME,
-						'label'             => __( 'Allow/Deny Mode', 'wp-graphql-labs' ),
-						'desc'              => __( 'Allow or deny specific queries. Or leave your graphql endpoint wideopen with the public option (not recommended).', 'wp-graphql-labs' ),
+						'label'             => __( 'Allow/Deny Mode', 'wp-graphql-smart-cache' ),
+						'desc'              => __( 'Allow or deny specific queries. Or leave your graphql endpoint wideopen with the public option (not recommended).', 'wp-graphql-smart-cache' ),
 						'type'              => 'radio',
 						'default'           => Grant::GLOBAL_DEFAULT,
 						'options'           => [
@@ -99,8 +99,8 @@ class Settings {
 					'graphql_persisted_queries_section',
 					[
 						'name'    => 'editor_display',
-						'label'   => __( 'Display saved queries in admin editor', 'wp-graphql-labs' ),
-						'desc'    => __( 'Toggle to show saved queries in wp-admin left side menu', 'wp-graphql-labs' ),
+						'label'   => __( 'Display saved queries in admin editor', 'wp-graphql-smart-cache' ),
+						'desc'    => __( 'Toggle to show saved queries in wp-admin left side menu', 'wp-graphql-smart-cache' ),
 						'type'    => 'checkbox',
 						'default' => 'off',
 					]
@@ -110,8 +110,8 @@ class Settings {
 				register_graphql_settings_section(
 					'graphql_cache_section',
 					[
-						'title' => __( 'Object Cache', 'wp-graphql-labs' ),
-						'desc'  => __( 'Use local object or transient cache to save entire GraphQL query results, for improved speed and performance.', 'wp-graphql-labs' ),
+						'title' => __( 'Object Cache', 'wp-graphql-smart-cache' ),
+						'desc'  => __( 'Use local object or transient cache to save entire GraphQL query results, for improved speed and performance.', 'wp-graphql-smart-cache' ),
 					]
 				);
 
@@ -119,8 +119,8 @@ class Settings {
 					'graphql_cache_section',
 					[
 						'name'    => 'cache_toggle',
-						'label'   => __( 'GraphQL Object Cache', 'wp-graphql-labs' ),
-						'desc'    => __( 'Store and return results of GraphQL Queries in the Object cache until they have expired (see below) or a related action has evicted the cached response.', 'wp-graphql-labs' ),
+						'label'   => __( 'GraphQL Object Cache', 'wp-graphql-smart-cache' ),
+						'desc'    => __( 'Store and return results of GraphQL Queries in the Object cache until they have expired (see below) or a related action has evicted the cached response.', 'wp-graphql-smart-cache' ),
 						'type'    => 'checkbox',
 						'default' => 'off',
 					]
@@ -130,9 +130,9 @@ class Settings {
 					'graphql_cache_section',
 					[
 						'name'              => 'global_ttl',
-						'label'             => __( 'Object Cache Expiration', 'wp-graphql-labs' ),
+						'label'             => __( 'Object Cache Expiration', 'wp-graphql-smart-cache' ),
 						// translators: the global cache ttl default value
-						'desc'              => sprintf( __( 'Time, in seconds, to store the result in cache for an individual GraphQL request. Cached results will be evicted after this amount of time, if not before by a related data eviction. Value should be an integer, greater or equal to zero. Default %1$s (%2$s minutes).', 'wp-graphql-labs' ), Results::GLOBAL_DEFAULT_TTL, ( Results::GLOBAL_DEFAULT_TTL / 60 ) ),
+						'desc'              => sprintf( __( 'Time, in seconds, to store the result in cache for an individual GraphQL request. Cached results will be evicted after this amount of time, if not before by a related data eviction. Value should be an integer, greater or equal to zero. Default %1$s (%2$s minutes).', 'wp-graphql-smart-cache' ), Results::GLOBAL_DEFAULT_TTL, ( Results::GLOBAL_DEFAULT_TTL / 60 ) ),
 						'type'              => 'number',
 						'sanitize_callback' => function ( $value ) {
 							if ( $value < 0 || ! is_numeric( $value ) ) {
@@ -147,8 +147,8 @@ class Settings {
 					'graphql_cache_section',
 					[
 						'name'              => 'purge_all',
-						'label'             => __( 'Purge GraphQL Object Cache', 'wp-graphql-labs' ),
-						'desc'              => __( 'Select this box and click the save button to purge all responses stored in the GraphQL Object Cache.', 'wp-graphql-labs' ),
+						'label'             => __( 'Purge GraphQL Object Cache', 'wp-graphql-smart-cache' ),
+						'desc'              => __( 'Select this box and click the save button to purge all responses stored in the GraphQL Object Cache.', 'wp-graphql-smart-cache' ),
 						'type'              => 'checkbox',
 						'default'           => 'off',
 						'sanitize_callback' => function ( $value ) {
@@ -161,8 +161,8 @@ class Settings {
 					'graphql_cache_section',
 					[
 						'name'              => 'purge_all_timestamp',
-						'label'             => __( 'Did you purge the cache?', 'wp-graphql-labs' ),
-						'desc'              => __( 'This field displays the last time the purge all was invoked on this page.', 'wp-graphql-labs' ),
+						'label'             => __( 'Did you purge the cache?', 'wp-graphql-smart-cache' ),
+						'desc'              => __( 'This field displays the last time the purge all was invoked on this page.', 'wp-graphql-smart-cache' ),
 						'type'              => 'text',
 						'sanitize_callback' => function ( $value ) {
 							$existing_purge_all_time = self::caching_purge_timestamp();

@@ -1,6 +1,6 @@
 <?php
 
-namespace WPGraphQL\Labs\Storage;
+namespace WPGraphQL\SmartCache\Storage;
 
 class WpCache {
 

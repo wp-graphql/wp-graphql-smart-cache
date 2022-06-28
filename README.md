@@ -23,7 +23,7 @@ Example POST data:
 }
 ```
 
-After that successful POST request, you can use the GET request to invoke the query by queryId. 
+After that successful POST request, you can use the GET request to invoke the query by queryId.
 
     docker run -v $PWD:/app composer install --optimize-autoloader
 
@@ -37,7 +37,7 @@ Queries that require variables to execute the graphql query, will need the varia
 
 Here is an example of invoking a saved query and providing variables.
 
-If this is the saved query in the system, 
+If this is the saved query in the system,
 
 POST
 
@@ -126,5 +126,5 @@ Select the GraphQL Settings tab.
 -
 Check the box to enable results caching.
 
-![The checkbox to enable the results cache](./docs/images/wp-graphql-labs-settings-cache.png).
+![The checkbox to enable the results cache](./docs/images/wp-graphql-smart-cache-settings-cache.png).
 

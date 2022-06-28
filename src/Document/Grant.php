@@ -2,14 +2,14 @@
 /**
  * Content
  *
- * @package Wp_Graphql_Labs
+ * @package Wp_Graphql_Smart_Cache
  */
 
-namespace WPGraphQL\Labs\Document;
+namespace WPGraphQL\SmartCache\Document;
 
-use WPGraphQL\Labs\Admin\Settings;
-use WPGraphQL\Labs\Document;
-use WPGraphQL\Labs\ValidationRules\AllowDenyQueryDocument;
+use WPGraphQL\SmartCache\Admin\Settings;
+use WPGraphQL\SmartCache\Document;
+use WPGraphQL\SmartCache\ValidationRules\AllowDenyQueryDocument;
 use GraphQL\Server\RequestError;
 
 class Grant {
@@ -35,16 +35,16 @@ class Grant {
 			self::TAXONOMY_NAME,
 			Document::TYPE_NAME,
 			[
-				'description'        => __( 'Allow/Deny access grant for a saved GraphQL query document', 'wp-graphql-labs' ),
+				'description'        => __( 'Allow/Deny access grant for a saved GraphQL query document', 'wp-graphql-smart-cache' ),
 				'labels'             => [
-					'name' => __( 'Allow/Deny', 'wp-graphql-labs' ),
+					'name' => __( 'Allow/Deny', 'wp-graphql-smart-cache' ),
 				],
 				'hierarchical'       => false,
 				'show_admin_column'  => true,
 				'show_in_menu'       => Settings::show_in_admin(),
 				'show_in_quick_edit' => false,
 				'meta_box_cb'        => [
-					'WPGraphQL\Labs\Admin\Editor',
+					'WPGraphQL\SmartCache\Admin\Editor',
 					'grant_input_box_cb',
 				],
 				'show_in_graphql'    => false,
@@ -58,7 +58,7 @@ class Grant {
 				$register_type_name = ucfirst( Document::GRAPHQL_NAME );
 				$config             = [
 					'type'        => 'String',
-					'description' => __( 'Allow, deny or default access grant for specific query', 'wp-graphql-labs' ),
+					'description' => __( 'Allow, deny or default access grant for specific query', 'wp-graphql-smart-cache' ),
 				];
 
 				register_graphql_field( 'Create' . $register_type_name . 'Input', 'grant', $config );
@@ -99,7 +99,7 @@ class Grant {
 
 		if ( ! in_array( $input['grant'], [ self::ALLOW, self::DENY, self::USE_DEFAULT ], true ) ) {
 			// Translators: The placeholder is the input allow/deny value
-			throw new RequestError( sprintf( __( 'Invalid value for allow/deny grant: "%s"', 'wp-graphql-labs' ), $input['grant'] ) );
+			throw new RequestError( sprintf( __( 'Invalid value for allow/deny grant: "%s"', 'wp-graphql-smart-cache' ), $input['grant'] ) );
 		}
 
 		return $input;

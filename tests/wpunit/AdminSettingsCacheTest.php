@@ -1,8 +1,8 @@
 <?php
 
-namespace WPGraphQL\Labs;
+namespace WPGraphQL\SmartCache;
 
-use WPGraphQL\Labs\Admin\Settings;
+use WPGraphQL\SmartCache\Admin\Settings;
 
 /**
  * Test the wp-graphql request to cached query is faster

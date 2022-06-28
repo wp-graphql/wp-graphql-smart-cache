@@ -1,9 +1,9 @@
 <?php
-namespace WPGraphQL\Labs;
+namespace WPGraphQL\SmartCache;
 
-use TestCase\WPGraphQLLabs\TestCase\WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches;
+use TestCase\WPGraphQLSmartCache\TestCase\WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches;
 
-class MenuCacheInvalidationTest extends WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches {
+class MenuCacheInvalidationTest extends WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches {
 
 
 	public function setUp(): void {

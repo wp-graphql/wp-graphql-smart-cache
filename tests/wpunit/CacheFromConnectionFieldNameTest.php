@@ -1,9 +1,9 @@
 <?php
 
-namespace WPGraphQL\Labs;
+namespace WPGraphQL\SmartCache;
 
-use WPGraphQL\Labs\Cache\Collection;
-use WPGraphQL\Labs\Storage\Ephemeral;
+use WPGraphQL\SmartCache\Cache\Collection;
+use WPGraphQL\SmartCache\Storage\Ephemeral;
 use GraphQLRelay\Relay;
 
 class CacheFromConnectionFieldNameTest extends \Codeception\TestCase\WPTestCase {

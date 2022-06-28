@@ -8,11 +8,11 @@
  *
  */
 
-namespace WPGraphQL\Labs;
+namespace WPGraphQL\SmartCache;
 
-use WPGraphQL\Labs\Document;
-use WPGraphQL\Labs\Document\Grant;
-use WPGraphQL\Labs\Utils;
+use WPGraphQL\SmartCache\Document;
+use WPGraphQL\SmartCache\Document\Grant;
+use WPGraphQL\SmartCache\Utils;
 
 class AllowDenyQueryRulesTest extends \Codeception\TestCase\WPTestCase {
 

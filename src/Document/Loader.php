@@ -2,12 +2,12 @@
 /**
  * Storage
  *
- * @package Wp_Graphql_Labs
+ * @package Wp_Graphql_Smart_Cache
  */
 
-namespace WPGraphQL\Labs\Document;
+namespace WPGraphQL\SmartCache\Document;
 
-use WPGraphQL\Labs\Document;
+use WPGraphQL\SmartCache\Document;
 use GraphQL\Server\RequestError;
 
 class Loader {
@@ -28,7 +28,7 @@ class Loader {
 
 		if ( ! isset( $query ) ) {
 			// Translators: The placeholder is the persisted query id hash
-			throw new RequestError( __( 'PersistedQueryNotFound', 'wp-graphql-labs' ) );
+			throw new RequestError( __( 'PersistedQueryNotFound', 'wp-graphql-smart-cache' ) );
 		}
 
 		return $query;

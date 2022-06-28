@@ -1,5 +1,5 @@
 <?php
-namespace TestCase\WPGraphQLLabs\TestCase;
+namespace TestCase\WPGraphQLSmartCache\TestCase;
 
 use Exception;
 use Tests\WPGraphQL\TestCase\WPGraphQLTestCase;
@@ -8,9 +8,9 @@ use WP_Nav_Menu_Item;
 use WP_Post;
 use WP_Term;
 use WP_User;
-use WPGraphQL\Labs\Cache\Collection;
+use WPGraphQL\SmartCache\Cache\Collection;
 
-class WPGraphQLLabsTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestCase {
+class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQLTestCase {
 
 	/**
 	 * @var WP_User

@@ -1,8 +1,8 @@
 <?php
 
-namespace WPGraphQL\Labs;
+namespace WPGraphQL\SmartCache;
 
-use WPGraphQL\Labs\Storage\Ephemeral;
+use WPGraphQL\SmartCache\Storage\Ephemeral;
 
 class StorageEphemeralTest extends \Codeception\TestCase\WPTestCase {
 

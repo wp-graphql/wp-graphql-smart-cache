@@ -1,8 +1,8 @@
 <?php
 
-namespace WPGraphQL\Labs;
+namespace WPGraphQL\SmartCache;
 
-use WPGraphQL\Labs\Cache\Collection;
+use WPGraphQL\SmartCache\Cache\Collection;
 
 class CacheInvalidationTest extends \Codeception\TestCase\WPTestCase {
 

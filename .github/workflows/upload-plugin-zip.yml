@@ -19,13 +19,13 @@ jobs:
       - name: Create Artifact
         run: |
           mkdir plugin-build
-          composer archive -vvv --format=zip --file="plugin-build/wp-graphql-labs"
+          composer archive -vvv --format=zip --file="plugin-build/wp-graphql-smart-cache"
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
-          name: wp-graphql-labs
-          path: plugin-build/wp-graphql-labs.zip
+          name: wp-graphql-smart-cache
+          path: plugin-build/wp-graphql-smart-cache.zip
       - name: Upload release asset
         uses: softprops/action-gh-release@v1
         with:
-          files: plugin-build/wp-graphql-labs.zip
+          files: plugin-build/wp-graphql-smart-cache.zip

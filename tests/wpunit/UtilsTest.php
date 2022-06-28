@@ -2,12 +2,12 @@
 /**
  * Class SampleTest
  *
- * @package Wp_Graphql_Labs
+ * @package Wp_Graphql_Smart_Cache
  */
 
-namespace WPGraphQL\Labs;
+namespace WPGraphQL\SmartCache;
 
-use WPGraphQL\Labs\Utils;
+use WPGraphQL\SmartCache\Utils;
 
 /**
  * Test the content class

@@ -3,7 +3,7 @@
  * Nothing fancy here. Use in memory array to 'store' some data.
  * Makes a good test class.
  */
-namespace WPGraphQL\Labs\Storage;
+namespace WPGraphQL\SmartCache\Storage;
 
 class Ephemeral {
 
