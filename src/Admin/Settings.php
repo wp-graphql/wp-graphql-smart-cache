@@ -43,7 +43,8 @@ class Settings {
 				register_graphql_settings_section(
 					'graphql_persisted_queries_section',
 					[
-						'title' => __( 'Persisted Queries', 'wp-graphql-labs' ),
+						'title' => __( 'Network Cache', 'wp-graphql-labs' ),
+						'desc'  => __( 'These settings apply to GraphQL queries coming over HTTP requests.', 'wp-graphql-labs' ),
 					]
 				);
 
@@ -98,8 +99,8 @@ class Settings {
 					'graphql_persisted_queries_section',
 					[
 						'name'    => 'editor_display',
-						'label'   => __( 'Display queries in admin editor', 'wp-graphql-labs' ),
-						'desc'    => __( 'Toggle to show queries in wp-admin left side menu', 'wp-graphql-labs' ),
+						'label'   => __( 'Display saved queries in admin editor', 'wp-graphql-labs' ),
+						'desc'    => __( 'Toggle to show saved queries in wp-admin left side menu', 'wp-graphql-labs' ),
 						'type'    => 'checkbox',
 						'default' => 'off',
 					]
@@ -109,7 +110,8 @@ class Settings {
 				register_graphql_settings_section(
 					'graphql_cache_section',
 					[
-						'title' => __( 'Cache', 'wp-graphql-labs' ),
+						'title' => __( 'Object Cache', 'wp-graphql-labs' ),
+						'desc'  => __( 'Use local object or transient cache to save entire GraphQL query results.', 'wp-graphql-labs' ),
 					]
 				);
 
@@ -146,7 +148,7 @@ class Settings {
 					[
 						'name'              => 'purge_all',
 						'label'             => __( 'Purge The Cache?', 'wp-graphql-labs' ),
-						'desc'              => __( 'Select this box and save to purge the cache.', 'wp-graphql-labs' ),
+						'desc'              => __( 'Select this box and click the save button.', 'wp-graphql-labs' ),
 						'type'              => 'checkbox',
 						'default'           => 'off',
 						'sanitize_callback' => function ( $value ) {
@@ -159,8 +161,8 @@ class Settings {
 					'graphql_cache_section',
 					[
 						'name'              => 'purge_all_timestamp',
-						'label'             => __( 'Last time it was purged', 'wp-graphql-labs' ),
-						'desc'              => __( 'This field displays the last time the purge all was invoked.', 'wp-graphql-labs' ),
+						'label'             => __( 'Did you purge the cache?', 'wp-graphql-labs' ),
+						'desc'              => __( 'This field displays the last time the purge all was invoked on this page.', 'wp-graphql-labs' ),
 						'type'              => 'text',
 						'sanitize_callback' => function ( $value ) {
 							$existing_purge_all_time = self::caching_purge_timestamp();
