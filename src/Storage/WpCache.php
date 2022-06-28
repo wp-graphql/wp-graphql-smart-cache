@@ -28,7 +28,12 @@ class WpCache {
 	 * @return bool False if value was not set and true if value was set.
 	 */
 	public function set( $key, $data, $expire ) {
-		return wp_cache_set( $key, $data, $this->group_name, $expire );
+		return wp_cache_set(
+			$key,
+			is_array( $data ) ? $data : $data->toArray(),
+			$this->group_name,
+			$expire
+		);
 	}
 
 	/**
