@@ -78,7 +78,7 @@ class Results extends Query {
 		// construct the message to return
 		$message = [
 			'graphqlObjectCache' => [
-				'message'  => __( 'This response is cached by WPGraphQL Smart Cache', 'wp-graphql-smart-cache' ),
+				'message'  => __( 'This response was not executed at run-time but has been returned from the GraphQL Object Cache', 'wp-graphql-smart-cache' ),
 				'cacheKey' => $this->cache_key,
 			],
 		];
