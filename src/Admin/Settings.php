@@ -132,7 +132,7 @@ class Settings {
 						'name'              => 'global_ttl',
 						'label'             => __( 'Object Cache Expiration', 'wp-graphql-labs' ),
 						// translators: the global cache ttl default value
-						'desc'              => sprintf( __( 'Time, in seconds, to store the result in cache for an individual GraphQL request. Cached results will be evicted after this amount of time, if not before by a related data eviction. Value should be an integer, greater or equal to zero. Default %s (%s minutes).', 'wp-graphql-labs' ), Results::GLOBAL_DEFAULT_TTL, (Results::GLOBAL_DEFAULT_TTL/60) ),
+						'desc'              => sprintf( __( 'Time, in seconds, to store the result in cache for an individual GraphQL request. Cached results will be evicted after this amount of time, if not before by a related data eviction. Value should be an integer, greater or equal to zero. Default %1$s (%2$s minutes).', 'wp-graphql-labs' ), Results::GLOBAL_DEFAULT_TTL, ( Results::GLOBAL_DEFAULT_TTL / 60 ) ),
 						'type'              => 'number',
 						'sanitize_callback' => function ( $value ) {
 							if ( $value < 0 || ! is_numeric( $value ) ) {
