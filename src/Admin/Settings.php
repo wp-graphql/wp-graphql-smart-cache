@@ -110,7 +110,7 @@ class Settings {
 							if ( $value < 0 || ! is_numeric( $value ) ) {
 								return 0;
 							}
-							return intval( $value );
+							return (int) $value;
 						},
 					]
 				);
@@ -138,7 +138,7 @@ class Settings {
 							if ( $value < 0 || ! is_numeric( $value ) ) {
 								return null;
 							}
-							return intval( $value );
+							return (int) $value;
 						},
 					]
 				);

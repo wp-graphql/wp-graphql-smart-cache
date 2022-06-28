@@ -6,7 +6,7 @@
  * Author:          WPGraphQL
  * Author URI:      http://www.wpgraphql.com
  * Domain Path:     /languages
- * Version:         0.1.0-alpha
+ * Version:         0.1.1
  *
  * Persisted Queries and Caching for WPGraphQL
  */

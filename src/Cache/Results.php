@@ -12,10 +12,31 @@ class Results extends Query {
 
 	const GLOBAL_DEFAULT_TTL = 600;
 
+	/**
+	 * The cache key for the executed GraphQL Document
+	 *
+	 * @var string
+	 */
+	protected $cache_key = '';
+
+	/**
+	 * The cached response of a GraphQL Query execution. False if it doesn't exist.
+	 *
+	 * @var mixed|bool|array|object
+	 */
+	protected $cached_result;
+
 	public function init() {
+
+		$this->cached_result = false;
+
 		add_filter( 'pre_graphql_execute_request', [ $this, 'get_query_results_from_cache_cb' ], 10, 2 );
 		add_action( 'graphql_return_response', [ $this, 'save_query_results_to_cache_cb' ], 10, 7 );
 		add_action( 'wpgraphql_cache_purge_nodes', [ $this, 'purge_nodes_cb' ], 10, 2 );
+		add_filter( 'graphql_request_results', [
+			$this,
+			'add_cache_key_to_response_extensions',
+		], 10, 1 );
 
 		parent::init();
 	}
@@ -31,7 +52,42 @@ class Results extends Query {
 	 * @return string|false unique id for this request or false if query not provided
 	 */
 	public function the_results_key( $query_id, $query, $variables = null, $operation = null ) {
-		return $this->build_key( $query_id, $query, $variables, $operation );
+		$this->cache_key = $this->build_key( $query_id, $query, $variables, $operation );
+		return $this->cache_key;
+	}
+
+
+	/**
+	 * Add a message to the extensions when a GraphQL request is returned from the GraphQL Object Cache
+	 *
+	 * @param mixed|array|object $response The response of the GraphQL Request
+	 *
+	 * @return array|mixed
+	 */
+	public function add_cache_key_to_response_extensions( $response ) {
+
+		// if there's no cache key, or there is no cached_result return the response as-is
+		if ( empty( $this->cache_key ) || empty( $this->cached_result ) ) {
+			return $response;
+		}
+
+		// construct the message to return
+		$message = [
+			'graphqlObjectCache' => [
+				'message' => __( 'This response is cached by WPGraphQL Smart Cache', 'wp-graphql-smart-cache' ),
+				'cacheKey' => $this->cache_key,
+			]
+		];
+
+		if ( is_array( $response ) ) {
+			$response['extensions']['graphqlSmartCache'] = $message;
+		} if ( is_object( $response ) ) {
+			$response->extensions['graphqlSmartCache'] = $message;
+		}
+
+		// return the modified response with the graphqlSmartCache message in the extensions output
+		return $response;
+
 	}
 
 	/**
@@ -56,8 +112,10 @@ class Results extends Query {
 			return null;
 		}
 
-		$cached_result = $this->get( $key );
-		return ( false === $cached_result ) ? null : $cached_result;
+		$this->cached_result = $this->get( $key );
+
+
+		return ( false === $this->cached_result ) ? null : $this->cached_result;
 	}
 
 	/**
