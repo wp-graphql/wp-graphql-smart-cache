@@ -70,23 +70,20 @@ class Results extends Query {
 	 */
 	public function add_cache_key_to_response_extensions( $response ) {
 
-		// if there's no cache key, or there is no cached_result return the response as-is
-		if ( empty( $this->cache_key ) || empty( $this->cached_result ) ) {
-			return $response;
-		}
+		$message = [];
 
-		// construct the message to return
-		$message = [
-			'graphqlObjectCache' => [
+		// if there's no cache key, or there is no cached_result return the response as-is
+		if ( ! empty( $this->cache_key ) && ! empty( $this->cached_result ) ) {
+			$message = [
 				'message'  => __( 'This response was not executed at run-time but has been returned from the GraphQL Object Cache', 'wp-graphql-smart-cache' ),
 				'cacheKey' => $this->cache_key,
-			],
-		];
+			];
+		}
 
 		if ( is_array( $response ) ) {
-			$response['extensions']['graphqlSmartCache'] = $message;
+			$response['extensions']['graphqlSmartCache']['graphqlObjectCache'] = $message;
 		} if ( is_object( $response ) ) {
-			$response->extensions['graphqlSmartCache'] = $message;
+			$response->extensions['graphqlSmartCache']['graphqlObjectCache'] = $message;
 		}
 
 		// return the modified response with the graphqlSmartCache message in the extensions output
