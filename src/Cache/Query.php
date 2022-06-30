@@ -56,9 +56,9 @@ class Query {
 		$user = wp_get_current_user();
 
 		$parts = [
-			'query'     => $query,
-			'variables' => $variables,
-			'operation' => $operation,
+			'query'     => $query ?: null,
+			'variables' => $variables ?: null,
+			'operation' => $operation ?: null,
 			'user'      => $user->ID,
 		];
 		return hash( 'sha256', wp_json_encode( $parts ) );
