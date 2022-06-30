@@ -69,7 +69,6 @@ class Results extends Query {
 	 * @return array|mixed
 	 */
 	public function add_cache_key_to_response_extensions( $response ) {
-
 		$message = [];
 
 		// if there's no cache key, or there is no cached_result return the response as-is
