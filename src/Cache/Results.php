@@ -113,7 +113,7 @@ class Results extends Query {
 			}
 		} else {
 			//phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
-			$result = $this->get_result( $request->queryId, $request->query, $request->variables, $request->operation );
+			$result = $this->get_result( $request->params->queryId, $request->params->query, $request->params->variables, $request->params->operation );
 		}
 		return $result;
 	}
