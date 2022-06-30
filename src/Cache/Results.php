@@ -32,15 +32,7 @@ class Results extends Query {
 		add_filter( 'pre_graphql_execute_request', [ $this, 'get_query_results_from_cache_cb' ], 10, 2 );
 		add_action( 'graphql_return_response', [ $this, 'save_query_results_to_cache_cb' ], 10, 7 );
 		add_action( 'wpgraphql_cache_purge_nodes', [ $this, 'purge_nodes_cb' ], 10, 2 );
-		add_filter(
-			'graphql_request_results',
-			[
-				$this,
-				'add_cache_key_to_response_extensions',
-			],
-			10,
-			1
-		);
+		add_filter( 'graphql_request_results', [ $this, 'add_cache_key_to_response_extensions' ], 10, 1 );
 
 		parent::init();
 	}
