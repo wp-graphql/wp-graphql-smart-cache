@@ -6,7 +6,7 @@
 
 class DocumentMaxAgeCest {
 	public function _before( FunctionalTester $I ) {
-		$I->dontHaveOptionInDatabase( 'graphql_persisted_queries_section'  );
+		$I->dontHaveOptionInDatabase( 'graphql_cache_section'  );
 	}
 
 	public function _runQuery( FunctionalTester $I, $expected ) {
@@ -25,22 +25,22 @@ class DocumentMaxAgeCest {
 	public function queryShowsMaxAgeTest( FunctionalTester $I ) {
 		$I->wantTo( 'See my custom max-age header in response for a graphql query' );
 
-		$I->dontHaveOptionInDatabase( 'graphql_persisted_queries_section'  );
+		$I->dontHaveOptionInDatabase( 'graphql_cache_section'  );
 		$this->_runQuery( $I, 600 );
 
-		$I->haveOptionInDatabase( 'graphql_persisted_queries_section', [ 'global_max_age' => null ] );
+		$I->haveOptionInDatabase( 'graphql_cache_section', [ 'global_max_age' => null ] );
 		$this->_runQuery( $I, 600 );
 
-		$I->haveOptionInDatabase( 'graphql_persisted_queries_section', [ 'global_max_age' => 30 ] );
+		$I->haveOptionInDatabase( 'graphql_cache_section', [ 'global_max_age' => 30 ] );
 		$this->_runQuery( $I, 30 );
 
-		$I->haveOptionInDatabase( 'graphql_persisted_queries_section', [ 'global_max_age' => 10.5 ] );
+		$I->haveOptionInDatabase( 'graphql_cache_section', [ 'global_max_age' => 10.5 ] );
 		$this->_runQuery( $I, 10 );
 
-		$I->haveOptionInDatabase( 'graphql_persisted_queries_section', [ 'global_max_age' => -1 ] );
+		$I->haveOptionInDatabase( 'graphql_cache_section', [ 'global_max_age' => -1 ] );
 		$this->_runQuery( $I, 600 );
 
-		$I->haveOptionInDatabase( 'graphql_persisted_queries_section', [ 'global_max_age' => 0 ] );
+		$I->haveOptionInDatabase( 'graphql_cache_section', [ 'global_max_age' => 0 ] );
 		$this->_runQuery( $I, 0 );
 
 	}

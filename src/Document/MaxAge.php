@@ -163,7 +163,7 @@ class MaxAge {
 
 		if ( null === $age ) {
 			// If not, use a global max-age setting if set.
-			$age = get_graphql_setting( 'global_max_age', null, 'graphql_persisted_queries_section' );
+			$age = get_graphql_setting( 'global_max_age', null, 'graphql_cache_section' );
 		}
 
 		// Access-Control-Max-Age header should be zero or positive integer, no decimals.

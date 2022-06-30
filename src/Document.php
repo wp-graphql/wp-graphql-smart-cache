@@ -37,13 +37,12 @@ class Document {
 		register_post_type(
 			self::TYPE_NAME,
 			[
-				'description'         => __( 'Saved GraphQL queries', 'wp-graphql-smart-cache' ),
+				'description'         => __( 'Saved GraphQL Documents', 'wp-graphql-smart-cache' ),
 				'labels'              => [
-					'name'          => __( 'GraphQLQueries', 'wp-graphql-smart-cache' ),
-					'singular_name' => __( 'GraphQLQuery', 'wp-graphql-smart-cache' ),
+					'name'          => __( 'GraphQL Documents', 'wp-graphql-smart-cache' ),
+					'singular_name' => __( 'GraphQL Document', 'wp-graphql-smart-cache' ),
 				],
 				'public'              => false,
-				'publicly_queryable'  => true,
 				'show_ui'             => Settings::show_in_admin(),
 				'taxonomies'          => [
 					self::ALIAS_TAXONOMY_NAME,

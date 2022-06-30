@@ -4,8 +4,6 @@ class LookupCest {
 	public function _before( FunctionalTester $I ) {
 		// Make sure that is gone.
 		$I->dontHavePostInDatabase( ['post_title' => 'Hello world!'] );
-
-		$I->dontHaveOptionInDatabase( 'graphql_persisted_queries_section'  );
 	}
 
 	// no id/hash. expect an error that it doesn't exist

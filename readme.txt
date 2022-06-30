@@ -16,4 +16,4 @@ WPGraphQL Persisted Queries for WPGraphQL, a plugin that provides an extendable 
 
 = 0.1.1 =
 
-Initial release for beta testers and feedback collection
+- Initial release to beta users
