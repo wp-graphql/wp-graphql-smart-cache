@@ -23,7 +23,7 @@ class Results extends Query {
 		add_filter( 'pre_graphql_execute_request', [ $this, 'get_query_results_from_cache_cb' ], 10, 2 );
 		add_action( 'graphql_return_response', [ $this, 'save_query_results_to_cache_cb' ], 10, 8 );
 		add_action( 'wpgraphql_cache_purge_nodes', [ $this, 'purge_nodes_cb' ], 10, 2 );
-		add_filter( 'graphql_request_results', [ $this, 'add_cache_key_to_response_extensions' ], 10, 7 );
+		add_filter( 'graphql_request_results', [ $this, 'add_cache_key_to_response_extensions' ], 10, 8 );
 
 		parent::init();
 	}
@@ -47,6 +47,12 @@ class Results extends Query {
 	 * Add a message to the extensions when a GraphQL request is returned from the GraphQL Object Cache
 	 *
 	 * @param mixed|array|object $response The response of the GraphQL Request
+	 * @param WPSchema   $schema    The schema object for the root query
+	 * @param string     $operation The name of the operation
+	 * @param string     $query     The query that GraphQL executed
+	 * @param array|null $variables Variables to passed to your GraphQL request
+	 * @param Request    $request   Instance of the Request
+	 * @param string|null $query_id The query id that GraphQL executed
 	 *
 	 * @return array|mixed
 	 */
@@ -143,9 +149,16 @@ class Results extends Query {
 	 * When a query response is being returned to the client, build map for each item and this query/queryId
 	 * That way we will know what to invalidate on data change.
 	 *
-	 * @param $filtered_response GraphQL\Executor\ExecutionResult
-	 * @param $response GraphQL\Executor\ExecutionResult
-	 * @param $request WPGraphQL\Request
+	 * @param ExecutionResult $filtered_response The response after GraphQL Execution has been
+	 *                                           completed and passed through filters
+	 * @param ExecutionResult $response          The raw, unfiltered response of the GraphQL
+	 *                                           Execution
+	 * @param Schema          $schema            The WPGraphQL Schema
+	 * @param string          $operation         The name of the Operation
+	 * @param string          $query             The query string
+	 * @param array           $variables         The variables for the query
+	 * @param Request         $request           The WPGraphQL Request object
+	 * @param string|null     $query_id          The query id that GraphQL executed
 	 *
 	 * @return void
 	 */
