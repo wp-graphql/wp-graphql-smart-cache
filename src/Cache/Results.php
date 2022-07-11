@@ -13,11 +13,11 @@ class Results extends Query {
 	const GLOBAL_DEFAULT_TTL = 600;
 
 	/**
-	 * The cached response of a GraphQL Query execution. False if it doesn't exist.
+	 * Indicator of the GraphQL Query execution cached or not.
 	 *
-	 * @var mixed|bool|array|object
+	 * @array bool
 	 */
-	protected $cached_result = false;
+	protected $is_cached = [];
 
 	public function init() {
 		add_filter( 'pre_graphql_execute_request', [ $this, 'get_query_results_from_cache_cb' ], 10, 2 );
@@ -69,8 +69,8 @@ class Results extends Query {
 		if ( $key ) {
 			$message = [];
 
-			// if there's no cache key, or there is no cached_result return the response as-is
-			if ( ! empty( $this->cached_result[ $key ] ) ) {
+			// If we know that the results were pulled from cache, add messaging
+			if ( true === $this->is_cached[ $key ] ) {
 				$message = [
 					'message'  => __( 'This response was not executed at run-time but has been returned from the GraphQL Object Cache', 'wp-graphql-smart-cache' ),
 					'cacheKey' => $key,
@@ -132,7 +132,7 @@ class Results extends Query {
 	 * @param array $variables Variables sent with request or null
 	 * @param string $operation Name of operation if specified on the request or null
 	 *
-	 * @return string|false unique id for this request or false if query not provided
+	 * @return string|null The response or null if not found in cache
 	 */
 	public function get_result( $query_id, $query_string, $variables, $operation_name ) {
 		$key = $this->the_results_key( $query_id, $query_string, $variables, $operation_name );
@@ -140,9 +140,14 @@ class Results extends Query {
 			return null;
 		}
 
-		$this->cached_result[ $key ] = $this->get( $key );
+		$result = $this->get( $key );
+		if ( false === $result ) {
+			return null;
+		}
 
-		return ( false === $this->cached_result[ $key ] ) ? null : $this->cached_result[ $key ];
+		$this->is_cached[ $key ] = true;
+
+		return $result;
 	}
 
 	/**
