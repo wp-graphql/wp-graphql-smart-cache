@@ -70,7 +70,7 @@ class Results extends Query {
 			$message = [];
 
 			// If we know that the results were pulled from cache, add messaging
-			if ( true === $this->is_cached[ $key ] ) {
+			if ( isset( $this->is_cached[ $key ] ) && true === $this->is_cached[ $key ] ) {
 				$message = [
 					'message'  => __( 'This response was not executed at run-time but has been returned from the GraphQL Object Cache', 'wp-graphql-smart-cache' ),
 					'cacheKey' => $key,
