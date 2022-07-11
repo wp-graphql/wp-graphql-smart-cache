@@ -19,7 +19,7 @@ class Document {
 
 	public function init() {
 		add_filter( 'graphql_request_data', [ $this, 'graphql_query_contains_queryid_cb' ], 10, 2 );
-		add_filter( 'pre_graphql_execute_query_params', [ $this, 'graphql_execute_query_params_cb' ], 10, 2 );
+		add_filter( 'graphql_execute_query_params', [ $this, 'graphql_execute_query_params_cb' ], 10, 2 );
 
 		add_action( 'post_updated', [ $this, 'after_updated_cb' ], 10, 3 );
 
