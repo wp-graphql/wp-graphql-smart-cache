@@ -141,7 +141,10 @@ class MaxAge {
 	}
 
 	public function peak_at_executing_query_cb( $result, $request ) {
-		if ( $request->params->queryId ) {
+		// For batch request, params are an array for each query/queryId in the batch
+		if ( is_array( $request->params ) ) {
+			return $result;
+		} elseif ( $request->params->queryId ) {
 			$this->query_id = $request->params->queryId;
 		} elseif ( $request->params->query ) {
 			$this->query_id = Utils::generateHash( $request->params->query );
