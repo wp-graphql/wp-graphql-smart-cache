@@ -66,7 +66,7 @@ class Collection extends Query {
 
 	// initialize the cache collection
 	public function init() {
-		add_action( 'graphql_return_response', [ $this, 'save_query_mapping_cb' ], 10, 7 );
+		add_action( 'graphql_return_response', [ $this, 'save_query_mapping_cb' ], 10, 8 );
 		add_filter( 'pre_graphql_execute_request', [ $this, 'before_executing_query_cb' ], 10, 2 );
 		add_filter( 'graphql_dataloader_get_model', [ $this, 'data_loaded_process_cb' ], 10, 1 );
 
@@ -405,7 +405,8 @@ class Collection extends Query {
 	 * @param string          $operation         The name of the Operation
 	 * @param string          $query             The query string
 	 * @param array           $variables         The variables for the query
-	 * @param Request The WPGraphQL Request object
+	 * @param Request         $request           The WPGraphQL Request object
+	 * @param string|null     $query_id          The query id that GraphQL executed
 	 *
 	 * @return void
 	 */
@@ -416,9 +417,10 @@ class Collection extends Query {
 		$operation,
 		$query,
 		$variables,
-		$request
+		$request,
+		$query_id
 	) {
-		$request_key = $this->build_key( $request->params->queryId, $request->params->query, $request->params->variables, $request->params->operation );
+		$request_key = $this->build_key( $query_id, $query, $variables, $operation );
 
 		// Only store mappings of urls when it's a GET request
 		$map_the_url = false;

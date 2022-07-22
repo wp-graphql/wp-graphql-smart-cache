@@ -13,27 +13,18 @@ class Results extends Query {
 	const GLOBAL_DEFAULT_TTL = 600;
 
 	/**
-	 * The cache key for the executed GraphQL Document
+	 * Indicator of the GraphQL Query execution cached or not.
 	 *
-	 * @var string
+	 * @array bool
 	 */
-	protected $cache_key = '';
-
-	/**
-	 * The cached response of a GraphQL Query execution. False if it doesn't exist.
-	 *
-	 * @var mixed|bool|array|object
-	 */
-	protected $cached_result;
+	protected $is_cached = [];
 
 	public function init() {
-		$this->cached_result = false;
-
 		add_filter( 'pre_graphql_execute_request', [ $this, 'get_query_results_from_cache_cb' ], 10, 2 );
-		add_action( 'graphql_return_response', [ $this, 'save_query_results_to_cache_cb' ], 10, 7 );
+		add_action( 'graphql_return_response', [ $this, 'save_query_results_to_cache_cb' ], 10, 8 );
 		add_action( 'wpgraphql_cache_purge_nodes', [ $this, 'purge_nodes_cb' ], 10, 2 );
 		add_action( 'wpgraphql_cache_purge_all', [ $this, 'purge_all_cb' ], 10, 0 );
-		add_filter( 'graphql_request_results', [ $this, 'add_cache_key_to_response_extensions' ], 10, 1 );
+		add_filter( 'graphql_request_results', [ $this, 'add_cache_key_to_response_extensions' ], 10, 7 );
 
 		parent::init();
 	}
@@ -48,9 +39,8 @@ class Results extends Query {
 	 *
 	 * @return string|false unique id for this request or false if query not provided
 	 */
-	public function the_results_key( $query_id, $query, $variables = null, $operation = null ) {
-		$this->cache_key = $this->build_key( $query_id, $query, $variables, $operation );
-		return $this->cache_key;
+	public function the_results_key( $query_id, $query, $variables = null, $operation_name = null ) {
+		return $this->build_key( $query_id, $query, $variables, $operation_name );
 	}
 
 
@@ -58,24 +48,41 @@ class Results extends Query {
 	 * Add a message to the extensions when a GraphQL request is returned from the GraphQL Object Cache
 	 *
 	 * @param mixed|array|object $response The response of the GraphQL Request
+	 * @param WPSchema   $schema    The schema object for the root query
+	 * @param string     $operation The name of the operation
+	 * @param string     $query     The query that GraphQL executed
+	 * @param array|null $variables Variables to passed to your GraphQL request
+	 * @param Request    $request   Instance of the Request
+	 * @param string|null $query_id The query id that GraphQL executed
 	 *
 	 * @return array|mixed
 	 */
-	public function add_cache_key_to_response_extensions( $response ) {
-		$message = [];
+	public function add_cache_key_to_response_extensions(
+		$response,
+		$schema,
+		$operation_name,
+		$query_string,
+		$variables,
+		$request,
+		$query_id
+	) {
+		$key = $this->the_results_key( $query_id, $query_string, $variables, $operation_name );
+		if ( $key ) {
+			$message = [];
 
-		// if there's no cache key, or there is no cached_result return the response as-is
-		if ( ! empty( $this->cache_key ) && ! empty( $this->cached_result ) ) {
-			$message = [
-				'message'  => __( 'This response was not executed at run-time but has been returned from the GraphQL Object Cache', 'wp-graphql-smart-cache' ),
-				'cacheKey' => $this->cache_key,
-			];
-		}
+			// If we know that the results were pulled from cache, add messaging
+			if ( isset( $this->is_cached[ $key ] ) && true === $this->is_cached[ $key ] ) {
+				$message = [
+					'message'  => __( 'This response was not executed at run-time but has been returned from the GraphQL Object Cache', 'wp-graphql-smart-cache' ),
+					'cacheKey' => $key,
+				];
+			}
 
-		if ( is_array( $response ) ) {
-			$response['extensions']['graphqlSmartCache']['graphqlObjectCache'] = $message;
-		} if ( is_object( $response ) ) {
-			$response->extensions['graphqlSmartCache']['graphqlObjectCache'] = $message;
+			if ( is_array( $response ) ) {
+				$response['extensions']['graphqlSmartCache']['graphqlObjectCache'] = $message;
+			} if ( is_object( $response ) ) {
+				$response->extensions['graphqlSmartCache']['graphqlObjectCache'] = $message;
+			}
 		}
 
 		// return the modified response with the graphqlSmartCache message in the extensions output
@@ -92,30 +99,72 @@ class Results extends Query {
 	 * @return mixed|array|object|null  The response or null if not found in cache
 	 */
 	public function get_query_results_from_cache_cb( $result, $request ) {
-
 		// if caching is not enabled or the request is authenticated, bail early
 		// right now we're not supporting GraphQL cache for authenticated requests.
 		// Possibly in the future.
 		if ( ! Settings::caching_enabled() || is_user_logged_in() ) {
 			return $result;
 		}
-		$key = $this->the_results_key( $request->params->queryId, $request->params->query, $request->params->variables, $request->params->operation );
+
+		// Loop over each request and load the response. If any one are empty, not in cache, return so all get reloaded.
+		if ( is_array( $request->params ) ) {
+			$result = [];
+			foreach ( $request->params as $req ) {
+				//phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
+				$response = $this->get_result( $req->queryId, $req->query, $req->variables, $req->operation );
+				// If any one is null, return all are null.
+				if ( null === $response ) {
+					return null;
+				}
+				$result[] = $response;
+			}
+		} else {
+			//phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
+			$result = $this->get_result( $request->params->queryId, $request->params->query, $request->params->variables, $request->params->operation );
+		}
+		return $result;
+	}
+
+	/**
+	 * Unique identifier for this request is normalized query string, operation and variables
+	 *
+	 * @param string $query_id queryId from the graphql query request
+	 * @param string $query query string
+	 * @param array $variables Variables sent with request or null
+	 * @param string $operation Name of operation if specified on the request or null
+	 *
+	 * @return string|null The response or null if not found in cache
+	 */
+	public function get_result( $query_id, $query_string, $variables, $operation_name ) {
+		$key = $this->the_results_key( $query_id, $query_string, $variables, $operation_name );
 		if ( ! $key ) {
 			return null;
 		}
 
-		$this->cached_result = $this->get( $key );
+		$result = $this->get( $key );
+		if ( false === $result ) {
+			return null;
+		}
 
-		return ( false === $this->cached_result ) ? null : $this->cached_result;
+		$this->is_cached[ $key ] = true;
+
+		return $result;
 	}
 
 	/**
 	 * When a query response is being returned to the client, build map for each item and this query/queryId
 	 * That way we will know what to invalidate on data change.
 	 *
-	 * @param $filtered_response GraphQL\Executor\ExecutionResult
-	 * @param $response GraphQL\Executor\ExecutionResult
-	 * @param $request WPGraphQL\Request
+	 * @param ExecutionResult $filtered_response The response after GraphQL Execution has been
+	 *                                           completed and passed through filters
+	 * @param ExecutionResult $response          The raw, unfiltered response of the GraphQL
+	 *                                           Execution
+	 * @param Schema          $schema            The WPGraphQL Schema
+	 * @param string          $operation         The name of the Operation
+	 * @param string          $query             The query string
+	 * @param array           $variables         The variables for the query
+	 * @param Request         $request           The WPGraphQL Request object
+	 * @param string|null     $query_id          The query id that GraphQL executed
 	 *
 	 * @return void
 	 */
@@ -123,10 +172,11 @@ class Results extends Query {
 		$filtered_response,
 		$response,
 		$schema,
-		$operation,
+		$operation_name,
 		$query,
 		$variables,
-		$request
+		$request,
+		$query_id
 	) {
 		// if caching is not enabled or the request is authenticated, bail early
 		// right now we're not supporting GraphQL cache for authenticated requests.
@@ -135,7 +185,7 @@ class Results extends Query {
 			return;
 		}
 
-		$key = $this->the_results_key( $request->params->queryId, $request->params->query, $request->params->variables, $request->params->operation );
+		$key = $this->the_results_key( $query_id, $query, $variables, $operation_name );
 		if ( ! $key ) {
 			return;
 		}
@@ -146,7 +196,7 @@ class Results extends Query {
 		if ( false === $cached_result ) {
 			$expiration = \get_graphql_setting( 'global_ttl', self::GLOBAL_DEFAULT_TTL, 'graphql_cache_section' );
 
-			$this->save( $key, $response, $expiration );
+			$this->save( $key, $filtered_response, $expiration );
 		}
 	}
 
