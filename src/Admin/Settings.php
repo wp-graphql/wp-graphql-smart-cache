@@ -68,10 +68,6 @@ class Settings {
 								if ( $current_setting !== $value ) {
 									// Action for those listening to purge_all
 									do_action( 'wpgraphql_cache_purge_all' );
-
-									// Purge the local cache results if enabled
-									$cache_object = new Results();
-									$cache_object->purge_all();
 								}
 							}
 							return $value;
@@ -180,10 +176,7 @@ class Settings {
 								// Trigger action when cache purge_all is invoked
 								do_action( 'wpgraphql_cache_purge_all' );
 
-								$cache_object = new Results();
-								if ( true === $cache_object->purge_all() ) {
-									return gmdate( 'D, d M Y H:i T' );
-								}
+								return gmdate( 'D, d M Y H:i T' );
 							}
 
 							return $existing_purge_all_time;
