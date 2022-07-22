@@ -644,7 +644,7 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLSmartCache\TestCase\W
 
 		// ensure the query is cached now
 		$this->assertNotEmpty( $this->collection->get( $cache_key ) );
-		$this->assertSame( $actual, $this->collection->get( $cache_key ) );
+		$this->assertSame( $actual['data'], $this->collection->get( $cache_key )['data'] );
 
 		$new_post = self::factory()->post->create_and_get([
 			'post_type' => 'post',
@@ -662,7 +662,7 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLSmartCache\TestCase\W
 
 		// the query should be cached again
 		$this->assertNotEmpty( $this->collection->get( $cache_key ) );
-		$this->assertSame( $query_again, $this->collection->get( $cache_key ) );
+		$this->assertSame( $query_again['data'], $this->collection->get( $cache_key )['data'] );
 
 		// the results should have the user data
 		self::assertQuerySuccessful( $query_again, [
@@ -702,7 +702,7 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLSmartCache\TestCase\W
 
 		// the query should be cached again
 		$this->assertNotEmpty( $this->collection->get( $cache_key ) );
-		$this->assertSame( $actual, $this->collection->get( $cache_key ) );
+		$this->assertSame( $actual['data'], $this->collection->get( $cache_key )['data'] );
 
 		// the results should have the user data
 		self::assertQuerySuccessful( $actual, [
