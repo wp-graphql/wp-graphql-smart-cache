@@ -399,14 +399,14 @@ class Collection extends Query {
 	) {
 		$request_key = $this->build_key( $query_id, $query, $variables, $operation );
 
-		do_action( 'wpgraphql_cache_save_request', $request_key );
+		do_action( 'wpgraphql_cache_save_request', $request_key, $query_id, $query, $variables, $operation, $this->runtime_nodes, $this->list_types );
 
 		// Save/add the node ids for this query.  When one of these change in the future, we can purge the query
 		foreach ( $this->runtime_nodes as $node_id ) {
 			$this->store_content( $this->node_key( $node_id ), $request_key );
 		}
 
-		// For each connection resolver, store the url key
+		// For each connection resolver, store the list types associated with this graphql query request
 		if ( ! empty( $this->list_types ) && is_array( $this->list_types ) ) {
 			$this->list_types = array_unique( $this->list_types );
 			foreach ( $this->list_types as $type_name ) {
