@@ -344,17 +344,6 @@ class Collection extends Query {
 	}
 
 	/**
-	 * When save or retrieve urls for a specific Unique identifier for this request for use in the collection map
-	 *
-	 * @param string $id Id for the node
-	 *
-	 * @return string unique id for this request
-	 */
-	public function url_key( $id ) {
-		return 'url:' . $id;
-	}
-
-	/**
 	 * @param string $key     The identifier to the list
 	 * @param string $content to add
 	 *
@@ -378,18 +367,6 @@ class Collection extends Query {
 	 */
 	public function retrieve_nodes( $id ) {
 		$key = $this->node_key( $id );
-		return $this->get( $key );
-	}
-
-	/**
-	 * Get the list of urls associated with the content/node/list id
-	 *
-	 * @param mixed|string|int $id The content node identifier
-	 *
-	 * @return array The unique list of content stored
-	 */
-	public function retrieve_urls( $id ) {
-		$key = $this->url_key( $id );
 		return $this->get( $key );
 	}
 
@@ -422,30 +399,14 @@ class Collection extends Query {
 	) {
 		$request_key = $this->build_key( $query_id, $query, $variables, $operation );
 
-		// Only store mappings of urls when it's a GET request
-		$map_the_url = false;
-		if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'GET' === $_SERVER['REQUEST_METHOD'] ) {
-			$map_the_url = true;
-		}
-
-		// We don't want POSTs during mutations or nothing on the url. cause it'll purge /graphql*
-		if ( $map_the_url && ! empty( $_SERVER['REQUEST_URI'] ) ) {
-			//phpcs:ignore
-			$url_to_save = wp_unslash( $_SERVER['REQUEST_URI'] );
-
-			// Save the url this query request came in on, so we can purge it later when something changes
-			$urls = $this->store_content( $this->url_key( $request_key ), $url_to_save );
-
-			//phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_print_r
-			error_log( "Graphql Save Urls: $request_key " . print_r( $urls, 1 ) );
-		}
+		do_action( 'wpgraphql_cache_save_request', $request_key, $query_id, $query, $variables, $operation, $this->runtime_nodes, $this->list_types );
 
 		// Save/add the node ids for this query.  When one of these change in the future, we can purge the query
 		foreach ( $this->runtime_nodes as $node_id ) {
 			$this->store_content( $this->node_key( $node_id ), $request_key );
 		}
 
-		// For each connection resolver, store the url key
+		// For each connection resolver, store the list types associated with this graphql query request
 		if ( ! empty( $this->list_types ) && is_array( $this->list_types ) ) {
 			$this->list_types = array_unique( $this->list_types );
 			foreach ( $this->list_types as $type_name ) {
