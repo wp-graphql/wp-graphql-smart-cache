@@ -4,12 +4,15 @@ namespace WPGraphQL\Cache;
 
 use WPGraphQL\SmartCache\Cache\Results;
 use WPGraphQL\SmartCache\Document;
+use WPGraphQL\SmartCache\Document\MaxAge;
 
 /**
  * Test graphql batch request with local caching enabled.
  * Verify the result nodes are saved to the results map memory/transients.
  */
 class BatchQueryTest extends \Tests\WPGraphQL\TestCase\WPGraphQLTestCase {
+
+	public $created_post_ids = [];
 
 	public function _before() {
 		delete_option( 'graphql_cache_section' );
@@ -20,13 +23,15 @@ class BatchQueryTest extends \Tests\WPGraphQL\TestCase\WPGraphQLTestCase {
 		$query_string = sprintf( "query %s { posts { nodes { id title } } }", $this->query_alias );
 
 		$saved_query = new Document();
-		$this->created_post_id = $saved_query->save( $this->query_alias, $query_string );
-		codecept_debug( "$this->created_post_id, $this->query_alias, $query_string" );
+		$this->created_post_ids[] = $saved_query->save( $this->query_alias, $query_string );
+		codecept_debug( "$this->query_alias, $query_string" );
 	}
 
 	public function _after() {
 		delete_option( 'graphql_cache_section' );
-		wp_delete_post( $this->created_post_id );
+		foreach ( $this->created_post_ids as $post_id ) {
+			wp_delete_post( $this->post_id );
+		}
 	}
 
 	public function testBatchQueryIsCached() {
@@ -79,4 +84,37 @@ class BatchQueryTest extends \Tests\WPGraphQL\TestCase\WPGraphQLTestCase {
 		$this->assertEquals( $query_alias_cache['data']['posts']['nodes'][0]['id'], $query_string_cache['data']['posts']['nodes'][0]['id'] );
 	}
 
+	public function testBatchQueryMaxAgeMinimum() {
+		$saved_query = new Document();
+
+		// Create/save persisted query for the query and query id
+		// Set the max age for a saved query
+		$query_alias_1 = uniqid( "query_posts_" );
+		$query_string = sprintf( "query %s { posts { nodes { id title } } }", $query_alias_1 );
+		$query_post_id = $saved_query->save( $query_alias_1, $query_string );
+		$max_age = new MaxAge();
+		$max_age->save( $query_post_id, '10' );
+		$this->created_post_ids[] = $query_post_id;
+
+		// Create/save persisted query for the query and query id
+		// Set the max age for a saved query
+		$query_alias_2 = uniqid( "query_posts_" );
+		$query_string_2 = sprintf( "query %s { posts { nodes { id title } } }", $query_alias_2 );
+		$query_post_id = $saved_query->save( $query_alias_2, $query_string_2 );
+		$max_age = new MaxAge();
+		$max_age->save( $query_post_id, '12' );
+		$this->created_post_ids[] = $query_post_id;
+
+		// Test batch queries, for saved querys that have different max ages.
+		$request = [
+			'params' => [
+				[	"queryId" => $query_alias_1 ],
+				[	"queryId" => $query_string_2 ],
+			]
+		];
+		$max_age->peak_at_executing_query_cb( '', json_decode( json_encode( $request ) ) );
+
+		$headers = $max_age->http_headers_cb( [] );
+		$this->assertEquals( 10, $headers[ 'Access-Control-Max-Age' ] );
+	}
 }

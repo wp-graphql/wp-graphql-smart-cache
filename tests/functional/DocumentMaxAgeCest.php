@@ -45,4 +45,23 @@ class DocumentMaxAgeCest {
 
 	}
 
+	public function batchQueryDefaultMaxAgeTest( FunctionalTester $I ) {
+		$I->haveOptionInDatabase( 'graphql_cache_section', [ 'global_max_age' => 444 ] );
+
+		$query =
+			[
+				[	"query" => "query { __typename }" ],
+				[	"query" => "{ posts { nodes { title content } } }" ],
+			]
+		;
+
+		$I->sendPost('graphql', $query );
+		$I->seeResponseContainsJson([
+			'data' => [
+				'__typename' => 'RootQuery'
+			]
+		]);
+		$I->seeHttpHeader( 'Access-Control-Max-Age', 444 );
+	}
+
 }
