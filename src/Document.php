@@ -19,6 +19,7 @@ class Document {
 
 	public function init() {
 		add_filter( 'graphql_request_data', [ $this, 'graphql_query_contains_queryid_cb' ], 10, 2 );
+		add_filter( 'graphql_execute_query_params', [ $this, 'graphql_execute_query_params_cb' ], 10, 2 );
 
 		add_action( 'post_updated', [ $this, 'after_updated_cb' ], 10, 3 );
 
@@ -172,6 +173,26 @@ class Document {
 			unset( $parsed_body_params['query'] );
 		}
 		return $parsed_body_params;
+	}
+
+	/**
+	 * During invoking 'graphql()', not as an http request, if queryId is present, look it up and return the query string
+	 *
+	 * @param string $query  The graphql query sring.
+	 * @param mixed|array|OperationParams| $params  The graphql request params, containing queryId
+	 */
+	public function graphql_execute_query_params_cb( $query, $params ) {
+		if ( empty( $query ) ) {
+			//phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
+			if ( isset( $params->queryId ) ) {
+				//phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
+				$query_id = $params->queryId;
+			} elseif ( isset( $params['queryId'] ) ) {
+				$query_id = $params['queryId'];
+			}
+			$query = $this->get( $query_id );
+		}
+		return $query;
 	}
 
 	/**

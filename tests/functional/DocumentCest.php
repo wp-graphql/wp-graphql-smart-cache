@@ -7,7 +7,7 @@ class DocumentCest {
 
 		// clean up and persisted queries terms in the taxonomy
 		$I->dontHavePostInDatabase( [ 'post_type' => 'graphql_document' ] );
-		$I->dontHaveTermInDatabase( ['taxonomy' => 'graphql_query_alias'] );
+		$I->dontHaveTermInDatabase( [ 'taxonomy' => 'graphql_query_alias'] );
 
 		$I->dontHaveOptionInDatabase( 'graphql_persisted_queries_section'  );
 	}
