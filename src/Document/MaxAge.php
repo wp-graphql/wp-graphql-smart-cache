@@ -15,8 +15,8 @@ use GraphQL\Server\RequestError;
 class MaxAge {
 	const TAXONOMY_NAME = 'graphql_document_http_maxage';
 
-	// The in-progress query
-	public $query_id;
+	// The in-progress query(s)
+	public $query_ids = [];
 
 	public function init() {
 		register_taxonomy(
@@ -142,25 +142,42 @@ class MaxAge {
 
 	public function peak_at_executing_query_cb( $result, $request ) {
 		// For batch request, params are an array for each query/queryId in the batch
+		$params = [];
 		if ( is_array( $request->params ) ) {
-			return $result;
-		} elseif ( $request->params->queryId ) {
-			$this->query_id = $request->params->queryId;
-		} elseif ( $request->params->query ) {
-			$this->query_id = Utils::generateHash( $request->params->query );
+			$params = $request->params;
+		} else {
+			$params[] = $request->params;
+		}
+
+		foreach ( $params as $req ) {
+			//phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
+			if ( isset( $req->queryId ) ) {
+				//phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
+				$this->query_ids[] = $req->queryId;
+			} elseif ( isset( $req->query ) ) {
+				$this->query_ids[] = Utils::generateHash( $req->query );
+			}
 		}
 
 		return $result;
 	}
 
+	/**
+	 * @param array $headers
+	 */
 	public function http_headers_cb( $headers ) {
 		$age = null;
 
 		// Look up this specific request query. If found and has an individual max-age setting, use it.
-		if ( $this->query_id ) {
-			$post = Utils::getPostByTermName( $this->query_id, Document::TYPE_NAME, Document::ALIAS_TAXONOMY_NAME );
+		// For batch queries, look up and use the smallest/shortest max-age selection.
+		foreach ( $this->query_ids as $query_id ) {
+			$post = Utils::getPostByTermName( $query_id, Document::TYPE_NAME, Document::ALIAS_TAXONOMY_NAME );
 			if ( $post ) {
-				$age = $this->get( $post->ID );
+				// If this saved query has a specified max-age, use it. Make sure to keep the smallest value.
+				$value = $this->get( $post->ID );
+				if ( $value ) {
+					$age = ( null === $age ) ? $value : min( $age, $value );
+				}
 			}
 		}
 
