@@ -431,6 +431,14 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			'post_status' => 'publish'
 		]);
 
+		$this->approved_comment = self::factory()->comment->create_and_get([
+			'comment_approved' => true,
+		]);
+
+		$this->unapproved_comment = self::factory()->comment->create_and_get([
+			'comment_approved' => false,
+		]);
+
 		// set the parent menu item
 		wp_update_nav_menu_item( $this->menu->term_id, $this->menu_item_1->ID, [
 			'menu-item-title' => 'Test Item',
@@ -856,7 +864,20 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			'listMediaItem' => [
 				'name' => 'listMediaItem',
 				'query' => $this->getListMediaItemQuery(),
-			]
+			],
+			'singleApprovedCommentByDatabaseId' => [
+				'name' => 'singleApprovedCommentByDatabaseId',
+				'query' => $this->getSingleCommentByGlobalIdQuery(),
+				'variables' => [ 'id' => $this->approved_comment->comment_ID ],
+				'expectedCacheKeys' => [
+					'node:' . $this->toRelayId( 'comment', $this->approved_comment->comment_ID )
+				],
+			],
+			'listComment' => [
+				'name' => 'listComment',
+				'query' => $this->getListCommentQuery(),
+				'variables' => null,
+			],
 
 //			@todo: I believe the WPGraphQL Model Layer might have some bugs to fix re: private taxonomies? 🤔
 //			'singlePrivateTaxonomyTerm' => [
@@ -1401,7 +1422,7 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 	/**
 	 * @return string
 	 */
-	public function getListCommentsQuery() {
+	public function getListCommentQuery() {
 		return '
 		query GetComments {
 		  comments {
