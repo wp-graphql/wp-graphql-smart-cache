@@ -24,7 +24,7 @@ class CommentCacheInvalidationTest extends WPGraphQLSmartCacheTestCaseWithSeedDa
 		$this->assertEmpty( $this->getEvictedCaches() );
 
 		self::factory()->comment->create_object( [
-			'comment_approved' => false
+			'comment_approved' => 0
 		] );
 
 		$this->assertEmpty( $this->getEvictedCaches() );
@@ -37,7 +37,7 @@ class CommentCacheInvalidationTest extends WPGraphQLSmartCacheTestCaseWithSeedDa
 		$this->assertEmpty( $this->getEvictedCaches() );
 
 		self::factory()->comment->create_object( [
-			'comment_approved' => true,
+			'comment_approved' => 1,
 			'comment_post_ID' => $this->published_post->ID,
 		] );
 
@@ -56,7 +56,7 @@ class CommentCacheInvalidationTest extends WPGraphQLSmartCacheTestCaseWithSeedDa
 		$this->assertEmpty( $this->getEvictedCaches() );
 
 		self::factory()->comment->update_object( $this->unapproved_comment->comment_ID, [
-			'comment_approved' => true
+			'comment_approved' => 1
 		] );
 
 		$evicted_caches = $this->getEvictedCaches();
@@ -74,7 +74,7 @@ class CommentCacheInvalidationTest extends WPGraphQLSmartCacheTestCaseWithSeedDa
 		$this->assertEmpty( $this->getEvictedCaches() );
 
 		self::factory()->comment->update_object( $this->approved_comment->comment_ID, [
-			'comment_approved' => false
+			'comment_approved' => 0
 		] );
 
 		$evicted_caches = $this->getEvictedCaches();

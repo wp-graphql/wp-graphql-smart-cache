@@ -751,7 +751,9 @@ class Invalidation {
 	 * @param WP_Comment $comment Comment object.
 	 */
 	public function on_insert_comment_cb( $comment_id, $comment ) {
-		$this->purge_nodes( Comment::class, 'comment', $comment_id );
-		$this->purge( 'list:comment' );
+		if ( isset( $comment->comment_approved ) && '1' === $comment->comment_approved ) {
+			$this->purge_nodes( Comment::class, 'comment', $comment_id );
+			$this->purge( 'list:comment' );
+		}
 	}
 }
