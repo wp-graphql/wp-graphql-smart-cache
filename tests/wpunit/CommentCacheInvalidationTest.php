@@ -37,7 +37,8 @@ class CommentCacheInvalidationTest extends WPGraphQLSmartCacheTestCaseWithSeedDa
 		$this->assertEmpty( $this->getEvictedCaches() );
 
 		self::factory()->comment->create_object( [
-			'comment_approved' => true
+			'comment_approved' => true,
+			'comment_post_ID' => $this->published_post->ID,
 		] );
 
 		$evicted_caches = $this->getEvictedCaches();

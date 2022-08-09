@@ -109,6 +109,7 @@ class Invalidation {
 
 		## Comment actions
 
+		add_action( 'wp_insert_comment', [ $this, 'on_insert_comment_cb' ], 10, 2 );
 		add_action( 'transition_comment_status', [ $this, 'on_comment_transition_cb' ], 10, 3 );
 	}
 
@@ -743,4 +744,14 @@ class Invalidation {
 		$this->purge( 'list:comment' );
 	}
 
+	/**
+	 * Fires immediately after a comment is inserted into the database.
+	 *
+	 * @param int        $id      The comment ID.
+	 * @param WP_Comment $comment Comment object.
+	 */
+	public function on_insert_comment_cb( $comment_id, $comment ) {
+		$this->purge_nodes( Comment::class, 'comment', $comment_id );
+		$this->purge( 'list:comment' );
+	}
 }
