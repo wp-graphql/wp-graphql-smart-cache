@@ -82,7 +82,7 @@ class CommentCacheInvalidationTest extends WPGraphQLSmartCacheTestCaseWithSeedDa
 
 		$this->assertEqualSets([
 			'listComment',
-			'singleApprovedCommentByDatabaseId'
+			'singleApprovedCommentByGlobalId'
 		], $evicted_caches );
 
 	}
@@ -99,7 +99,7 @@ class CommentCacheInvalidationTest extends WPGraphQLSmartCacheTestCaseWithSeedDa
 
 		$this->assertEqualSets([
 			'listComment',
-			'singleApprovedCommentByDatabaseId'
+			'singleApprovedCommentByGlobalId'
 		], $evicted_caches );
 
 	}

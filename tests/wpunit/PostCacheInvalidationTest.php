@@ -347,7 +347,7 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLSmartCache\TestCase\W
 			'singleContentNode',
 			'singleNodeById',
 			'singleNodeByUri',
-			'singleApprovedCommentByDatabaseId',
+			'singleApprovedCommentByGlobalId',
 			'listComment',
 		], $evicted_caches );
 	}
@@ -385,7 +385,7 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLSmartCache\TestCase\W
 			'singleContentNode',
 			'listPost',
 			'singlePost',
-			'singleApprovedCommentByDatabaseId',
+			'singleApprovedCommentByGlobalId',
 			'listComment',
 		], $evicted_caches );
 

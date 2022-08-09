@@ -871,8 +871,8 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 				'name' => 'listMediaItem',
 				'query' => $this->getListMediaItemQuery(),
 			],
-			'singleApprovedCommentByDatabaseId' => [
-				'name' => 'singleApprovedCommentByDatabaseId',
+			'singleApprovedCommentByGlobalId' => [
+				'name' => 'singleApprovedCommentByGlobalId',
 				'query' => $this->getSingleCommentByGlobalIdQuery(),
 				'variables' => [ 'id' => $this->toRelayId( 'comment', $this->approved_comment->comment_ID ) ],
 				'expectedCacheKeys' => [
