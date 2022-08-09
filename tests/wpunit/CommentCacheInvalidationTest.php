@@ -18,7 +18,6 @@ class CommentCacheInvalidationTest extends WPGraphQLSmartCacheTestCaseWithSeedDa
 		$this->assertTrue( true );
 	}
 
-	// @todo: need to think through all the comment actions
 	// create comment (unapproved)
 	public function testCreateUnapprovedCommentDoesNotEvictCache() {
 

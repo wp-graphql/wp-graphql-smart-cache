@@ -42,7 +42,7 @@ Build using wp-graphql image from docker hub registry, instead of building your 
 
 Use this command if you want to build a specific image. If you ran the docker-compose command above, this is not necessary.
 
-    docker build -f docker/Dockerfile -t wp-graphql-smart-cache:latest-wp5.6-php7.4 --build-arg WP_VERSION=5.6 --build-arg PHP_VERSION=8.0
+    docker build -f docker/Dockerfile -t wp-graphql-smart-cache:latest-wp5.6-php8.0 --build-arg WP_VERSION=5.6 --build-arg PHP_VERSION=8.0 .
 
 ## Run
 
