@@ -247,4 +247,36 @@ class CachedQueryTest extends \Codeception\TestCase\WPTestCase {
 		$this->assertLessThanOrEqual( $time_after + 30, $transient_timeout_option );
 	}
 
+	public function testPurgeAllCacheAction() {
+		add_option( 'graphql_cache_section', [ 'cache_toggle' => 'on' ] );
+
+		$results_object = new Results();
+
+		// Put something in the cache for the query key that proves it came from cache.
+		$query = "query GetPosts {
+			posts {
+				nodes {
+					title
+				}
+			}
+		}";
+		$key = $results_object->the_results_key( null, $query );
+		$expected = [
+			'data' => [
+				'__typename' => 'Foo Bar'
+			]
+		];
+		$results_object->save( $key, $expected );
+
+		$actual = $results_object->get( $key );
+		$this->assertEquals( $expected, $actual );
+
+		// Clear the cache
+		do_action( 'wpgraphql_cache_purge_all' );
+
+		// empty when pulled directly from cache
+		$actual = $results_object->get( $key );
+		$this->assertEmpty( $actual );
+	}
+
 }

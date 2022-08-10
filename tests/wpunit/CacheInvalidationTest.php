@@ -30,7 +30,6 @@ class CacheInvalidationTest extends \Codeception\TestCase\WPTestCase {
 		parent::tearDown();
 	}
 
-
 	public function testNonNullListOfNonNullPostMapsToListOfPosts() {
 
 		register_graphql_field( 'RootQuery', 'listOfThing', [
