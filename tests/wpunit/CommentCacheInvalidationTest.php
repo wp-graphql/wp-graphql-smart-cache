@@ -104,4 +104,20 @@ class CommentCacheInvalidationTest extends WPGraphQLSmartCacheTestCaseWithSeedDa
 
 	}
 
+	/**
+	 * transition not-approved comment to another not-approved status
+	 * See WP transition_comment_status().
+	 * unapproved -> spam
+	 */
+	public function testTransitionUnApprovedCommentToSpamDoesNotEvictCache() {
+
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+		self::factory()->comment->update_object( $this->unapproved_comment->comment_ID, [
+			'comment_approved' => 'spam'
+		] );
+
+		$this->assertEmpty( $this->getEvictedCaches() );
+	}
+
 }

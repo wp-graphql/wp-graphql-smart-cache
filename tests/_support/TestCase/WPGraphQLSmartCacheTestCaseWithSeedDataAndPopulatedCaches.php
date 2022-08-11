@@ -437,12 +437,12 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 		]);
 
 		$this->approved_comment = self::factory()->comment->create_and_get([
-			'comment_approved' => true,
+			'comment_approved' => 1,
 			'comment_post_ID' => $this->published_post->ID,
 		]);
 
 		$this->unapproved_comment = self::factory()->comment->create_and_get([
-			'comment_approved' => false,
+			'comment_approved' => 0,
 		]);
 
 		// set the parent menu item

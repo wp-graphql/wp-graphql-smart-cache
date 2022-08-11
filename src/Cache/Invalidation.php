@@ -733,15 +733,16 @@ class Invalidation {
 	/**
 	 * Fires when the comment status is in transition.
 	 *
-	 * @since 2.7.0
-	 *
 	 * @param int|string $new_status The new comment status.
 	 * @param int|string $old_status The old comment status.
 	 * @param WP_Comment $comment    Comment object.
 	 */
 	public function on_comment_transition_cb( $new_status, $old_status, $comment ) {
-		$this->purge_nodes( Comment::class, 'comment', $comment->comment_ID );
-		$this->purge( 'list:comment' );
+		// Only evict cache if transitioning to or from 'approved'
+		if ( in_array( 'approved', [ $new_status, $old_status ], true ) ) {
+			$this->purge_nodes( Comment::class, 'comment', $comment->comment_ID );
+			$this->purge( 'list:comment' );
+		}
 	}
 
 	/**
