@@ -112,7 +112,7 @@ class BatchQueryTest extends \Tests\WPGraphQL\TestCase\WPGraphQLTestCase {
 				[	"queryId" => $query_string_2 ],
 			]
 		];
-		$max_age->peak_at_executing_query_cb( '', json_decode( json_encode( $request ) ) );
+		$max_age->peek_at_executing_query_cb( '', json_decode( json_encode( $request ) ) );
 
 		$headers = $max_age->http_headers_cb( [] );
 		$this->assertEquals( 10, $headers[ 'Access-Control-Max-Age' ] );
