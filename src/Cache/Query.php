@@ -61,6 +61,7 @@ class Query {
 			'operation' => $operation ?: null,
 			'user'      => $user->ID,
 		];
+
 		return hash( 'sha256', wp_json_encode( $parts ) );
 	}
 
