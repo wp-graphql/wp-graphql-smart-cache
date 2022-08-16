@@ -15,8 +15,8 @@ use GraphQL\Server\RequestError;
 class MaxAge {
 	const TAXONOMY_NAME = 'graphql_document_http_maxage';
 
-	// The in-progress query
-	public $query_id;
+	// The in-progress query(s)
+	public $query_ids = [];
 
 	public function init() {
 		register_taxonomy(
@@ -63,7 +63,7 @@ class MaxAge {
 
 		// From WPGraphql Router
 		add_filter( 'graphql_response_headers_to_send', [ $this, 'http_headers_cb' ], 10, 1 );
-		add_filter( 'pre_graphql_execute_request', [ $this, 'peak_at_executing_query_cb' ], 10, 2 );
+		add_filter( 'pre_graphql_execute_request', [ $this, 'peek_at_executing_query_cb' ], 10, 2 );
 
 		add_filter( 'graphql_mutation_input', [ $this, 'graphql_mutation_filter' ], 10, 4 );
 		add_action( 'graphql_mutation_response', [ $this, 'graphql_mutation_insert' ], 10, 6 );
@@ -140,24 +140,44 @@ class MaxAge {
 		return wp_set_post_terms( $post_id, $value, self::TAXONOMY_NAME );
 	}
 
-	public function peak_at_executing_query_cb( $result, $request ) {
-		if ( $request->params->queryId ) {
-			$this->query_id = $request->params->queryId;
-		} elseif ( $request->params->query ) {
-			$this->query_id = Utils::generateHash( $request->params->query );
+	public function peek_at_executing_query_cb( $result, $request ) {
+		// For batch request, params are an array for each query/queryId in the batch
+		$params = [];
+		if ( is_array( $request->params ) ) {
+			$params = $request->params;
+		} else {
+			$params[] = $request->params;
+		}
+
+		foreach ( $params as $req ) {
+			//phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
+			if ( isset( $req->queryId ) ) {
+				//phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
+				$this->query_ids[] = $req->queryId;
+			} elseif ( isset( $req->query ) ) {
+				$this->query_ids[] = Utils::generateHash( $req->query );
+			}
 		}
 
 		return $result;
 	}
 
+	/**
+	 * @param array $headers
+	 */
 	public function http_headers_cb( $headers ) {
 		$age = null;
 
 		// Look up this specific request query. If found and has an individual max-age setting, use it.
-		if ( $this->query_id ) {
-			$post = Utils::getPostByTermName( $this->query_id, Document::TYPE_NAME, Document::ALIAS_TAXONOMY_NAME );
+		// For batch queries, look up and use the smallest/shortest max-age selection.
+		foreach ( $this->query_ids as $query_id ) {
+			$post = Utils::getPostByTermName( $query_id, Document::TYPE_NAME, Document::ALIAS_TAXONOMY_NAME );
 			if ( $post ) {
-				$age = $this->get( $post->ID );
+				// If this saved query has a specified max-age, use it. Make sure to keep the smallest value.
+				$value = $this->get( $post->ID );
+				if ( $value ) {
+					$age = ( null === $age ) ? $value : min( $age, $value );
+				}
 			}
 		}
 
