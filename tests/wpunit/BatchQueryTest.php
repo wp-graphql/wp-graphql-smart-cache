@@ -49,7 +49,7 @@ class BatchQueryTest extends \Tests\WPGraphQL\TestCase\WPGraphQLTestCase {
 
 		// Test saved/persisted query.
 		$query_string = sprintf( "query %s { posts { nodes { uri id databaseId } } }", $this->query_alias );
-		$query = 
+		$query =
 			[
 				[	"queryId" => $this->query_alias ],
 				[	"query" => $query_string ],
@@ -115,6 +115,6 @@ class BatchQueryTest extends \Tests\WPGraphQL\TestCase\WPGraphQLTestCase {
 		$max_age->peek_at_executing_query_cb( '', json_decode( json_encode( $request ) ) );
 
 		$headers = $max_age->http_headers_cb( [] );
-		$this->assertEquals( 10, $headers[ 'Access-Control-Max-Age' ] );
+		$this->assertEquals( 'max-age=10, s-maxage=10, must-revalidate', $headers[ 'Cache-Control' ] );
 	}
 }

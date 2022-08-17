@@ -23,7 +23,7 @@ class MaxAge {
 			self::TAXONOMY_NAME,
 			Document::TYPE_NAME,
 			[
-				'description'        => __( 'HTTP Access-Control-Max-Age Header for a saved GraphQL document', 'wp-graphql-smart-cache' ),
+				'description'        => __( 'HTTP Cache-Control max-age directive for a saved GraphQL document', 'wp-graphql-smart-cache' ),
 				'labels'             => [
 					'name' => __( 'Max-Age Header', 'wp-graphql-smart-cache' ),
 				],
@@ -46,7 +46,7 @@ class MaxAge {
 				$register_type_name = ucfirst( Document::GRAPHQL_NAME );
 				$config             = [
 					'type'        => 'Int',
-					'description' => __( 'HTTP Access-Control-Max-Age Header for a saved GraphQL document', 'wp-graphql-smart-cache' ),
+					'description' => __( 'HTTP Cache-Control max-age directive for a saved GraphQL document', 'wp-graphql-smart-cache' ),
 				];
 
 				register_graphql_field( 'Create' . $register_type_name . 'Input', 'max_age_header', $config );
@@ -186,10 +186,14 @@ class MaxAge {
 			$age = get_graphql_setting( 'global_max_age', null, 'graphql_cache_section' );
 		}
 
-		// Access-Control-Max-Age header should be zero or positive integer, no decimals.
+		// Cache-Control max-age directive should be a positive integer, no decimals.
+		// A value of zero indicates that caching should be disabled.
 		if ( $this->valid( $age ) ) {
-			$headers['Access-Control-Max-Age'] = intval( $age );
-			$headers['Cache-Control']          = sprintf( 'max-age=%1$s, s-maxage=%1$s, must-revalidate', intval( $age ) );
+			if ( 0 === $age ) {
+				$headers['Cache-Control'] = 'no-store';
+			} else {
+				$headers['Cache-Control'] = sprintf( 'max-age=%1$s, s-maxage=%1$s, must-revalidate', intval( $age ) );
+			}
 		}
 
 		return $headers;

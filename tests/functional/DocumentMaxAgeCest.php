@@ -9,7 +9,7 @@ class DocumentMaxAgeCest {
 		$I->dontHaveOptionInDatabase( 'graphql_cache_section'  );
 	}
 
-	public function _runQuery( FunctionalTester $I, $expected ) {
+	public function _runQuery( FunctionalTester $I ) {
 		$query = "query { __typename }";
 		$I->sendPost('graphql', [
 			'query'         => $query,
@@ -19,30 +19,34 @@ class DocumentMaxAgeCest {
 				'__typename' => 'RootQuery'
 			]
 		]);
-		$I->seeHttpHeader( 'Access-Control-Max-Age', $expected );
 	}
 
 	public function queryShowsMaxAgeTest( FunctionalTester $I ) {
-		$I->wantTo( 'See my custom max-age header in response for a graphql query' );
+		$I->wantTo( 'See my custom max-age directive in response for a graphql query' );
 
 		$I->dontHaveOptionInDatabase( 'graphql_cache_section'  );
-		$this->_runQuery( $I, 600 );
+		$this->_runQuery( $I );
+		$I->dontSeeHttpHeader( 'Cache-Control' );
 
 		$I->haveOptionInDatabase( 'graphql_cache_section', [ 'global_max_age' => null ] );
-		$this->_runQuery( $I, 600 );
-
-		$I->haveOptionInDatabase( 'graphql_cache_section', [ 'global_max_age' => 30 ] );
-		$this->_runQuery( $I, 30 );
-
-		$I->haveOptionInDatabase( 'graphql_cache_section', [ 'global_max_age' => 10.5 ] );
-		$this->_runQuery( $I, 10 );
+		$this->_runQuery( $I );
+		$I->dontSeeHttpHeader( 'Cache-Control' );
 
 		$I->haveOptionInDatabase( 'graphql_cache_section', [ 'global_max_age' => -1 ] );
-		$this->_runQuery( $I, 600 );
+		$this->_runQuery( $I );
+		$I->dontSeeHttpHeader( 'Cache-Control' );
+
+		$I->haveOptionInDatabase( 'graphql_cache_section', [ 'global_max_age' => 30 ] );
+		$this->_runQuery( $I );
+		$I->seeHttpHeader( 'Cache-Control', 'max-age=30, s-maxage=30, must-revalidate' );
+
+		$I->haveOptionInDatabase( 'graphql_cache_section', [ 'global_max_age' => 10.5 ] );
+		$this->_runQuery( $I );
+		$I->seeHttpHeader( 'Cache-Control', 'max-age=10, s-maxage=10, must-revalidate' );
 
 		$I->haveOptionInDatabase( 'graphql_cache_section', [ 'global_max_age' => 0 ] );
-		$this->_runQuery( $I, 0 );
-
+		$this->_runQuery( $I );
+		$I->seeHttpHeader( 'Cache-Control', 'no-store' );
 	}
 
 	public function batchQueryDefaultMaxAgeTest( FunctionalTester $I ) {
@@ -61,7 +65,7 @@ class DocumentMaxAgeCest {
 				'__typename' => 'RootQuery'
 			]
 		]);
-		$I->seeHttpHeader( 'Access-Control-Max-Age', 444 );
+		$I->seeHttpHeader( 'Cache-Control', 'max-age=444, s-maxage=444, must-revalidate' );
 	}
 
 }
