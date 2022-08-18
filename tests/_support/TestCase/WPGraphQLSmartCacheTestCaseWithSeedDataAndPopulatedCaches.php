@@ -135,7 +135,12 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 	/**
 	 * @var WP_Comment
 	 */
-	public $comment;
+	public $approved_comment;
+
+	/**
+	 * @var WP_Comment
+	 */
+	public $unapproved_comment;
 
 	/**
 	 * @var WP_Term
@@ -431,6 +436,15 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			'post_status' => 'publish'
 		]);
 
+		$this->approved_comment = self::factory()->comment->create_and_get([
+			'comment_approved' => 1,
+			'comment_post_ID' => $this->published_post->ID,
+		]);
+
+		$this->unapproved_comment = self::factory()->comment->create_and_get([
+			'comment_approved' => 0,
+		]);
+
 		// set the parent menu item
 		wp_update_nav_menu_item( $this->menu->term_id, $this->menu_item_1->ID, [
 			'menu-item-title' => 'Test Item',
@@ -511,7 +525,7 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 					$this->expectedField( 'post.databaseId', $this->published_post->ID )
 				],
 				'expectedCacheKeys' => [
-					'node:' . $this->toRelayId( 'post', $this->published_post->ID )
+					'node:' . \WPGraphQL\Model\Post::class . ':' . $this->toRelayId( 'post', $this->published_post->ID )
 				]
 			],
 			'singlePostByEditor' => [
@@ -523,7 +537,7 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 					$this->expectedField( 'post.databaseId', $this->published_post_by_editor->ID )
 				],
 				'expectedCacheKeys' => [
-					'node:' . $this->toRelayId( 'post', $this->published_post_by_editor->ID )
+					'node:' . \WPGraphQL\Model\Post::class . ':' . $this->toRelayId( 'post', $this->published_post_by_editor->ID )
 				]
 			],
 			'listPage' => [
@@ -549,7 +563,7 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 					$this->expectedField( 'page.databaseId', $this->published_page->ID )
 				],
 				'expectedCacheKeys' => [
-					'node:' . $this->toRelayId( 'post', $this->published_page->ID ),
+					'node:' . \WPGraphQL\Model\Post::class . ':' . $this->toRelayId( 'post', $this->published_page->ID ),
 				]
 			],
 			'listTestPostType' => [
@@ -575,7 +589,7 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 					$this->expectedField( 'testPostType.databaseId', $this->published_test_post_type->ID )
 				],
 				'expectedCacheKeys' => [
-					'node:' . $this->toRelayId( 'post', $this->published_test_post_type->ID )
+					'node:' . \WPGraphQL\Model\Post::class . ':' . $this->toRelayId( 'post', $this->published_test_post_type->ID )
 				]
 			],
 			'listPrivatePostType' => [
@@ -613,7 +627,7 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 					$this->expectedField( 'contentNode.databaseId', $this->published_post->ID )
 				],
 				'expectedCacheKeys' => [
-					'node:' . $this->toRelayId( 'post', $this->published_post->ID ),
+					'node:' . \WPGraphQL\Model\Post::class . ':' . $this->toRelayId( 'post', $this->published_post->ID ),
 				],
 			],
 			'listContentNode' => [
@@ -633,8 +647,8 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 					])
 				],
 				'expectedCacheKeys' => [
-					'node:' . $this->toRelayId( 'post', $this->published_post->ID ),
-					'node:' . $this->toRelayId( 'post', $this->published_page->ID ),
+					'node:' . \WPGraphQL\Model\Post::class . ':' . $this->toRelayId( 'post', $this->published_post->ID ),
+					'node:' . \WPGraphQL\Model\Post::class . ':' . $this->toRelayId( 'post', $this->published_page->ID ),
 				],
 			],
 			'singleNodeById' => [
@@ -646,7 +660,7 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 					$this->expectedField( 'node.databaseId', $this->published_post->ID )
 				],
 				'expectedCacheKeys' => [
-					'node:' . $this->toRelayId( 'post', $this->published_post->ID )
+					'node:' . \WPGraphQL\Model\Post::class . ':' . $this->toRelayId( 'post', $this->published_post->ID )
 				]
 			],
 			'singleNodeByUri' => [
@@ -682,7 +696,7 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 					$this->expectedField( 'tag.databaseId', $this->tag->term_id )
 				],
 				'expectedCacheKeys' => [
-					'node:' . $this->toRelayId( 'term', $this->tag->term_id )
+					'node:' . \WPGraphQL\Model\Term::class . ':' . $this->toRelayId( 'term', $this->tag->term_id )
 				]
 			],
 			'listCategory' => [
@@ -709,7 +723,7 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 					$this->expectedField( 'category.databaseId', $this->category->term_id )
 				],
 				'expectedCacheKeys' => [
-					'node:' . $this->toRelayId( 'term', $this->category->term_id )
+					'node:' . \WPGraphQL\Model\Term::class . ':' . $this->toRelayId( 'term', $this->category->term_id )
 				]
 			],
 			'singleTestTaxonomyTerm' => [
@@ -721,7 +735,7 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 					$this->expectedField( 'testTaxonomyTerm.databaseId', $this->test_taxonomy_term->term_id )
 				],
 				'expectedCacheKeys' => [
-					'node:' . $this->toRelayId( 'term', $this->test_taxonomy_term->term_id )
+					'node:' . \WPGraphQL\Model\Term::class . ':' . $this->toRelayId( 'term', $this->test_taxonomy_term->term_id )
 				]
 			],
 			'listTestTaxonomyTerm' => [
@@ -753,7 +767,7 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 				],
 				'expectedCacheKeys' => [
 					'list:post',
-					'node:' . $this->toRelayId( 'user', $this->admin->ID )
+					'node:' . \WPGraphQL\Model\User::class . ':' . $this->toRelayId( 'user', $this->admin->ID )
 				]
 			],
 			'editorUserWithPostsConnection' => [
@@ -770,7 +784,7 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 				],
 				'expectedCacheKeys' => [
 					'list:post',
-					'node:' . $this->toRelayId( 'user', $this->editor->ID )
+					'node:' . \WPGraphQL\Model\User::class . ':' . $this->toRelayId( 'user', $this->editor->ID )
 				]
 			],
 			'adminUserByDatabaseId' => [
@@ -782,7 +796,7 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 					$this->expectedField( 'user.databaseId', $this->admin->ID ),
 				],
 				'expectedCacheKeys' => [
-					'node:' . $this->toRelayId( 'user', $this->admin->ID )
+					'node:' . \WPGraphQL\Model\User::class . ':' . $this->toRelayId( 'user', $this->admin->ID )
 				],
 
 			],
@@ -856,7 +870,20 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			'listMediaItem' => [
 				'name' => 'listMediaItem',
 				'query' => $this->getListMediaItemQuery(),
-			]
+			],
+			'singleApprovedCommentByGlobalId' => [
+				'name' => 'singleApprovedCommentByGlobalId',
+				'query' => $this->getSingleCommentByGlobalIdQuery(),
+				'variables' => [ 'id' => $this->toRelayId( 'comment', $this->approved_comment->comment_ID ) ],
+				'expectedCacheKeys' => [
+					'node:' . \WPGraphQL\Model\Comment::class . ':' . $this->toRelayId( 'comment', $this->approved_comment->comment_ID )
+				],
+			],
+			'listComment' => [
+				'name' => 'listComment',
+				'query' => $this->getListCommentQuery(),
+				'variables' => null,
+			],
 
 //			@todo: I believe the WPGraphQL Model Layer might have some bugs to fix re: private taxonomies? 🤔
 //			'singlePrivateTaxonomyTerm' => [
@@ -929,13 +956,12 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			// $this->assertSame( $actual, $this->collection->get( $cache_key ) );
 
 			// check any expected cache keys to ensure they're not empty
-//			if ( ! empty( $expectedCacheKeys ) ) {
-//				foreach ( $expectedCacheKeys as $expected_cache_key ) {
-//
-//					 $this->assertNotEmpty( $this->collection->get( $expected_cache_key ) );
-//					 $this->assertContains( $cache_key, $this->collection->get( $expected_cache_key ) );
-//				}
-//			}
+			if ( ! empty( $expectedCacheKeys ) ) {
+				foreach ( $expectedCacheKeys as $expected_cache_key ) {
+					$this->assertNotEmpty( $this->collection->get( $expected_cache_key ) );
+					$this->assertContains( $cache_key, $this->collection->get( $expected_cache_key ) );
+				}
+			}
 
 			$this->query_results[ $name ] = [
 				'name' => $name,
@@ -1401,7 +1427,7 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 	/**
 	 * @return string
 	 */
-	public function getListCommentsQuery() {
+	public function getListCommentQuery() {
 		return '
 		query GetComments {
 		  comments {

@@ -5,6 +5,7 @@ use GraphQLRelay\Relay;
 use WP_Post;
 use WP_Term;
 use WP_User;
+use WPGraphQL\Model\Comment;
 use WPGraphQL\Model\Menu;
 use WPGraphQL\Model\MenuItem;
 use WPGraphQL\Model\Post;
@@ -105,8 +106,12 @@ class Invalidation {
 		add_action( 'delete_attachment', [ $this, 'on_delete_attachment' ], 10, 1 );
 		add_action( 'wp_save_image_editor_file', [ $this, 'on_save_image_file_cb' ], 10, 5 );
 		add_action( 'wp_save_image_file', [ $this, 'on_save_image_file_cb' ], 10, 5 );
-	}
 
+		## Comment actions
+
+		add_action( 'wp_insert_comment', [ $this, 'on_insert_comment_cb' ], 10, 2 );
+		add_action( 'transition_comment_status', [ $this, 'on_comment_transition_cb' ], 10, 3 );
+	}
 
 	/**
 	 * Determines whether the meta should be tracked or not.
@@ -725,4 +730,31 @@ class Invalidation {
 		$this->purge_nodes( Post::class, 'post', $attachment_id );
 	}
 
+	/**
+	 * Fires when the comment status is in transition.
+	 *
+	 * @param int|string $new_status The new comment status.
+	 * @param int|string $old_status The old comment status.
+	 * @param WP_Comment $comment    Comment object.
+	 */
+	public function on_comment_transition_cb( $new_status, $old_status, $comment ) {
+		// Only evict cache if transitioning to or from 'approved'
+		if ( in_array( 'approved', [ $new_status, $old_status ], true ) ) {
+			$this->purge_nodes( Comment::class, 'comment', $comment->comment_ID );
+			$this->purge( 'list:comment' );
+		}
+	}
+
+	/**
+	 * Fires immediately after a comment is inserted into the database.
+	 *
+	 * @param int        $id      The comment ID.
+	 * @param WP_Comment $comment Comment object.
+	 */
+	public function on_insert_comment_cb( $comment_id, $comment ) {
+		if ( isset( $comment->comment_approved ) && '1' === $comment->comment_approved ) {
+			$this->purge_nodes( Comment::class, 'comment', $comment_id );
+			$this->purge( 'list:comment' );
+		}
+	}
 }
