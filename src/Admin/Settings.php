@@ -99,13 +99,18 @@ class Settings {
 					'graphql_cache_section',
 					[
 						'name'              => 'global_max_age',
-						'label'             => __( 'Access-Control-Max-Age Header', 'wp-graphql-smart-cache' ),
-						'desc'              => __( 'Global Max-Age HTTP header. Integer value, greater or equal to zero.', 'wp-graphql-smart-cache' ),
+						'label'             => __( 'Cache-Control max-age', 'wp-graphql-smart-cache' ),
+						'desc'              => __( 'If set, a Cache-Control header with max-age directive will be set for all GraphQL responses. Value should be an integer, greater or equal to zero, or blank to disable. A value of 0 indicates that requests should not be cached (use with caution).', 'wp-graphql-smart-cache' ),
 						'type'              => 'number',
 						'sanitize_callback' => function ( $value ) {
-							if ( $value < 0 || ! is_numeric( $value ) ) {
+							if ( ! is_numeric( $value ) ) {
+								return null;
+							}
+
+							if ( $value < 0 ) {
 								return 0;
 							}
+
 							return (int) $value;
 						},
 					]
