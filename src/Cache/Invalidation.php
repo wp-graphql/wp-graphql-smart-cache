@@ -836,6 +836,8 @@ class Invalidation {
 					'query'     => $query,
 					'variables' => $variables,
 				] ),
+				// set a low timeout so the response is not waited for
+				'timeout' => 0.01,
 				// this is a non-blocking HTTP request so that
 				// the current action causing cache evictions
 				// can complete independent of the caches being
@@ -895,6 +897,10 @@ class Invalidation {
 				if ( ! wp_verify_nonce( $input['nonce'], 'graphql_purge') ) {
 					$success = false;
 				} else {
+
+					// uncomment this to test the async purge slowing down saving posts
+					// sleep( 10 );
+
 					do_action( 'wpgraphql_cache_purge_nodes', $input['key'], $input['queryIds'] );
 					$success = ! empty( $input['queryIds'] );
 				}
