@@ -1,6 +1,7 @@
 <?php
 namespace WPGraphQL\SmartCache\Cache;
 
+use Exception;
 use GraphQLRelay\Relay;
 use WP_Post;
 use WP_Term;
@@ -11,6 +12,7 @@ use WPGraphQL\Model\MenuItem;
 use WPGraphQL\Model\Post;
 use WPGraphQL\Model\Term;
 use WPGraphQL\Model\User;
+use WPGraphQL\Router;
 
 
 /**
@@ -111,6 +113,9 @@ class Invalidation {
 
 		add_action( 'wp_insert_comment', [ $this, 'on_insert_comment_cb' ], 10, 2 );
 		add_action( 'transition_comment_status', [ $this, 'on_comment_transition_cb' ], 10, 3 );
+
+		add_action( 'graphql_register_types', [ $this, 'register_purge_mutation' ] );
+
 	}
 
 	/**
@@ -166,7 +171,7 @@ class Invalidation {
 	public function purge( $key ) {
 		$nodes = $this->collection->get( $key );
 		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
-			do_action( 'wpgraphql_cache_purge_nodes', $key, $nodes );
+			$this->dispatch_purge_cache( $key, $nodes );
 		}
 	}
 
@@ -757,4 +762,151 @@ class Invalidation {
 			$this->purge( 'list:comment' );
 		}
 	}
+
+	/**
+	 * Given a key and nodes, dispatch an HTTP request to the
+	 * GraphQL endpoint to purge the specified caches
+	 *
+	 * @param $key
+	 * @param $nodes
+	 *
+	 * @return void
+	 * @throws Exception
+	 */
+	public function dispatch_purge_cache( $key, $nodes ) {
+
+		// if there are no nodes to purge, bail
+		if ( empty( $nodes ) ) {
+			return;
+		}
+
+		$query = '
+		mutation AsyncPurgeGraphqlCache( $input: AsyncPurgeGraphqlCacheInput! ) {
+		  asyncPurgeGraphqlCache( input: $input ) {
+		    success
+		    queryIds
+		    key
+		  }
+		}
+		';
+
+		$variables = [
+			'input' => [
+				'clientMutationId' => uniqid( 'graphql_purge', true ),
+				'key' => $key,
+				'queryIds' => $nodes,
+				'nonce' => wp_create_nonce( 'graphql_purge' )
+			],
+		];
+
+		$purge_async = apply_filters( 'graphql_smart_cache_purge_async', true );
+
+		// if purge async is disabled, purge internally
+		if ( ! $purge_async ) {
+
+			// if async purging is disabled,
+			// use the graphql() function internally
+			// to purge the cache.
+			// This is used for unit testing, and can be used
+			// in certain debug scenarios as well.
+			graphql([
+				'query' => $query,
+				'variables' => $variables,
+			]);
+		} else {
+
+			// get the current cookies and prepare them to
+			// be sent in the remote POST request
+			// so it can execute as the user
+			// making the current request.
+			$cookies = [];
+			foreach ( $_COOKIE as $name => $value ) {
+				$cookies[] = new \WP_Http_Cookie([
+					'name' => $name,
+					'value' => $value,
+				]);
+			}
+
+			// send a post request to the GraphQL endpoint
+			wp_safe_remote_post( site_url( Router::$route ), [
+				'headers'  => [
+					'Content-Type' => 'application/json',
+				],
+				'body'     => wp_json_encode( [
+					'query'     => $query,
+					'variables' => $variables,
+				] ),
+				// this is a non-blocking HTTP request so that
+				// the current action causing cache evictions
+				// can complete independent of the caches being
+				// looped over and evicted.
+				'blocking' => false,
+				// send the cookies of the current user along for the ride
+				// so the mutation can execute as the user making the
+				// action (save_post, etc)
+				'cookies'  => $cookies,
+			] );
+		}
+
+
+	}
+
+	/**
+	 * Add a mutation to the WPGraphQL Schema to purge cache via HTTP request
+	 *
+	 * @return void
+	 * @throws Exception
+	 */
+	public function register_purge_mutation() {
+
+		register_graphql_mutation( 'asyncPurgeGraphqlCache', [
+			'inputFields' => [
+				'key' => [
+					'type' => [ 'non_null' => 'ID' ],
+					'description' => __( 'Identifier for the nodes stored in cache', 'wp-graphql-smart-cache' ),
+				],
+				'queryIds' => [
+					'type' => [ 'non_null' => [ 'list_of' => 'ID' ] ],
+					'description' => __( 'List of query IDs to purge', 'wp-graphql-smart-cache' ),
+				],
+				'nonce' => [
+					'type' => [ 'non_null' => 'String' ],
+					'description' => __( 'Nonce', 'wp-graphql-smart-cache' ),
+				],
+			],
+			'outputFields' => [
+				'success' => [
+					'type' => 'Boolean',
+					'description' => __( 'Whether the purge was successfully executed', 'wp-graphql-smart-cache' ),
+				],
+				'key' => [
+					'type' => 'ID',
+					'description' => __( 'Identifier for the nodes stored in cache', 'wp-graphql-smart-cache' ),
+				],
+				'queryIds' => [
+					'type' => [ 'list_of' => 'ID' ],
+					'description' => __( 'List of query IDs to purge', 'wp-graphql-smart-cache' ),
+				],
+			],
+			'mutateAndGetPayload' => function( $input, $context, $info ) {
+
+				// ensure the action was evoked by an internal WordPress action
+				// or a client with access to the graphql_purge nonce
+				if ( ! wp_verify_nonce( $input['nonce'], 'graphql_purge') ) {
+					$success = false;
+				} else {
+					do_action( 'wpgraphql_cache_purge_nodes', $input['key'], $input['queryIds'] );
+					$success = ! empty( $input['queryIds'] );
+				}
+
+				return [
+					'success' => $success,
+					'key' => $input['key'],
+					'queryIds' => $input['queryIds'],
+				];
+			}
+		]);
+
+	}
+
 }

@@ -187,6 +187,11 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 		 */
 		$this->clearSchema();
 
+		// Don't purge async, instead purge using internal graphql call
+		// by default, WPGraphQL Smart Cache will attempt
+		// to make an async POST request to purge caches
+		add_filter( 'graphql_smart_cache_purge_async', '__return_false' );
+
 		// prevent default category from being added to posts on creation
 		update_option( 'default_category', 0 );
 
