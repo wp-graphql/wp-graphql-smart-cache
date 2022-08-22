@@ -115,7 +115,6 @@ class Invalidation {
 		add_action( 'transition_comment_status', [ $this, 'on_comment_transition_cb' ], 10, 3 );
 
 		add_action( 'graphql_register_types', [ $this, 'register_purge_mutation' ] );
-
 	}
 
 	/**
@@ -793,13 +792,13 @@ class Invalidation {
 		$variables = [
 			'input' => [
 				'clientMutationId' => uniqid( 'graphql_purge', true ),
-				'key' => $key,
-				'queryIds' => $nodes,
-				'nonce' => wp_create_nonce( 'graphql_purge' )
+				'key'              => $key,
+				'queryIds'         => $nodes,
+				'nonce'            => wp_create_nonce( 'graphql_purge' ),
 			],
 		];
 
-		$purge_async = apply_filters( 'graphql_smart_cache_purge_async', true );
+		$purge_async = apply_filters( 'wpgraphql_smart_cache_purge_async', true );
 
 		// if purge async is disabled, purge internally
 		if ( ! $purge_async ) {
@@ -809,10 +808,12 @@ class Invalidation {
 			// to purge the cache.
 			// This is used for unit testing, and can be used
 			// in certain debug scenarios as well.
-			graphql([
-				'query' => $query,
-				'variables' => $variables,
-			]);
+			graphql(
+				[
+					'query'     => $query,
+					'variables' => $variables,
+				]
+			);
 		} else {
 
 			// get the current cookies and prepare them to
@@ -821,36 +822,41 @@ class Invalidation {
 			// making the current request.
 			$cookies = [];
 			foreach ( $_COOKIE as $name => $value ) {
-				$cookies[] = new \WP_Http_Cookie([
-					'name' => $name,
-					'value' => $value,
-				]);
+				$cookies[] = new \WP_Http_Cookie(
+					[
+						'name'  => $name,
+						'value' => $value,
+					]
+				);
 			}
 
 			// send a post request to the GraphQL endpoint
-			wp_safe_remote_post( site_url( Router::$route ), [
-				'headers'  => [
-					'Content-Type' => 'application/json',
-				],
-				'body'     => wp_json_encode( [
-					'query'     => $query,
-					'variables' => $variables,
-				] ),
-				// set a low timeout so the response is not waited for
-				'timeout' => 0.01,
-				// this is a non-blocking HTTP request so that
-				// the current action causing cache evictions
-				// can complete independent of the caches being
-				// looped over and evicted.
-				'blocking' => false,
-				// send the cookies of the current user along for the ride
-				// so the mutation can execute as the user making the
-				// action (save_post, etc)
-				'cookies'  => $cookies,
-			] );
+			wp_safe_remote_post(
+				site_url( Router::$route ),
+				[
+					'headers'  => [
+						'Content-Type' => 'application/json',
+					],
+					'body'     => wp_json_encode(
+						[
+							'query'     => $query,
+							'variables' => $variables,
+						]
+					),
+					// set a low timeout so the response is not waited for
+					'timeout'  => 0.01,
+					// this is a non-blocking HTTP request so that
+					// the current action causing cache evictions
+					// can complete independent of the caches being
+					// looped over and evicted.
+					'blocking' => false,
+					// send the cookies of the current user along for the ride
+					// so the mutation can execute as the user making the
+					// action (save_post, etc)
+					'cookies'  => $cookies,
+				]
+			);
 		}
-
-
 	}
 
 	/**
@@ -860,59 +866,60 @@ class Invalidation {
 	 * @throws Exception
 	 */
 	public function register_purge_mutation() {
-
-		register_graphql_mutation( 'asyncPurgeGraphqlCache', [
-			'inputFields' => [
-				'key' => [
-					'type' => [ 'non_null' => 'ID' ],
-					'description' => __( 'Identifier for the nodes stored in cache', 'wp-graphql-smart-cache' ),
+		register_graphql_mutation(
+			'asyncPurgeGraphqlCache',
+			[
+				'inputFields'         => [
+					'key'      => [
+						'type'        => [ 'non_null' => 'ID' ],
+						'description' => __( 'Identifier for the nodes stored in cache', 'wp-graphql-smart-cache' ),
+					],
+					'queryIds' => [
+						'type'        => [ 'non_null' => [ 'list_of' => 'ID' ] ],
+						'description' => __( 'List of query IDs to purge', 'wp-graphql-smart-cache' ),
+					],
+					'nonce'    => [
+						'type'        => [ 'non_null' => 'String' ],
+						'description' => __( 'Nonce', 'wp-graphql-smart-cache' ),
+					],
 				],
-				'queryIds' => [
-					'type' => [ 'non_null' => [ 'list_of' => 'ID' ] ],
-					'description' => __( 'List of query IDs to purge', 'wp-graphql-smart-cache' ),
+				'outputFields'        => [
+					'success'  => [
+						'type'        => 'Boolean',
+						'description' => __( 'Whether the purge was successfully executed', 'wp-graphql-smart-cache' ),
+					],
+					'key'      => [
+						'type'        => 'ID',
+						'description' => __( 'Identifier for the nodes stored in cache', 'wp-graphql-smart-cache' ),
+					],
+					'queryIds' => [
+						'type'        => [ 'list_of' => 'ID' ],
+						'description' => __( 'List of query IDs to purge', 'wp-graphql-smart-cache' ),
+					],
 				],
-				'nonce' => [
-					'type' => [ 'non_null' => 'String' ],
-					'description' => __( 'Nonce', 'wp-graphql-smart-cache' ),
-				],
-			],
-			'outputFields' => [
-				'success' => [
-					'type' => 'Boolean',
-					'description' => __( 'Whether the purge was successfully executed', 'wp-graphql-smart-cache' ),
-				],
-				'key' => [
-					'type' => 'ID',
-					'description' => __( 'Identifier for the nodes stored in cache', 'wp-graphql-smart-cache' ),
-				],
-				'queryIds' => [
-					'type' => [ 'list_of' => 'ID' ],
-					'description' => __( 'List of query IDs to purge', 'wp-graphql-smart-cache' ),
-				],
-			],
-			'mutateAndGetPayload' => function( $input, $context, $info ) {
+				'mutateAndGetPayload' => function ( $input, $context, $info ) {
 
-				// ensure the action was evoked by an internal WordPress action
-				// or a client with access to the graphql_purge nonce
-				if ( ! wp_verify_nonce( $input['nonce'], 'graphql_purge') ) {
-					$success = false;
-				} else {
+					// ensure the action was evoked by an internal WordPress action
+					// or a client with access to the graphql_purge nonce
+					if ( ! wp_verify_nonce( $input['nonce'], 'graphql_purge' ) ) {
+						$success = false;
+					} else {
 
-					// uncomment this to test the async purge slowing down saving posts
-					// sleep( 10 );
+						// uncomment this to test the async purge slowing down saving posts
+						// sleep( 10 );
 
-					do_action( 'wpgraphql_cache_purge_nodes', $input['key'], $input['queryIds'] );
-					$success = ! empty( $input['queryIds'] );
-				}
+						do_action( 'wpgraphql_cache_purge_nodes', $input['key'], $input['queryIds'] );
+						$success = ! empty( $input['queryIds'] );
+					}
 
-				return [
-					'success' => $success,
-					'key' => $input['key'],
-					'queryIds' => $input['queryIds'],
-				];
-			}
-		]);
-
+					return [
+						'success'  => $success,
+						'key'      => $input['key'],
+						'queryIds' => $input['queryIds'],
+					];
+				},
+			]
+		);
 	}
 
 }
