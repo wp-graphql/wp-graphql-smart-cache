@@ -50,8 +50,13 @@ class CacheInvalidationTest extends \Codeception\TestCase\WPTestCase {
 		}
 		';
 
-		$schema = \WPGraphQL::get_schema();
-		$types = $this->collection->get_query_list_types( $schema, $query );
+		$request = graphql([
+			'query' => $query,
+		], true );
+
+		$request->execute();
+
+		$types = $request->get_query_analyzer()->get_list_types();
 
 		$this->assertContains( 'list:post', $types );
 
@@ -75,8 +80,13 @@ class CacheInvalidationTest extends \Codeception\TestCase\WPTestCase {
 		}
 		';
 
-		$schema = \WPGraphQL::get_schema();
-		$types = $this->collection->get_query_list_types( $schema, $query );
+		$request = graphql([
+			'query' => $query,
+		], true );
+
+		$request->execute();
+
+		$types = $request->get_query_analyzer()->get_list_types();
 
 		$this->assertContains( 'list:post', $types );
 
