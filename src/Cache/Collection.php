@@ -32,13 +32,6 @@ class Collection extends Query {
 	public $nodes = [];
 
 	/**
-	 * Whether the query is a query (not a mutation or subscription)
-	 *
-	 * @var boolean
-	 */
-	public $is_query;
-
-	/**
 	 * Types that are referenced in the query
 	 *
 	 * @var array
@@ -70,8 +63,6 @@ class Collection extends Query {
 		add_filter( 'pre_graphql_execute_request', [ $this, 'before_executing_query_cb' ], 10, 2 );
 		add_filter( 'graphql_dataloader_get_model', [ $this, 'data_loaded_process_cb' ], 10, 1 );
 
-		add_action( 'graphql_after_resolve_field', [ $this, 'during_query_resolve_field' ], 10, 6 );
-
 		// before execution begins, determine the type names map
 		add_action( 'graphql_before_execute', [ $this, 'determine_query_types' ], 10, 1 );
 
@@ -102,9 +93,9 @@ class Collection extends Query {
 		// if there's a query (either saved or part of the request params)
 		// get the GraphQL Types being asked for by the query
 		if ( ! empty( $query ) ) {
-			$this->list_types  = $this->get_query_list_types( $request->schema, $query );
-			$this->type_names  = $this->get_query_types( $request->schema, $query );
-			$this->model_names = $this->get_query_models( $request->schema, $query );
+			$this->list_types  = $request->get_query_analyzer()->get_list_types() ?: [];
+			$this->type_names  = $request->get_query_analyzer()->get_query_types() ?: [];
+			$this->model_names = $request->get_query_analyzer()->get_query_models() ?: [];
 
 			// @todo: should this info be output as an extension?
 			// output the types as graphql debug info
@@ -314,22 +305,6 @@ class Collection extends Query {
 		}
 
 		return $model;
-	}
-
-	/**
-	 * An action after the field resolves
-	 *
-	 * @param mixed       $source    The source passed down the Resolve Tree
-	 * @param array       $args      The args for the field
-	 * @param AppContext  $context   The AppContext passed down the ResolveTree
-	 * @param ResolveInfo $info      The ResolveInfo passed down the ResolveTree
-	 * @param string      $type_name The name of the type the fields belong to
-	 */
-	public function during_query_resolve_field( $source, $args, $context, $info, $field_resolver, $type_name ) {
-		// If at any point while processing fields and it shows this request is a query, track that.
-		if ( 'RootQuery' === $type_name ) {
-			$this->is_query = true;
-		}
 	}
 
 	/**
