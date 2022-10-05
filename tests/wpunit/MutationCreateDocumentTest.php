@@ -11,7 +11,7 @@ class MutationCreateDocumentTest extends \Codeception\TestCase\WPTestCase {
 
         \WPGraphQL::clear_schema();
 
-        $this->admin = $this->factory->user->create( [
+        $this->admin = self::factory()->user->create( [
             'role' => 'administrator',
         ] );
 

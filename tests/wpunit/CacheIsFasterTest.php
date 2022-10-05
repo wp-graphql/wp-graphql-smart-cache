@@ -52,7 +52,7 @@ class CacheIsFasterTest extends \Codeception\TestCase\WPTestCase {
 		// Make a bunch of requests
 		// Average the time for requests
 		add_option( 'graphql_cache_section', [ 'cache_toggle' => 'on' ] );
-		$post_id = $this->factory->post->create(
+		$post_id = self::factory()->post->create(
 			[
 				'post_status'   => 'publish'
 			]
@@ -69,7 +69,7 @@ class CacheIsFasterTest extends \Codeception\TestCase\WPTestCase {
 		\wp_delete_post( $post_id );
 
 		delete_option( 'graphql_cache_section' );
-		$this->factory->post->create(
+		self::factory()->post->create(
 			[
 				'post_status'   => 'publish'
 			]

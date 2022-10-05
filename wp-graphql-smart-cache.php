@@ -21,20 +21,6 @@ use WPGraphQL\SmartCache\Admin\Settings;
 use WPGraphQL\SmartCache\Document\Description;
 use WPGraphQL\SmartCache\Document\Grant;
 use WPGraphQL\SmartCache\Document\MaxAge;
-use WPGraphQL\Model\Avatar;
-use WPGraphQL\Model\Comment;
-use WPGraphQL\Model\Plugin;
-use WPGraphQL\Model\PostType;
-use WPGraphQL\Model\Taxonomy;
-use WPGraphQL\Model\User;
-use WPGraphQL\Model\CommentAuthor;
-use WPGraphQL\Model\Menu;
-use WPGraphQL\Model\MenuItem;
-use WPGraphQL\Model\UserRole;
-use WPGraphQL\Model\Post;
-use WPGraphQL\Type\WPInterfaceType;
-use WPGraphQL\Type\WPObjectType;
-use WPGraphQL\Model\Term;
 
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {

@@ -54,7 +54,7 @@ class Collection extends Query {
 	 * @param ExecutionResult $response          The raw, unfiltered response of the GraphQL
 	 *                                           Execution
 	 * @param Schema          $schema            The WPGraphQL Schema
-	 * @param ?string         $operation_name    The name of the Operation
+	 * @param string          $operation         The name of the Operation
 	 * @param string          $query             The query string
 	 * @param array           $variables         The variables for the query
 	 * @param Request         $request           The WPGraphQL Request object
@@ -66,13 +66,13 @@ class Collection extends Query {
 		$filtered_response,
 		$response,
 		$schema,
-		$operation_name,
+		$operation,
 		$query,
 		$variables,
 		$request,
 		$query_id
 	) {
-		$request_key = $this->build_key( $query_id, $query, $variables, $operation_name );
+		$request_key = $this->build_key( $query_id, $query, $variables, $operation );
 
 		// get the runtime nodes from the query analyzer
 		$runtime_nodes = $request->get_query_analyzer()->get_runtime_nodes() ?: [];
@@ -82,13 +82,14 @@ class Collection extends Query {
 		 * Save the cache response
 		 *
 		 * @param string  $request_key   The unique key for the request, generated from the query, variables and operation name
-		 * @param ?string $query_id      The query Id for the query document
+		 * @param ?string $query_id      The query ID for the query document
 		 * @param string  $query         The query string being executed
 		 * @param ?array  $variables     Variables passed to the request
+		 * @param ?string $operation     The name of the operation to execute
 		 * @param array   $runtime_nodes Nodes that have been resolved at runtime
 		 * @param array   $list_types    Types that have been requested during execution
 		 */
-		do_action( 'wpgraphql_cache_save_request', $request_key, $query_id, $query, $variables, $operation_name, $runtime_nodes, $list_types );
+		do_action( 'wpgraphql_cache_save_request', $request_key, $query_id, $query, $variables, $operation, $runtime_nodes, $list_types );
 
 		// Save/add the node ids for this query.  When one of these change in the future, we can purge the query
 		foreach ( $runtime_nodes as $node_id ) {
