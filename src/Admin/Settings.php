@@ -13,7 +13,11 @@ class Settings {
 		return ( 'on' === $display_admin );
 	}
 
-	// Settings checkbox set to on to enable caching
+	/**
+	 * Whether caching is enabled, according to the settings
+	 *
+	 * @return bool
+	 */
 	public static function caching_enabled() {
 
 		// get the cache_toggle setting

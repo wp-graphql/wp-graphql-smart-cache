@@ -165,6 +165,7 @@ class Invalidation {
 	 * @param string $key An identifiers for data stored in memory.
 	 */
 	public function purge( $key ) {
+		do_action( 'graphql_purge', $key );
 		$nodes = $this->collection->get( $key );
 		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
 			do_action( 'wpgraphql_cache_purge_nodes', $key, $nodes );
@@ -181,8 +182,17 @@ class Invalidation {
 	 * @param mixed|string|int $id The node entity identifier
 	 */
 	public function purge_nodes( $id_prefix, $id ) {
+
 		$relay_id = Relay::toGlobalId( $id_prefix, $id );
-		$this->purge( $this->collection->node_key( $relay_id ) );
+
+		// purge the node
+		$this->purge( $relay_id );
+
+		// purge caches that had skipped keys of the type
+		// because of header limitations, WPGraphQL truncates the X-GraphQL-Key
+		// header, then depending on the types of node IDs that were skipped,
+		// skipped:$type_name keys are added to the list
+		$this->purge( 'skipped:' . $id_prefix );
 	}
 
 	/**
