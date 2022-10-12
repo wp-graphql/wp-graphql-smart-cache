@@ -182,7 +182,6 @@ class Invalidation {
 	 * @param mixed|string|int $id The node entity identifier
 	 */
 	public function purge_nodes( $id_prefix, $id ) {
-
 		$relay_id = Relay::toGlobalId( $id_prefix, $id );
 
 		// purge the node

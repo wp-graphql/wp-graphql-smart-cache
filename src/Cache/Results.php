@@ -157,7 +157,6 @@ class Results extends Query {
 	 * @return bool
 	 */
 	protected function is_object_cache_enabled() {
-
 		if ( is_user_logged_in() ) {
 			return false;
 		}
@@ -174,7 +173,6 @@ class Results extends Query {
 		}
 
 		return false;
-
 	}
 
 	/**
