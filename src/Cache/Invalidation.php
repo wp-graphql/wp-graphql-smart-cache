@@ -165,7 +165,12 @@ class Invalidation {
 	 * @param string $key An identifiers for data stored in memory.
 	 */
 	public function purge( $key ) {
+
+		// This action is emitted with the key to purge.
+		// Plugins can respond to this action to evict caches for that key
+		// phpcs:ignore
 		do_action( 'graphql_purge', $key );
+
 		$nodes = $this->collection->get( $key );
 		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
 			do_action( 'wpgraphql_cache_purge_nodes', $key, $nodes );
