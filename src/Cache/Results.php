@@ -161,12 +161,6 @@ class Results extends Query {
 			return false;
 		}
 
-		// if the request is a GraphQL request over GET
-		// don't use the cached response (rely on Network caching, i.e. varnish)
-		if ( is_graphql_http_request() && ! empty( $_SERVER['REQUEST_METHOD'] ) && 'GET' === $_SERVER['REQUEST_METHOD'] ) {
-			return false;
-		}
-
 		// if caching is enabled, respect it
 		if ( Settings::caching_enabled() ) {
 			return true;
