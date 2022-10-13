@@ -6,13 +6,6 @@ use WP_Comment;
 use WP_Post;
 use WP_Term;
 use WP_User;
-use WPGraphQL\Model\Comment;
-use WPGraphQL\Model\Menu;
-use WPGraphQL\Model\MenuItem;
-use WPGraphQL\Model\Post;
-use WPGraphQL\Model\Term;
-use WPGraphQL\Model\User;
-
 
 /**
  * This class handles the invalidation of the WPGraphQL Caches
@@ -187,6 +180,11 @@ class Invalidation {
 	 * @param mixed|string|int $id The node entity identifier
 	 */
 	public function purge_nodes( $id_prefix, $id ) {
+
+		if ( ! method_exists( Relay::class, 'toGlobalId' ) ) {
+			return;
+		}
+
 		$relay_id = Relay::toGlobalId( $id_prefix, $id );
 
 		// purge the node
@@ -427,7 +425,6 @@ class Invalidation {
 			$action_type = 'CREATE';
 		}
 
-		$relay_id         = Relay::toGlobalId( 'post', $post->ID );
 		$post_type_object = get_post_type_object( $post->post_type );
 		$type_name        = strtolower( $post_type_object->graphql_single_name );
 
