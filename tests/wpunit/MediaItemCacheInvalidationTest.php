@@ -21,7 +21,7 @@ class MediaItemCacheInvalidationTest extends WPGraphQLSmartCacheTestCaseWithSeed
 	public function testUploadMediaItemEvictsCache() {
 
 		// uploading a media item should evict cache for list of media items
-		$filename = WPGRAPHQL_LABS_PLUGIN_DIR . '/tests/_data/images/test.png';
+		$filename = WPGRAPHQL_SMART_CACHE_PLUGIN_DIR . '/tests/_data/images/test.png';
 		codecept_debug( $filename );
 
 		$this->assertEmpty( $this->getEvictedCaches() );

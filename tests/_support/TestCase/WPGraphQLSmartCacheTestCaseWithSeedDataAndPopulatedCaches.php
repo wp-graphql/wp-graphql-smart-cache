@@ -273,7 +273,7 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			'term' => 'Test Category'
 		]);
 
-		$filename = WPGRAPHQL_LABS_PLUGIN_DIR . '/tests/_data/images/test.png';
+		$filename = WPGRAPHQL_SMART_CACHE_PLUGIN_DIR . '/tests/_data/images/test.png';
 		$image_id = self::factory()->attachment->create_upload_object( $filename );
 		$this->mediaItem = get_post( $image_id );
 
