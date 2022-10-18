@@ -1,10 +1,10 @@
 === WPGraphQL Smart Cache ===
-Contributors: markkelnar, jasonbahl
+Contributors: WPGraphQL, markkelnar, jasonbahl
 Tags: GraphQL
 Requires at least: 4.5
 Tested up to: 5.6.1
 Requires PHP: 5.6
-Stable tag: 0.2.0
+Stable tag: 0.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -24,13 +24,15 @@ In order to use v0.2.0+ of WPGraphQL Smart Cache, you will need WPGraphQL v1.12.
 
 == Changelog ==
 
+
 = 0.2.2 =
 
 - fix bug with patch. Missing namespace
 
 = 0.2.1 =
 
-- add patch for wp-engine customers. will be removed when the wp-engine mu plugin is updated
+- add temporary patch for wp-engine users. Will be removed when the wp engine mu plugin is updated.
+
 
 = 0.2.0
 
