@@ -1,12 +1,19 @@
 <?php
 /**
- * Plugin Name:     WP GraphQL Smart Cache
- * Plugin URI:      https://github.com/wp-graphql/wp-graphql-smart-cache
- * Description:     Smart Caching and Cache Invalidation for WPGraphQL
- * Author:          WPGraphQL
- * Author URI:      http://www.wpgraphql.com
- * Domain Path:     /languages
- * Version:         0.1.2
+ * Plugin Name: WPGraphQL Smart Cache
+ * Plugin URI: https://github.com/wp-graphql/wp-graphql-smart-cache
+ * GitHub Plugin URI: https://github.com/wp-graphql/wp-graphql-smart-cache
+ * Description: Smart Caching and Cache Invalidation for WPGraphQL
+ * Author: WPGraphQL
+ * Author URI: http://www.wpgraphql.com
+ * Requires at least: 5.0
+ * Tested up to: 5.9.1
+ * Requires PHP: 7.4
+ * Text Domain: wp-graphql-smart-cache
+ * Domain Path: /languages
+ * Version: 0.1.2
+ * License: GPL-3
+ * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  *
  * Persisted Queries and Caching for WPGraphQL
  */
@@ -21,30 +28,46 @@ use WPGraphQL\SmartCache\Admin\Settings;
 use WPGraphQL\SmartCache\Document\Description;
 use WPGraphQL\SmartCache\Document\Grant;
 use WPGraphQL\SmartCache\Document\MaxAge;
-use WPGraphQL\Model\Avatar;
-use WPGraphQL\Model\Comment;
-use WPGraphQL\Model\Plugin;
-use WPGraphQL\Model\PostType;
-use WPGraphQL\Model\Taxonomy;
-use WPGraphQL\Model\User;
-use WPGraphQL\Model\CommentAuthor;
-use WPGraphQL\Model\Menu;
-use WPGraphQL\Model\MenuItem;
-use WPGraphQL\Model\UserRole;
-use WPGraphQL\Model\Post;
-use WPGraphQL\Type\WPInterfaceType;
-use WPGraphQL\Type\WPObjectType;
-use WPGraphQL\Model\Term;
 
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+const WPGRAPHQL_REQUIRED_MIN_VERSION = '1.2.0';
+const WPGRAPHQL_SMART_CACHE_VERSION  = '0.1.2';
+
 require __DIR__ . '/vendor/autoload.php';
 
-if ( ! defined( 'WPGRAPHQL_LABS_PLUGIN_DIR' ) ) {
-	define( 'WPGRAPHQL_LABS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+if ( ! defined( 'WPGRAPHQL_SMART_CACHE_PLUGIN_DIR' ) ) {
+	define( 'WPGRAPHQL_SMART_CACHE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+}
+
+/**
+ * Check whether ACF and WPGraphQL are active, and whether the minimum version requirement has been
+ * met
+ *
+ * @return bool
+ * @since 0.3
+ */
+function can_load_plugin() {
+
+	// Is WPGraphQL active?
+	if ( ! class_exists( 'WPGraphQL' ) ) {
+		return false;
+	}
+
+	// Do we have a WPGraphQL version to check against?
+	if ( empty( defined( 'WPGRAPHQL_VERSION' ) ) ) {
+		return false;
+	}
+
+	// Have we met the minimum version requirement?
+	if ( true === version_compare( WPGRAPHQL_VERSION, WPGRAPHQL_REQUIRED_MIN_VERSION, 'lt' ) ) {
+		return false;
+	}
+
+	return true;
 }
 
 /**
@@ -65,6 +88,18 @@ add_action(
 add_action(
 	'init',
 	function () {
+
+		/**
+		 * If WPGraphQL is not active, or is an incompatible version, show the admin notice and bail
+		 */
+		if ( false === can_load_plugin() ) {
+			// Show the admin notice
+			add_action( 'admin_init', __NAMESPACE__ . '\show_admin_notice' );
+
+			// Bail
+			return;
+		}
+
 		$document = new Document();
 		$document->init();
 
@@ -85,9 +120,48 @@ add_action(
 	}
 );
 
+/**
+ * Show admin notice to admins if this plugin is active but either ACF and/or WPGraphQL
+ * are not active
+ *
+ * @return bool
+ */
+function show_admin_notice() {
+
+	/**
+	 * For users with lower capabilities, don't show the notice
+	 */
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return false;
+	}
+
+	add_action(
+		'admin_notices',
+		function () {
+			?>
+			<div class="error notice">
+				<p>
+					<?php
+					// translators: placeholder is the version number of the WPGraphQL Plugin that this plugin depends on
+					$text = sprintf( 'WPGraphQL (v%s+) must be active for "wp-graphql-smart-cache" to work', WPGRAPHQL_REQUIRED_MIN_VERSION );
+
+					// phpcs:ignore
+					esc_html_e( $text, 'wp-graphql-smart-cache' );
+					?>
+				</p>
+			</div>
+			<?php
+		}
+	);
+}
+
 add_action(
 	'admin_init',
 	function () {
+		if ( false === can_load_plugin() ) {
+			return;
+		}
+
 		$editor = new Editor();
 		$editor->admin_init();
 	},
@@ -97,6 +171,9 @@ add_action(
 add_action(
 	'wp_loaded',
 	function () {
+		if ( false === can_load_plugin() ) {
+			return;
+		}
 
 		// override the query execution with cached results, if present
 		$results = new Results();
@@ -109,118 +186,5 @@ add_action(
 		// start listening to events that should invalidate caches
 		$invalidation = new Invalidation( $collection );
 		$invalidation->init();
-	}
-);
-
-/**
- * Defines the Model classes responsible for resolving a Type
- *
- * @param array $config The config for the type being registered to the Schema
- * @param mixed|WPObjectType|WPInterfaceType $type The instance of the Type class
- *
- * @return array
- */
-function graphql_add_model_to_type_config( $config, $type ) {
-	// if the object type has no name, return config as is
-	if ( ! isset( $config['name'] ) ) {
-		return $config;
-	}
-
-	// if the type already has a model set, use it
-	if ( ! empty( $config['model'] ) ) {
-		return $config;
-	}
-
-	// if there's no model set, set it now
-	switch ( strtolower( $config['name'] ) ) {
-		case 'user':
-			$config['model'] = User::class;
-			break;
-		case 'comment':
-			$config['model'] = Comment::class;
-			break;
-		case 'avatar':
-			$config['model'] = Avatar::class;
-			break;
-		case 'commentauthor':
-			$config['model'] = CommentAuthor::class;
-			break;
-		case 'menu':
-			$config['model'] = Menu::class;
-			break;
-		case 'menuitem':
-			$config['model'] = MenuItem::class;
-			break;
-		case 'plugin':
-			$config['model'] = Plugin::class;
-			break;
-		case 'contenttype':
-			$config['model'] = PostType::class;
-			break;
-		case 'taxonomy':
-			$config['model'] = Taxonomy::class;
-			break;
-		case 'userrole':
-			$config['model'] = UserRole::class;
-			break;
-	}
-
-	return $config;
-}
-
-// Hook in when the GraphQL request is getting started
-add_action(
-	'init_graphql_request',
-	function () {
-		$post_type_graphql_types = [];
-		$term_graphql_types      = [];
-
-		// determine the graphql types that represent post types
-		$post_types = \WPGraphql::get_allowed_post_types();
-		foreach ( $post_types as $post_type ) {
-			$post_type_object          = get_post_type_object( $post_type );
-			$post_type_graphql_types[] = strtolower( $post_type_object->graphql_single_name );
-		}
-
-		// determine the graphql types that represent terms
-		$taxonomies = \WPGraphql::get_allowed_taxonomies();
-		foreach ( $taxonomies as $taxonomy_name ) {
-			$taxonomy             = get_taxonomy( $taxonomy_name );
-			$term_graphql_types[] = strtolower( $taxonomy->graphql_single_name );
-		}
-
-		// filter the model in for
-		add_filter(
-			'graphql_wp_object_type_config',
-			function ( $config, $object_type ) use ( $term_graphql_types, $post_type_graphql_types ) {
-
-				// if the model is already set, use it
-				if ( isset( $config['model'] ) ) {
-					return $config;
-				}
-
-				// if the $config has no name, return the config
-				if ( ! isset( $config['name'] ) ) {
-					return $config;
-				}
-
-				// if the config name matches one of the graphql types for posts, set the model
-				if ( in_array( strtolower( $config['name'] ), $post_type_graphql_types, true ) ) {
-					$config['model'] = Post::class;
-				}
-
-				// if the config name matches one of the graphql types for taxonomies, set the model
-				if ( in_array( strtolower( $config['name'] ), $term_graphql_types, true ) ) {
-					$config['model'] = Term::class;
-				}
-
-				return $config;
-			},
-			10,
-			2
-		);
-
-		add_filter( 'graphql_wp_interface_type_config', 'WPGraphQL\SmartCache\graphql_add_model_to_type_config', 10, 2 );
-		add_filter( 'graphql_wp_object_type_config', 'WPGraphQL\SmartCache\graphql_add_model_to_type_config', 10, 2 );
 	}
 );

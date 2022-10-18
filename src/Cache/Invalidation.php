@@ -2,16 +2,10 @@
 namespace WPGraphQL\SmartCache\Cache;
 
 use GraphQLRelay\Relay;
+use WP_Comment;
 use WP_Post;
 use WP_Term;
 use WP_User;
-use WPGraphQL\Model\Comment;
-use WPGraphQL\Model\Menu;
-use WPGraphQL\Model\MenuItem;
-use WPGraphQL\Model\Post;
-use WPGraphQL\Model\Term;
-use WPGraphQL\Model\User;
-
 
 /**
  * This class handles the invalidation of the WPGraphQL Caches
@@ -164,6 +158,12 @@ class Invalidation {
 	 * @param string $key An identifiers for data stored in memory.
 	 */
 	public function purge( $key ) {
+
+		// This action is emitted with the key to purge.
+		// Plugins can respond to this action to evict caches for that key
+		// phpcs:ignore
+		do_action( 'graphql_purge', $key );
+
 		$nodes = $this->collection->get( $key );
 		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
 			do_action( 'wpgraphql_cache_purge_nodes', $key, $nodes );
@@ -176,14 +176,24 @@ class Invalidation {
 	 *
 	 * See the Collection class runtime_nodes.
 	 *
-	 * @param string $node_type The runtime node class name
 	 * @param string $id_prefix The type name specific to the id to form the "global ID" that is unique among all types
 	 * @param mixed|string|int $id The node entity identifier
 	 */
-	public function purge_nodes( $node_type, $id_prefix, $id ) {
+	public function purge_nodes( $id_prefix, $id ) {
+		if ( ! method_exists( Relay::class, 'toGlobalId' ) ) {
+			return;
+		}
+
 		$relay_id = Relay::toGlobalId( $id_prefix, $id );
-		$node_id  = $node_type . ':' . $relay_id;
-		$this->purge( $this->collection->node_key( $node_id ) );
+
+		// purge the node
+		$this->purge( $relay_id );
+
+		// purge caches that had skipped keys of the type
+		// because of header limitations, WPGraphQL truncates the X-GraphQL-Key
+		// header, then depending on the types of node IDs that were skipped,
+		// skipped:$type_name keys are added to the list
+		$this->purge( 'skipped:' . $id_prefix );
 	}
 
 	/**
@@ -203,13 +213,13 @@ class Invalidation {
 		}
 
 		// evict caches for the before and after post author (purge their archive pages)
-		$this->purge_nodes( User::class, 'user', $post_after->post_author );
+		$this->purge_nodes( 'user', $post_after->post_author );
 
 		// evict caches for the before and after post author (purge their archive pages)
-		$this->purge_nodes( User::class, 'user', $post_before->post_author );
+		$this->purge_nodes( 'user', $post_before->post_author );
 
 		// Delete the cached results associated with this post/key
-		$this->purge_nodes( Post::class, 'post', $post_id );
+		$this->purge_nodes( 'post', $post_id );
 	}
 
 	/**
@@ -238,7 +248,7 @@ class Invalidation {
 		}
 
 		// Delete the cached results associated with this post/key
-		$this->purge_nodes( Post::class, 'post', $post->ID );
+		$this->purge_nodes( 'post', $post->ID );
 	}
 
 	/**
@@ -296,7 +306,7 @@ class Invalidation {
 		}
 
 		// Delete the cached results associated with this term/key
-		$this->purge_nodes( Term::class, 'term', $term_id );
+		$this->purge_nodes( 'term', $term_id );
 	}
 
 	/**
@@ -324,7 +334,7 @@ class Invalidation {
 		}
 
 		// Delete the cached results associated with this post/key
-		$this->purge_nodes( Term::class, 'term', $term->term_id );
+		$this->purge_nodes( 'term', $term->term_id );
 	}
 
 	/**
@@ -352,7 +362,7 @@ class Invalidation {
 		}
 
 		// Delete the cached results associated with this post/key
-		$this->purge_nodes( Term::class, 'term', $term->term_id );
+		$this->purge_nodes( 'term', $term->term_id );
 	}
 
 	/**
@@ -414,7 +424,6 @@ class Invalidation {
 			$action_type = 'CREATE';
 		}
 
-		$relay_id         = Relay::toGlobalId( 'post', $post->ID );
 		$post_type_object = get_post_type_object( $post->post_type );
 		$type_name        = strtolower( $post_type_object->graphql_single_name );
 
@@ -430,7 +439,7 @@ class Invalidation {
 		// specific node in it
 		if ( 'UPDATE' === $action_type || 'DELETE' === $action_type ) {
 			// Delete the cached results associated with this post/key
-			$this->purge_nodes( Post::class, 'post', $post->ID );
+			$this->purge_nodes( 'post', $post->ID );
 		}
 	}
 
@@ -442,7 +451,7 @@ class Invalidation {
 	 */
 	public function on_user_profile_update_cb( $user_id, $old_user_data ) {
 		// Delete the cached results associated with this key
-		$this->purge_nodes( User::class, 'user', $user_id );
+		$this->purge_nodes( 'user', $user_id );
 	}
 
 	/**
@@ -465,7 +474,7 @@ class Invalidation {
 		}
 
 		// Delete the cached results associated with this key
-		$this->purge_nodes( User::class, 'user', $user->ID );
+		$this->purge_nodes( 'user', $user->ID );
 	}
 
 	/**
@@ -477,10 +486,10 @@ class Invalidation {
 	public function on_user_deleted_cb( $deleted_id, $reassign_id ) {
 		global $wpdb;
 
-		$this->purge_nodes( User::class, 'user', $deleted_id );
+		$this->purge_nodes( 'user', $deleted_id );
 
 		if ( $reassign_id ) {
-			$this->purge_nodes( User::class, 'user', $reassign_id );
+			$this->purge_nodes( 'user', $reassign_id );
 
 			// get the ids of the posts the user was the author of
 			// this query runs inside the wp_delete_user function
@@ -491,7 +500,7 @@ class Invalidation {
 			$reassigned_post_ids = $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_author = %d", $reassign_id ) );
 			if ( ! empty( $reassigned_post_ids ) ) {
 				foreach ( $reassigned_post_ids as $reassigned_post_id ) {
-					$this->purge_nodes( Post::class, 'post', $reassigned_post_id );
+					$this->purge_nodes( 'post', $reassigned_post_id );
 				}
 			}
 		}
@@ -537,7 +546,7 @@ class Invalidation {
 		}
 
 		// Delete the cached results associated with this post/key
-		$this->purge_nodes( Post::class, 'post', $post->ID );
+		$this->purge_nodes( 'post', $post->ID );
 	}
 
 	/**
@@ -590,7 +599,7 @@ class Invalidation {
 		$removed = array_diff( $old_locations, $new_locations );
 		if ( ! empty( $removed ) ) {
 			foreach ( $removed as $location => $removed_menu_id ) {
-				$this->purge_nodes( Menu::class, 'term', $removed_menu_id );
+				$this->purge_nodes( 'term', $removed_menu_id );
 			}
 		}
 
@@ -612,7 +621,7 @@ class Invalidation {
 		$menu = get_term_by( 'id', absint( $menu_id ), 'nav_menu' );
 
 		// menus have a term:id relay global ID, as they use the term loader
-		$this->purge_nodes( Menu::class, 'term', $menu->term_id );
+		$this->purge_nodes( 'term', $menu->term_id );
 	}
 
 	/**
@@ -646,7 +655,7 @@ class Invalidation {
 			return;
 		}
 
-		$this->purge_nodes( Menu::class, 'term', $term->term_id );
+		$this->purge_nodes( 'term', $term->term_id );
 	}
 
 	/**
@@ -677,7 +686,7 @@ class Invalidation {
 			return;
 		}
 
-		$this->purge_nodes( MenuItem::class, 'post', $post->ID );
+		$this->purge_nodes( 'post', $post->ID );
 	}
 
 	/**
@@ -717,9 +726,16 @@ class Invalidation {
 			return;
 		}
 
-		$this->purge_nodes( Post::class, 'post', $attachment_id );
+		$this->purge_nodes( 'post', $attachment_id );
 	}
 
+	/**
+	 * Handle purging when attachment is deleted
+	 *
+	 * @param $attachment_id
+	 *
+	 * @return void
+	 */
 	public function on_delete_attachment( $attachment_id ) {
 		$attachment = get_post( $attachment_id );
 
@@ -727,7 +743,7 @@ class Invalidation {
 			return;
 		}
 
-		$this->purge_nodes( Post::class, 'post', $attachment_id );
+		$this->purge_nodes( 'post', $attachment_id );
 	}
 
 	/**
@@ -740,7 +756,7 @@ class Invalidation {
 	public function on_comment_transition_cb( $new_status, $old_status, $comment ) {
 		// Only evict cache if transitioning to or from 'approved'
 		if ( in_array( 'approved', [ $new_status, $old_status ], true ) ) {
-			$this->purge_nodes( Comment::class, 'comment', $comment->comment_ID );
+			$this->purge_nodes( 'comment', $comment->comment_ID );
 			$this->purge( 'list:comment' );
 		}
 	}
@@ -748,12 +764,12 @@ class Invalidation {
 	/**
 	 * Fires immediately after a comment is inserted into the database.
 	 *
-	 * @param int        $id      The comment ID.
-	 * @param WP_Comment $comment Comment object.
+	 * @param int        $comment_id The comment ID.
+	 * @param WP_Comment $comment    Comment object.
 	 */
 	public function on_insert_comment_cb( $comment_id, $comment ) {
 		if ( isset( $comment->comment_approved ) && '1' === $comment->comment_approved ) {
-			$this->purge_nodes( Comment::class, 'comment', $comment_id );
+			$this->purge_nodes( 'comment', $comment_id );
 			$this->purge( 'list:comment' );
 		}
 	}

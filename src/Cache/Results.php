@@ -152,6 +152,24 @@ class Results extends Query {
 	}
 
 	/**
+	 * Determine whether object cache is enabled
+	 *
+	 * @return bool
+	 */
+	protected function is_object_cache_enabled() {
+		if ( is_user_logged_in() ) {
+			return false;
+		}
+
+		// if caching is enabled, respect it
+		if ( Settings::caching_enabled() ) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
 	 * When a query response is being returned to the client, build map for each item and this query/queryId
 	 * That way we will know what to invalidate on data change.
 	 *
@@ -178,10 +196,16 @@ class Results extends Query {
 		$request,
 		$query_id
 	) {
-		// if caching is not enabled or the request is authenticated, bail early
-		// right now we're not supporting GraphQL cache for authenticated requests.
-		// Possibly in the future.
-		if ( ! Settings::caching_enabled() || is_user_logged_in() ) {
+
+		// if caching is NOT enabled
+		// or the request is authenticated
+		// or the request is a GET request
+		// bail early
+		// right now we're not supporting GraphQL cache for authenticated requests,
+		// and we're recommending caching clients (varnish, etc) handle GET request caching
+		//
+		// Possibly in the future we'll have solutions for authenticated request caching
+		if ( ! $this->is_object_cache_enabled() ) {
 			return;
 		}
 

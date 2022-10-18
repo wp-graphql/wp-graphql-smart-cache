@@ -10,9 +10,7 @@
 
 namespace WPGraphQL\SmartCache;
 
-use WPGraphQL\SmartCache\Document;
 use WPGraphQL\SmartCache\Document\Grant;
-use WPGraphQL\SmartCache\Utils;
 
 class AllowDenyQueryRulesTest extends \Codeception\TestCase\WPTestCase {
 
@@ -31,6 +29,8 @@ class AllowDenyQueryRulesTest extends \Codeception\TestCase\WPTestCase {
 	 * @param grant Grant allow, deny, default, false
 	 *
 	 * @return string The query id for the query string
+	 * @throws \GraphQL\Server\RequestError
+	 * @throws \GraphQL\Error\SyntaxError
 	 */
 	public function _createAPersistedQuery( $query_string, $grant ) {
 		$query_id = Utils::generateHash( $query_string );
@@ -50,9 +50,14 @@ class AllowDenyQueryRulesTest extends \Codeception\TestCase\WPTestCase {
 	}
 
 	public function testDeniedQueryWorksWhenNoGlobalSettingIsSet() {
+
+		$this->assertSame( 1, 1 );
+
 		delete_option( 'graphql_persisted_queries_section' );
 
-		$post_id = $this->tester->factory()->post->create();
+		$post_id = self::factory()->post->create();
+
+		$this->assertNotEmpty( $post_id );
 
 		// Verify persisted query set as denied still works
 		$query_string = '{ __typename }';
@@ -68,7 +73,7 @@ class AllowDenyQueryRulesTest extends \Codeception\TestCase\WPTestCase {
 
 	public function testDeniedQueryWorksWhenWhenGlobalPublicIsSet() {
 		add_option( 'graphql_persisted_queries_section', [ 'grant_mode' => Grant::GLOBAL_PUBLIC ] );
-		$post_id = $this->tester->factory()->post->create();
+		$post_id = self::factory()->post->create();
 
 		// Verify persisted query set as denied still works
 		$query_string = 'query setAsDenied { __typename }';
@@ -84,7 +89,7 @@ class AllowDenyQueryRulesTest extends \Codeception\TestCase\WPTestCase {
 
 	public function testWhenGlobalOnlyAllowedIsSet() {
 		add_option( 'graphql_persisted_queries_section', [ 'grant_mode' => Grant::GLOBAL_ALLOWED ] );
-		$post_id = $this->tester->factory()->post->create();
+		$post_id = self::factory()->post->create();
 
 		// Verify allowed query works
 		$query_string = 'query setAsAllowed { posts { nodes { slug uri } } }';
@@ -111,7 +116,7 @@ class AllowDenyQueryRulesTest extends \Codeception\TestCase\WPTestCase {
 		$this->_assertError( $result, 'This query document has been blocked.' );
 
 		// Verify a non-persisted query doesn't work
-		$post_id = $this->tester->factory()->post->create();
+		$post_id = self::factory()->post->create();
 		$non_persisted_query = 'query notPersisted { __typename }';
 		$result = graphql( [ 'query' => $non_persisted_query ] );
 		$this->_assertError( $result, 'Not Found. Only pre-defined queries are allowed.' );
@@ -119,7 +124,7 @@ class AllowDenyQueryRulesTest extends \Codeception\TestCase\WPTestCase {
 
 	public function testWhenGlobalDenySomeIsSet() {
 		add_option( 'graphql_persisted_queries_section', [ 'grant_mode' => Grant::GLOBAL_DENIED ] );
-		$post_id = $this->tester->factory()->post->create();
+		$post_id = self::factory()->post->create();
 
 		// Verify allowed query works
 		$query_string = 'query setAsAllowed { posts { nodes { slug uri } } }';
