@@ -35,7 +35,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 const WPGRAPHQL_REQUIRED_MIN_VERSION = '1.2.0';
-const WPGRAPHQL_SMART_CACHE_VERSION = '0.1.2';
+const WPGRAPHQL_SMART_CACHE_VERSION  = '0.1.2';
 
 require __DIR__ . '/vendor/autoload.php';
 
@@ -137,7 +137,7 @@ function show_admin_notice() {
 
 	add_action(
 		'admin_notices',
-		function() {
+		function () {
 			?>
 			<div class="error notice">
 				<p><?php esc_html_e( sprintf( 'WPGraphQL (v%s+) must be active for "wp-graphql-smart-cache" to work', WPGRAPHQL_REQUIRED_MIN_VERSION ), 'wp-graphql-smart-cache' ); ?></p>
@@ -150,7 +150,6 @@ function show_admin_notice() {
 add_action(
 	'admin_init',
 	function () {
-
 		if ( false === can_load_plugin() ) {
 			return;
 		}
@@ -164,7 +163,6 @@ add_action(
 add_action(
 	'wp_loaded',
 	function () {
-
 		if ( false === can_load_plugin() ) {
 			return;
 		}
