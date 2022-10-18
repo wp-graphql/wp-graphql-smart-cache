@@ -11,7 +11,7 @@
  * Requires PHP: 7.4
  * Text Domain: wp-graphql-smart-cache
  * Domain Path: /languages
- * Version: 0.1.2
+ * Version: 0.2.0
  * License: GPL-3
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  *
@@ -35,7 +35,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 const WPGRAPHQL_REQUIRED_MIN_VERSION = '1.2.0';
-const WPGRAPHQL_SMART_CACHE_VERSION  = '0.1.2';
+const WPGRAPHQL_SMART_CACHE_VERSION  = '0.2.0';
 
 require __DIR__ . '/vendor/autoload.php';
 
