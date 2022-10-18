@@ -140,7 +140,15 @@ function show_admin_notice() {
 		function () {
 			?>
 			<div class="error notice">
-				<p><?php esc_html_e( sprintf( 'WPGraphQL (v%s+) must be active for "wp-graphql-smart-cache" to work', WPGRAPHQL_REQUIRED_MIN_VERSION ), 'wp-graphql-smart-cache' ); ?></p>
+				<p>
+					<?php
+					// translators: placeholder is the version number of the WPGraphQL Plugin that this plugin depends on
+					$text = sprintf( 'WPGraphQL (v%s+) must be active for "wp-graphql-smart-cache" to work', WPGRAPHQL_REQUIRED_MIN_VERSION );
+
+					// phpcs:ignore
+					esc_html_e( $text, 'wp-graphql-smart-cache' );
+					?>
+				</p>
 			</div>
 			<?php
 		}
