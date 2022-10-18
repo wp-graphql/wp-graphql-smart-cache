@@ -11,7 +11,7 @@
  * Requires PHP: 7.4
  * Text Domain: wp-graphql-smart-cache
  * Domain Path: /languages
- * Version: 0.2.0
+ * Version: 0.2.2
  * License: GPL-3
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  *
@@ -35,7 +35,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 const WPGRAPHQL_REQUIRED_MIN_VERSION = '1.2.0';
-const WPGRAPHQL_SMART_CACHE_VERSION  = '0.2.0';
+const WPGRAPHQL_SMART_CACHE_VERSION  = '0.2.2';
 
 require __DIR__ . '/vendor/autoload.php';
 
@@ -188,3 +188,13 @@ add_action(
 		$invalidation->init();
 	}
 );
+
+add_action( 'graphql_purge', function( $purge_keys ) {
+	if ( ! function_exists( 'graphql_get_endpoint_url' ) || ! method_exists( 'WpeCommon', 'http_to_varnish' ) ) {
+		return;
+	}
+	\WpeCommon::http_to_varnish( 'PURGE_GRAPHQL', null, [
+		'GraphQL-Purge-Keys' => $purge_keys,
+		'GraphQL-URL' => graphql_get_endpoint_url(),
+	] );
+}, 0, 1 );

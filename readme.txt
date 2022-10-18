@@ -24,6 +24,14 @@ In order to use v0.2.0+ of WPGraphQL Smart Cache, you will need WPGraphQL v1.12.
 
 == Changelog ==
 
+= 0.2.2 =
+
+- fix bug with patch. Missing namespace
+
+= 0.2.1 =
+
+- add patch for wp-engine customers. will be removed when the wp-engine mu plugin is updated
+
 = 0.2.0
 
 - chore: remove unreferenced .zip build artifact
