@@ -1,5 +1,5 @@
 === WPGraphQL Smart Cache ===
-Contributors: markkelnar, jasonbahl
+Contributors: WPGraphQL, markkelnar, jasonbahl
 Tags: GraphQL
 Requires at least: 4.5
 Tested up to: 5.6.1
