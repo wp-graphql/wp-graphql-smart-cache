@@ -178,10 +178,10 @@ class Document {
 
 		// if the query is empty, but the queryId is set
 		if ( empty( $parsed_body_params['query'] ) && ! empty( $parsed_body_params['queryId'] ) ) {
-			$query_id = $parsed_body_params['queryId'] ?: null;
+			$query_id     = $parsed_body_params['queryId'] ?: null;
 			$query_string = $this->get( $query_id );
 			if ( ! empty( $query_string ) ) {
-				$parsed_body_params['query'] = $query_string;
+				$parsed_body_params['query']           = $query_string;
 				$parsed_body_params['originalQueryId'] = $query_id;
 				unset( $parsed_body_params['queryId'] );
 			}
