@@ -18,7 +18,7 @@ class Document {
 	const GRAPHQL_NAME        = 'graphqlDocument';
 
 	public function init() {
-		add_filter( 'graphql_request_data', [ $this, 'graphql_query_contains_queryid_cb' ], 10, 2 );
+		add_filter( 'graphql_request_data', [ $this, 'graphql_query_contains_query_id_cb' ], 10, 2 );
 		add_filter( 'graphql_execute_query_params', [ $this, 'graphql_execute_query_params_cb' ], 10, 2 );
 
 		add_action( 'post_updated', [ $this, 'after_updated_cb' ], 10, 3 );
@@ -163,8 +163,11 @@ class Document {
 	 * @param  array $request_context An array containing the both body and query params
 	 * @return string Updated $parsed_body_params Request parameters.
 	 */
-	public function graphql_query_contains_queryid_cb( $parsed_body_params, $request_context ) {
-		if ( isset( $parsed_body_params['query'] ) && isset( $parsed_body_params['queryId'] ) ) {
+	public function graphql_query_contains_query_id_cb( $parsed_body_params, $request_context ) {
+
+		// if both query and queryId are set
+		// we should attempt to save the query document (per APQ)
+		if ( ! empty( $parsed_body_params['query'] ) && ! empty( $parsed_body_params['queryId'] ) ) {
 			// save the query
 			// The query string already coming from 'graphql_request_data' already has the query string unslashed.
 			$this->save( $parsed_body_params['queryId'], $parsed_body_params['query'] );
@@ -172,6 +175,18 @@ class Document {
 			// remove it from process body params so graphql-php operation proceeds without conflict.
 			unset( $parsed_body_params['query'] );
 		}
+
+		// if the query is empty, but the queryId is set
+		if ( empty( $parsed_body_params['query'] ) && ! empty( $parsed_body_params['queryId'] ) ) {
+			$query_id = $parsed_body_params['queryId'] ?: null;
+			$query_string = $this->get( $query_id );
+			if ( ! empty( $query_string ) ) {
+				$parsed_body_params['query'] = $query_string;
+				$parsed_body_params['originalQueryId'] = $query_id;
+				unset( $parsed_body_params['queryId'] );
+			}
+		}
+
 		return $parsed_body_params;
 	}
 
