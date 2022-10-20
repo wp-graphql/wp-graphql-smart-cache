@@ -189,12 +189,21 @@ add_action(
 	}
 );
 
-add_action( 'graphql_purge', function( $purge_keys ) {
-	if ( ! function_exists( 'graphql_get_endpoint_url' ) || ! method_exists( 'WpeCommon', 'http_to_varnish' ) ) {
-		return;
-	}
-	\WpeCommon::http_to_varnish( 'PURGE_GRAPHQL', null, [
-		'GraphQL-Purge-Keys' => $purge_keys,
-		'GraphQL-URL' => graphql_get_endpoint_url(),
-	] );
-}, 0, 1 );
+add_action(
+	'graphql_purge',
+	function ( $purge_keys ) {
+		if ( ! function_exists( 'graphql_get_endpoint_url' ) || ! method_exists( 'WpeCommon', 'http_to_varnish' ) ) {
+			return;
+		}
+		\WpeCommon::http_to_varnish(
+			'PURGE_GRAPHQL',
+			null,
+			[
+				'GraphQL-Purge-Keys' => $purge_keys,
+				'GraphQL-URL'        => graphql_get_endpoint_url(),
+			]
+		);
+	},
+	0,
+	1
+);
