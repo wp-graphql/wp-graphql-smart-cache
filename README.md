@@ -2,7 +2,7 @@
 
 This plugin provides support for caching and cache-invalidation of WPGraphQL Queries.
 
-## Docs
+## Docs (IN PROGRESS. UPDATING NOV 4, 2022)
 
 Below you will find documentation about the plugin.
 
