@@ -1,8 +1,10 @@
-The wp-graphql-smart-cache plugin.
+# Development
 
-Local development with docker to build the app and a local running WordPress. As well as run the test suites.
+In this document you will find information about how to develop for and contribute to the WPGraphQL Smart Cache plugin.
 
-# Plugin
+## Local Development
+
+We recommend using Docker for local development. With the instructions below, you can use Docker to build the app in an isolated environment with a local running WordPress + WPGraphQL. You can also use Docker to run the test suites.
 
 ## Build
 
@@ -18,7 +20,7 @@ One option is to use a docker image to run php/composer:
 
 # Docker App Image
 
-This section describes how to setup and run this plugin, WP and the wp-graphql plugin locally with docker.  It requires building the images at least once, which can take a few moments the first time.
+This section describes how to setup and run this plugin, WP and the wp-graphql plugin locally with docker. It requires building the images (see above) at least once, which can take a few moments the first time.
 
 ## Build
 
