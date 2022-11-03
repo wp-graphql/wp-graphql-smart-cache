@@ -31,6 +31,8 @@ class Invalidation {
 	 */
 	public function init() {
 
+		do_action( 'graphql_cache_invalidation_init', $this );
+
 		## POST ACTIONS
 
 		// listen for posts to transition statuses, so we know when to purge
