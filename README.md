@@ -367,6 +367,55 @@ The results of this query analysis are returned in the `X-GraphQL-Keys` header.
 
 ## FAQ & Troubleshooting
 
+### Question: How do I override the default cache invalidation strategy?
+
+The network cache layer uses the `x-graphql-keys` header to "tag" cached documents.
+
+When events occur that call the `purge( $key )` method, cached documents tagged with the key being purged will be deleted and the next request will be a cache miss.
+
+Sometimes, we might want different behavior.
+
+For example, if my homepage had a query like so:
+
+```graphql
+query HomePagePosts {
+  posts( first: 100 ) {
+    nodes {
+      id
+      title
+      date
+      excerpt
+      uri
+      author {
+        node {
+          id
+          displayName
+          uri
+        }
+      }
+    }
+  }
+}
+```
+
+The `x-graphql-keys` would contain the following keys:
+
+- **queryId**: a hash of the GraphQL Query string
+- **operationName**: The name of the operation. (In this case, it would be `HomePagePosts`)
+- **list types**: Any GraphQL Node Types that were queried as a list. (In this case it would be `list:post`)
+- **node IDs**: The IDs of any nodes resolved. For this request it would be the IDs of 100 posts, and the IDs of the author(s) of those 100 posts.
+- **skipped types**: If the length of the nodes is too long, they're truncated and a `skipped:$type_name` key is added to the headers.
+
+Because our query will have up to 100 post IDs and up to 100 user IDs, this query's cache will be purged whenever any of those nodes are edited, or when a new Post is deleted.
+
+For the homepage, that _might_ mean the cache will be purged quite often if you have editors editing any of the most recent 100 posts (correcting typos, adding updates, etc).
+
+Let's say you wanted this specific query to be purged _only_ if edits were made to the most recent 5 posts, but if any of the older posts are edited, don't purge the cache.
+
+You can do this by filtering the node IDs that are added to the `x-graphql-keys` header.
+
+
+
 ## Supported Hosts
 
 - [WP Engine](https://wpengine.com/atlas) WPEngine's "EverCache for WPGraphQL" is the first formal hosting integration to support WPGraphQL Smart Cache.
