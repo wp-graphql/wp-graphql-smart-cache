@@ -264,3 +264,11 @@ The network cache layer should respond to calls of the purge action and purge an
 
 - **Example with Varnish xkey**: [https://github.com/varnish/varnish-modules/blob/master/src/vmod_xkey.vcc#L45](https://github.com/varnish/varnish-modules/blob/master/src/vmod_xkey.vcc#L45)
 - **Example with Fastly**: [https://docs.fastly.com/en/guides/purging-with-surrogate-keys](https://docs.fastly.com/en/guides/purging-with-surrogate-keys)
+
+----
+
+## 👉 Up Next:
+
+- [Object Cache](./docs/object-cache.md)
+- [Persisted Queries](./docs/persisted-queries.md)
+- [Cache Invalidation](./docs/cache-invalidation.md)

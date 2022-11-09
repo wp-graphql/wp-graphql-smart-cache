@@ -49,3 +49,9 @@ In addition to enabling Object Caching, you can:
 - see the last time caches were purged
 
 Setting the expiration, and purging caches will only take effect if Object Caching is enabled.
+
+## 👉 Up Next:
+
+- [Network Cache](./docs/network-cache.md)
+- [Persisted Queries](./docs/persisted-queries.md)
+- [Cache Invalidation](./docs/cache-invalidation.md)

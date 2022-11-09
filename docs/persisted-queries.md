@@ -132,3 +132,9 @@ This max-age will be used as the max-age for the query to expire if another even
 This can be handy if you have queries that might not be invalidating properly based on changes to data in WordPress.
 
 For example, currently queries for "Settings" are not invalidating when settings change. For these queries, they will invalidate (expire) when the max age has been hit.
+
+## 👉 Up Next:
+
+- [Network Cache](./docs/network-cache.md)
+- [Object Cache](./docs/object-cache.md)
+- [Cache Invalidation](./docs/cache-invalidation.md)

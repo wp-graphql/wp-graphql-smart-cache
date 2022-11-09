@@ -10,7 +10,7 @@ WPGraphQL Smart Cache is a free, open-source WordPress plugin that provides supp
 ## Docs 📖
 
 - [Overview](#overview)
-- [Quick Start](#quick-start)
+- [Quick Start](#-quick-start)
 - Features
   - [Network Cache](./docs/network-cache.md)
   - [Object Cache](./docs/object-cache.md)

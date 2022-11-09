@@ -24,6 +24,11 @@ In order to use v0.2.0+ of WPGraphQL Smart Cache, you will need WPGraphQL v1.12.
 
 == Changelog ==
 
+= 0.3.0 =
+
+- feat: a LOT of updates to the documentation
+- feat: add opt-in telemetry via Appsero.
+
 = 0.2.3 =
 
 - fix: fixes a bug where X-GraphQL-Keys weren't being returned properly when querying a persisted query by queryId
