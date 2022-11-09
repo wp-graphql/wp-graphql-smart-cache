@@ -4,16 +4,23 @@
 
 This plugin is free!
 
-## Is the plugin on Composer or the WordPress.org repo?
+## Is this plugin on the WordPress.org repo?
 
-We plan to put the plugin on Composer and WordPress.org at some point, but currently it's only available on [Github](https://github.com/wp-graphql/wp-graphql-smart-cache/releases/latest).
+This plugin is not currently on the WordPress.org repo, but we plan to make it available there in the future.
+
+## Can I install the plugin using Composer?
+
+The plugin is available on packagist: [https://packagist.org/packages/wp-graphql/wp-graphql-smart-cache](https://packagist.org/packages/wp-graphql/wp-graphql-smart-cache).
 
 ## Does this plugin only work on WP Engine?
 
-This plugin was built to work in WordPress with as many WordPress hosts.
+This plugin was built to work in WordPress on any WordPress host.
 
-The [Network Cache](./network-cache.md) functionality does require some work from the host to support.
+The [Network Cache](./network-cache.md) functionality requires specific functionality from the host's network cache layer to work properly.
 
 We've partnered with WP Engine to get this functionality working for WP Engine customers, but we hope to see more hosts support GraphQL caching and Cache Invalidation at the network cache level.
 
 We have a [hosting guide](./network-cache.md#hosting-guide) for hosts that are interested in providing support.
+
+## How do I configure my GraphQL Client to work with WPGraphQL Smart Cache?
+

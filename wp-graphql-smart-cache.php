@@ -6,8 +6,8 @@
  * Description: Smart Caching and Cache Invalidation for WPGraphQL
  * Author: WPGraphQL
  * Author URI: http://www.wpgraphql.com
- * Requires at least: 5.0
- * Tested up to: 5.9.1
+ * Requires at least: 5.9
+ * Tested up to: 6.0
  * Requires PHP: 7.4
  * Text Domain: wp-graphql-smart-cache
  * Domain Path: /languages
@@ -20,6 +20,7 @@
 
 namespace WPGraphQL\SmartCache;
 
+use Appsero\Client;
 use WPGraphQL\SmartCache\Cache\Collection;
 use WPGraphQL\SmartCache\Cache\Invalidation;
 use WPGraphQL\SmartCache\Cache\Results;
@@ -207,3 +208,32 @@ add_action(
 	0,
 	1
 );
+
+/**
+ * Initialize the plugin tracker
+ *
+ * @return void
+ */
+function appsero_init_tracker_wpgraphql_smart_cache() {
+
+
+	// If the class doesn't exist, or code is being scanned by PHPSTAN, move on.
+	if ( ! class_exists( 'Appsero\Client' ) || defined( 'PHPSTAN' ) ) {
+		return;
+	}
+
+	$client   = new Client( '66f03878-3df1-40d7-8be9-0069994480d4', 'WPGraphQL Smart Cache', __FILE__ );
+
+	$insights = $client->insights();
+
+	// If the Appsero client has the add_plugin_data method, use it
+	if ( method_exists( $insights, 'add_plugin_data' ) ) {
+		// @phpstan-ignore-next-line
+		$insights->add_plugin_data();
+	}
+
+	// @phpstan-ignore-next-line
+	$insights->init();
+}
+
+appsero_init_tracker_wpgraphql_smart_cache();
