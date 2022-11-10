@@ -170,6 +170,30 @@ This section will help with troubleshooting when using WPGraphQL Network Cache.
 
 As more supported hosts work with WPGraphQL Smart Cache, some details may vary from host to host.
 
+### My GraphQL Queries are served from the Cache, but not evicting when content changes
+
+If your queries over GET requests are being served from the network cache, and you've verified this by inspecting the HTTP response headers, but the query is not being purged as expected, I would suggest the following:
+
+#### Make sure you're on a [supported host](#supported-hosts)
+
+Many WordPress hosts will already have a network caching layer in place that works with WPGraphQL requests. The problem is there's no way to smartly invalidate the cached queries.
+
+Hosts that support network caching for WPGraphQL queries, but don't have proper support for WPGraphQL Smart Cache purging, will serve stale data from the cache until it expires based on the MAX Age header.
+
+If you're host is not a [supported host](#supported-hosts), ask them to check out or [hosting guide](#hosting-guide) or sign up for a [FREE WP Engine Atlas sandbox account](https://wpengine.com/atlas) and test things there.
+
+#### If you are on a supported host, but GET request caches are not invalidating as expected:
+
+**Make sure the WPGraphQL Smart Cache plugin is still active.**
+
+If the plugin was de-activated for some reason, the Invalidation events will not be triggered properly.
+
+**Make sure the data you're querying for uses best practices for resolving data.**
+
+WPGraphQL analyzes queries and adds nodes to the cache tags. If your GraphQL Schema has fields that resolve nodes without going through the GraphQL Loader and Model Layer, the nodes might be ignored by the Query Analyzer and the cache might not be tagged in relation to the node.
+
+Custom GraphQL Types that are not nodes or loaded as nodes will not be tracked and tagged in the caches properly.
+
 
 ### How to identify if the request is served from network cache?
 
