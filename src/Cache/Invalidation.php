@@ -30,6 +30,8 @@ class Invalidation {
 	 * Initialize the actions to listen for
 	 */
 	public function init() {
+
+		// @phpcs:ignore
 		do_action( 'graphql_cache_invalidation_init', $this );
 
 		## POST ACTIONS
