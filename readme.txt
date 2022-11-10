@@ -24,7 +24,7 @@ In order to use v0.2.0+ of WPGraphQL Smart Cache, you will need WPGraphQL v1.12.
 
 == Changelog ==
 
-= 0.3.1 = 
+= 0.3.1 =
 
 - chore: update readme.txt with tags, updated "tested up to" version
 - chore: update testing matrix to run tests on more versions of WordPress and PHP
