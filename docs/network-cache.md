@@ -95,7 +95,7 @@ Visit the following URL in your browser: [https://content.wpgraphql.com/graphql?
 
 If you inspect the "Network" tab in your browser's developer tools, you should see either an `X-Cache: MISS` header or a `X-Cache: Hit #` header, showing the number of times this query has been served from cache.
 
-**X-Cache: MISS**
+#### **X-Cache: MISS**
 
 Below is a screenshot of a Cache Miss. Here, we see the `x-cache: MISS` header.
 
@@ -105,7 +105,7 @@ The total response time for the cache miss was ~520ms.
 
 ![Screenshot showing a cache miss in the network panel](./images/x-cache-miss.png)
 
-**X-Cache: HIT 26**
+#### **X-Cache: HIT 26**
 
 After refreshing the browser 26 times, I now see the header `x-cache: HIT 26`.
 
@@ -170,6 +170,7 @@ This section will help with troubleshooting when using WPGraphQL Network Cache.
 
 As more supported hosts work with WPGraphQL Smart Cache, some details may vary from host to host.
 
+
 ### How to identify if the request is served from network cache?
 
 If you're making GET requests and want to be sure the results are being served from a network cache, you should be able to inspect the headers.
@@ -177,6 +178,7 @@ If you're making GET requests and want to be sure the results are being served f
 WP Engine returns an `X-Cache` key which will either contain a cache hit count, or a `MISS` value.
 
 Other hosts might have different headers, but they should indicate whether the request was served from cache or not.
+
 
 ### Caches seem to be purging more than expected
 
@@ -188,7 +190,8 @@ For example, if you query for 100 posts, that means publishing a new post, delet
 
 Smaller queries with fewer nodes will be associated with fewer purge actions.
 
-#### Skipped Headers
+
+### Skipped Headers
 
 If your queries are _really_ big, there's a chance your x-graphql-keys header contains `skipped:$type_name` header(s).
 
