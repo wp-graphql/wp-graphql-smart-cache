@@ -102,6 +102,6 @@ There is a lot of nuance to consider. You can read more about this here: [https:
 
 ## 👉 Up Next:
 
-- [Network Cache](./docs/network-cache.md)
-- [Object Cache](./docs/object-cache.md)
-- [Persisted Queries](./docs/persisted-queries.md)
+- [Network Cache](./network-cache.md)
+- [Object Cache](./object-cache.md)
+- [Persisted Queries](./persisted-queries.md)
