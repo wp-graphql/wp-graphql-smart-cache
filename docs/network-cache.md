@@ -56,18 +56,6 @@ Now that you know how to take advantage of WPGraphQL Caching, put it to action a
 
 ----
 
-## Supported Hosts
-
-As we've mentioned, WPGraphQL Network Cache does require specific implementation details from the WordPress host.
-
-Below is a list of hosting companies we know support for WPGraphQL Smart Cache.
-
-- [WP Engine](https://wpengine.com/atlas)
-
-Below is a [hosting guide](#hosting-guide) to help hosts add support for WPGraphQL Caching and Cache Invalidation.
-
-----
-
 ## How WPGraphQL Network Cache works
 
 For many years, managed WordPress hosts have sped up WordPress by using network-level page caching and serving WordPress pages to users from a cache, preventing the WordPress application itself from being executed to build the page for most requests.
@@ -211,6 +199,18 @@ Documents with these headers will be purged whenever any node of that type is ed
 The solution here is typically to query fewer nodes.
 
 If you've filtered WPGraphQL to allow querying for 1000 nodes (instead of the default 100), consider not doing that.
+
+----
+
+## Supported Hosts
+
+As we've mentioned, WPGraphQL Network Cache does require specific implementation details from the WordPress host.
+
+Below is a list of hosting companies we know support for WPGraphQL Smart Cache.
+
+- [WP Engine](https://wpengine.com/atlas)
+
+Below is a [hosting guide](#hosting-guide) to help hosts add support for WPGraphQL Caching and Cache Invalidation.
 
 ----
 
