@@ -272,6 +272,6 @@ The network cache layer should respond to calls of the purge action and purge an
 
 ## 👉 Up Next:
 
-- [Object Cache](./docs/object-cache.md)
-- [Persisted Queries](./docs/persisted-queries.md)
-- [Cache Invalidation](./docs/cache-invalidation.md)
+- [Object Cache](./object-cache.md)
+- [Persisted Queries](./persisted-queries.md)
+- [Cache Invalidation](./cache-invalidation.md)
