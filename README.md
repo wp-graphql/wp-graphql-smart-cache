@@ -1,6 +1,6 @@
 <img src="./docs/images/logo-wp-graphql-smart-cache.jpg" width="150px" />
 
-# WPGraphQL Smart Cache
+# WPGraphQL Smart Cache (BETA)
 
 Do you want your API data _fast_ or _accurate_? With WPGraphQL Smart Cache, you can have both.
 
