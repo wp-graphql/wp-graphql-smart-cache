@@ -1,10 +1,10 @@
 === WPGraphQL Smart Cache ===
 Contributors: WPGraphQL, markkelnar, jasonbahl
-Tags: GraphQL
-Requires at least: 4.5
-Tested up to: 5.6.1
-Requires PHP: 5.6
-Stable tag: 0.2.3
+Tags: WPGraphQL, Cache, API, Invalidation, Persisted Queries, GraphQL, Performance, Speed
+Requires at least: 5.6
+Tested up to: 6.0
+Requires PHP: 7.4
+Stable tag: 0.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
