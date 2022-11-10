@@ -216,13 +216,12 @@ add_action(
  */
 function appsero_init_tracker_wpgraphql_smart_cache() {
 
-
 	// If the class doesn't exist, or code is being scanned by PHPSTAN, move on.
 	if ( ! class_exists( 'Appsero\Client' ) || defined( 'PHPSTAN' ) ) {
 		return;
 	}
 
-	$client   = new Client( '66f03878-3df1-40d7-8be9-0069994480d4', 'WPGraphQL Smart Cache', __FILE__ );
+	$client = new Client( '66f03878-3df1-40d7-8be9-0069994480d4', 'WPGraphQL Smart Cache', __FILE__ );
 
 	$insights = $client->insights();
 
