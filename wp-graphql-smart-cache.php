@@ -6,7 +6,7 @@
  * Description: Smart Caching and Cache Invalidation for WPGraphQL
  * Author: WPGraphQL
  * Author URI: http://www.wpgraphql.com
- * Requires at least: 5.9
+ * Requires at least: 5.6
  * Tested up to: 6.0
  * Requires PHP: 7.4
  * Text Domain: wp-graphql-smart-cache
