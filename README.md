@@ -1,6 +1,8 @@
 # WPGraphQL Smart Cache
 
-Do you want your API data Fast or Accurate? With WPGraphQL Smart Cache, you can have both.
+![Logo](./docs/images/logo-wp-graphql-smart-cache.jpg)
+
+Do you want your API data _fast_ or _accurate_? With WPGraphQL Smart Cache, you can have both.
 
 WPGraphQL Smart Cache is a free, open-source WordPress plugin that provides support for [caching](./docs/ca) and cache invalidation of WPGraphQL Queries.
 
