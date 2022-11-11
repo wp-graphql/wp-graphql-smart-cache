@@ -26,8 +26,6 @@ use WPGraphQL\SmartCache\Cache\Invalidation;
 use WPGraphQL\SmartCache\Cache\Results;
 use WPGraphQL\SmartCache\Admin\Editor;
 use WPGraphQL\SmartCache\Admin\Settings;
-use WPGraphQL\SmartCache\Document;
-use WPGraphQL\SmartCache\Document;
 use WPGraphQL\SmartCache\Document\Description;
 use WPGraphQL\SmartCache\Document\Grant;
 use WPGraphQL\SmartCache\Document\MaxAge;
