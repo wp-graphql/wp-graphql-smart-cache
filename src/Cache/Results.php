@@ -106,7 +106,6 @@ class Results extends Query {
 	 * @return mixed|array|object|null  The response or null if not found in cache
 	 */
 	public function get_query_results_from_cache_cb( $result, Request $request ) {
-
 		$this->request = $request;
 
 		// if caching is not enabled or the request is authenticated, bail early
