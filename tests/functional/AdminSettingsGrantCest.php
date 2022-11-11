@@ -23,7 +23,7 @@ class AdminSettingsGrantCest
 	}
 
 	public function testChangeAllowTriggersPurge( FunctionalTester $I ) {
-		$I->wantTo( 'Change the allow/deny grant glopbal setting and verify cache is purged' );
+		$I->wantTo( 'Change the allow/deny grant global setting and verify cache is purged' );
 
 		// Enable caching for this test
 		$I->haveOptionInDatabase( 'graphql_cache_section', [ 'cache_toggle' => 'on' ] );

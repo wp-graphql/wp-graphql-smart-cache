@@ -6,6 +6,8 @@
 
 namespace WPGraphQL\SmartCache\Cache;
 
+use WPGraphQL;
+use WPGraphQL\Request;
 use WPGraphQL\SmartCache\Admin\Settings;
 
 class Results extends Query {
@@ -18,6 +20,11 @@ class Results extends Query {
 	 * @array bool
 	 */
 	protected $is_cached = [];
+
+	/**
+	 * @var
+	 */
+	protected $request;
 
 	public function init() {
 		add_filter( 'pre_graphql_execute_request', [ $this, 'get_query_results_from_cache_cb' ], 10, 2 );
@@ -92,17 +99,19 @@ class Results extends Query {
 	/**
 	 * Look for a 'cached' response for this exact query, variables and operation name
 	 *
-	 * @param mixed|array|object $result The response from execution. Array for batch requests,
+	 * @param mixed|array|object $result   The response from execution. Array for batch requests,
 	 *                                     single object for individual requests
-	 * @param WPGraphql/Request $request The Request object
+	 * @param Request            $request
 	 *
 	 * @return mixed|array|object|null  The response or null if not found in cache
 	 */
-	public function get_query_results_from_cache_cb( $result, $request ) {
+	public function get_query_results_from_cache_cb( $result, Request $request ) {
+		$this->request = $request;
+
 		// if caching is not enabled or the request is authenticated, bail early
 		// right now we're not supporting GraphQL cache for authenticated requests.
 		// Possibly in the future.
-		if ( ! Settings::caching_enabled() || is_user_logged_in() ) {
+		if ( ! $this->is_object_cache_enabled() ) {
 			return $result;
 		}
 
@@ -157,16 +166,22 @@ class Results extends Query {
 	 * @return bool
 	 */
 	protected function is_object_cache_enabled() {
-		if ( is_user_logged_in() ) {
-			return false;
-		}
+
+		// default to disabled
+		$enabled = false;
 
 		// if caching is enabled, respect it
 		if ( Settings::caching_enabled() ) {
-			return true;
+			$enabled = true;
 		}
 
-		return false;
+		// however, if the user is logged in, we should bypass the cache
+		if ( is_user_logged_in() ) {
+			$enabled = false;
+		}
+
+		// @phpcs:ignore
+		return (bool) apply_filters( 'graphql_cache_is_object_cache_enabled', $enabled, $this->request );
 	}
 
 	/**
@@ -214,7 +229,7 @@ class Results extends Query {
 			return;
 		}
 
-		// If do not have a cached version, or it expired, save the results again with new expiration
+		// If we do not have a cached version, or it expired, save the results again with new expiration
 		$cached_result = $this->get( $key );
 
 		if ( false === $cached_result ) {
@@ -222,20 +237,6 @@ class Results extends Query {
 
 			$this->save( $key, $filtered_response, $expiration );
 		}
-	}
-
-	/**
-	 * Searches the database for all graphql transients matching our prefix
-	 *
-	 * @return int|false  Count of the number deleted. False if error, nothing to delete or caching not enabled.
-	 * @return bool True on success, false on failure.
-	 */
-	public function purge_all() {
-		if ( ! Settings::caching_enabled() ) {
-			return false;
-		}
-
-		return parent::purge_all();
 	}
 
 	/**
