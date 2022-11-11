@@ -240,16 +240,6 @@ class Results extends Query {
 	}
 
 	/**
-	 * Searches the database for all graphql transients matching our prefix
-	 *
-	 * @return int|false  Count of the number deleted. False if error, nothing to delete or caching not enabled.
-	 * @return bool True on success, false on failure.
-	 */
-	public function purge_all() {
-		return parent::purge_all();
-	}
-
-	/**
 	 * When an item changed and this callback is triggered to delete results we have cached for that list of nodes
 	 * Related to the data type that changed.
 	 */
