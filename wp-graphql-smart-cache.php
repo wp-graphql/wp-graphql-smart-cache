@@ -38,7 +38,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 const WPGRAPHQL_REQUIRED_MIN_VERSION = '1.2.0';
 const WPGRAPHQL_SMART_CACHE_VERSION  = '0.3.1';
 
-require __DIR__ . '/vendor/autoload.php';
+// If the autoload file exists, require it.
+// If the plugin was installed from composer, the autoload
+// would be required elsewhere in the project
+if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
+	require __DIR__ . '/vendor/autoload.php';
+}
 
 if ( ! defined( 'WPGRAPHQL_SMART_CACHE_PLUGIN_DIR' ) ) {
 	define( 'WPGRAPHQL_SMART_CACHE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
@@ -55,6 +60,11 @@ function can_load_plugin() {
 
 	// Is WPGraphQL active?
 	if ( ! class_exists( 'WPGraphQL' ) ) {
+		return false;
+	}
+
+	// If the Document class doesn't exist, then the autoloader failed to load
+	if ( ! class_exists( Document::class ) ) {
 		return false;
 	}
 
