@@ -246,10 +246,6 @@ class Results extends Query {
 	 * @return bool True on success, false on failure.
 	 */
 	public function purge_all() {
-		if ( ! $this->is_object_cache_enabled() ) {
-			return false;
-		}
-
 		return parent::purge_all();
 	}
 
