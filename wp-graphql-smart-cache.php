@@ -29,13 +29,14 @@ use WPGraphQL\SmartCache\Admin\Settings;
 use WPGraphQL\SmartCache\Document\Description;
 use WPGraphQL\SmartCache\Document\Grant;
 use WPGraphQL\SmartCache\Document\MaxAge;
+use WPGraphQL\SmartCache\Document\Loader;
 
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const WPGRAPHQL_REQUIRED_MIN_VERSION = '1.2.0';
+const WPGRAPHQL_REQUIRED_MIN_VERSION = '1.12.0';
 const WPGRAPHQL_SMART_CACHE_VERSION  = '0.3.2';
 
 // If the autoload file exists, require it.
@@ -50,8 +51,8 @@ if ( ! defined( 'WPGRAPHQL_SMART_CACHE_PLUGIN_DIR' ) ) {
 }
 
 /**
- * Check whether ACF and WPGraphQL are active, and whether the minimum version requirement has been
- * met
+ * Check whether WPGraphQL is active, and whether the minimum version requirement has been met,
+ * and whether the autoloader is working as expected
  *
  * @return bool
  * @since 0.3
@@ -63,11 +64,6 @@ function can_load_plugin() {
 		return false;
 	}
 
-	// If the Document class doesn't exist, then the autoloader failed to load
-	if ( ! class_exists( Document::class ) ) {
-		return false;
-	}
-
 	// Do we have a WPGraphQL version to check against?
 	if ( empty( defined( 'WPGRAPHQL_VERSION' ) ) ) {
 		return false;
@@ -75,6 +71,13 @@ function can_load_plugin() {
 
 	// Have we met the minimum version requirement?
 	if ( true === version_compare( WPGRAPHQL_VERSION, WPGRAPHQL_REQUIRED_MIN_VERSION, 'lt' ) ) {
+		return false;
+	}
+
+	// If the Document class doesn't exist, then the autoloader failed to load.
+	// This likely means that the plugin was installed via composer and the parent
+	// project doesn't have the autoloader setup properly
+	if ( ! class_exists( Document::class ) ) {
 		return false;
 	}
 
@@ -89,7 +92,7 @@ add_action(
 	'graphql_server_config',
 	function ( \GraphQL\Server\ServerConfig $config ) {
 		$config->setPersistentQueryLoader(
-			[ '\WPGraphQL\SmartCache\Document\Loader', 'by_query_id' ]
+			[ Loader::class, 'by_query_id' ]
 		);
 	},
 	10,
@@ -203,7 +206,7 @@ add_action(
 add_action(
 	'graphql_purge',
 	function ( $purge_keys ) {
-		if ( ! function_exists( 'graphql_get_endpoint_url' ) || ! method_exists( 'WpeCommon', 'http_to_varnish' ) ) {
+		if ( ! function_exists( 'graphql_get_endpoint_url' ) || ! class_exists( 'WpeCommon' ) || ! method_exists( 'WpeCommon', 'http_to_varnish' ) ) {
 			return;
 		}
 		\WpeCommon::http_to_varnish(
