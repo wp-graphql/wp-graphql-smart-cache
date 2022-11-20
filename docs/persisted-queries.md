@@ -101,7 +101,7 @@ Then I could use that Alias Name as the value of the `queryId` and execute the s
 
 ### GraphQL Variables
 
-Persisted queries support GraphQL variables which can passed in the query string: `queryId=getPostById&variables={“id”:”yourId”}`
+Persisted queries support GraphQL variables which can passed in the query string, e.g. `?queryId=getPostById&variables={"id":"yourId"}`
 
 #### Allow / Deny Rules
 
