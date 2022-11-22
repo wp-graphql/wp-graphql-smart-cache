@@ -6,7 +6,7 @@ Do you want your API data _fast_ or _accurate_? With WPGraphQL Smart Cache, you 
 
 WPGraphQL Smart Cache is a free, open-source WordPress plugin that provides support for [caching](./docs/ca) and cache invalidation of WPGraphQL Queries.
 
-> _**NOTE:** To get the most out of this plugin, we recommend using GET requests with Network Caching, which requires your WordPress install to be on a [supported host](./network-cache.md/#supported-hosts)._
+> _**NOTE:** To get the most out of this plugin, we recommend using GET requests with Network Caching, which requires your WordPress install to be on a [supported host](./docs/network-cache.md#supported-hosts)._
 
 ----
 ## Docs 📖
