@@ -225,7 +225,7 @@ Currently, we’re missing invalidation hooks related to Settings (options).
 
 That means cache for queries that ask for Settings (i.e General Settings, Discussion Settings, etc) will not be invalidated/evicted automatically when actions related to those things occur.
 
-You can read more about the nuances of supporting settings here:
+You can read more about the nuances of supporting settings here: [#158](https://github.com/wp-graphql/wp-graphql-smart-cache/issues/158)
 
 ----
 
