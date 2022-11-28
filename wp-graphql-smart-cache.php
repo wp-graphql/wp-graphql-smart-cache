@@ -36,14 +36,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const WPGRAPHQL_REQUIRED_MIN_VERSION = '1.12.0';
-const WPGRAPHQL_SMART_CACHE_VERSION  = '0.3.3';
-
 // If the autoload file exists, require it.
 // If the plugin was installed from composer, the autoload
 // would be required elsewhere in the project
 if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
 	require __DIR__ . '/vendor/autoload.php';
+}
+
+if ( ! defined( 'WPGRAPHQL_SMART_CACHE_VERSION' ) ) {
+	define( 'WPGRAPHQL_SMART_CACHE_VERSION', '0.3.3' );
+}
+
+if ( ! defined( 'WPGRAPHQL_SMART_CACHE_WPGRAPHQL_REQUIRED_MIN_VERSION' ) ) {
+	define( 'WPGRAPHQL_SMART_CACHE_WPGRAPHQL_REQUIRED_MIN_VERSION', '1.12.0' );
 }
 
 if ( ! defined( 'WPGRAPHQL_SMART_CACHE_PLUGIN_DIR' ) ) {
@@ -65,12 +70,12 @@ function can_load_plugin() {
 	}
 
 	// Do we have a WPGraphQL version to check against?
-	if ( empty( defined( 'WPGRAPHQL_VERSION' ) ) ) {
+	if ( ! defined( 'WPGRAPHQL_VERSION' ) ) {
 		return false;
 	}
 
 	// Have we met the minimum version requirement?
-	if ( true === version_compare( WPGRAPHQL_VERSION, WPGRAPHQL_REQUIRED_MIN_VERSION, 'lt' ) ) {
+	if ( true === version_compare( WPGRAPHQL_VERSION, WPGRAPHQL_SMART_CACHE_WPGRAPHQL_REQUIRED_MIN_VERSION, 'lt' ) ) {
 		return false;
 	}
 
