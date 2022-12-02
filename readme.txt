@@ -8,11 +8,56 @@ Stable tag: 0.3.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-== Description ==
+=== Description ===
 
-**BREAKING CHANGE DISCLAIMER:** While this plugin is tested and used in production, as we iterate we expect breaking changes. Not so much to surface functionality (unless required), but definitely expect changes to underlying code, class/function/filter names as we continue to receive feedback and workout details..
+Do you want your API data _fast_ or _accurate_? With WPGraphQL Smart Cache, you can have both.
 
-WPGraphQL Smart Cache is a plugin that provides WPGraphQL users with cache and cache invalidation options. The plugin also provides Persisted Query support.
+WPGraphQL Smart Cache is a free, open-source WordPress plugin that provides support for [caching](./docs/ca) and cache invalidation of WPGraphQL Queries.
+
+To get the most out of this plugin, we recommend using GET requests with Network Caching, which requires your WordPress install to be on a [supported host](https://github.com/wp-graphql/wp-graphql-smart-cache/blob/main/docs/network-cache.md#supported-hosts).
+
+**BREAKING CHANGE DISCLAIMER:** While this plugin is tested and used in production, as we iterate we expect breaking changes. Not so much to surface functionality (unless required), but expect changes to underlying code, class/function/filter names as we continue to receive feedback and workout details.
+
+== Docs ==
+
+- [Overview](https://github.com/wp-graphql/wp-graphql-smart-cache#overview)
+- [Quick Start](https://github.com/wp-graphql/wp-graphql-smart-cache#-quick-start)
+- Features
+  - [Network Cache](https://github.com/wp-graphql/wp-graphql-smart-cache/blob/main/docs/network-cache.md)
+  - [Object Cache](https://github.com/wp-graphql/wp-graphql-smart-cache/blob/main/docs/object-cache.md)
+  - [Persisted Queries](https://github.com/wp-graphql/wp-graphql-smart-cache/blob/main/docs/persisted-queries.md)
+  - [Cache Invalidation](https://github.com/wp-graphql/wp-graphql-smart-cache/blob/main/docs/cache-invalidation.md)
+- [Extending / Customizing Functionality](https://github.com/wp-graphql/wp-graphql-smart-cache/blob/main/docs/extending.md)
+- [FAQ and Troubleshooting](https://github.com/wp-graphql/wp-graphql-smart-cache#faq--troubleshooting)
+- [Known Issues](https://github.com/wp-graphql/wp-graphql-smart-cache#known-issues)
+- [Providing Feedback](https://github.com/wp-graphql/wp-graphql-smart-cache#providing-feedback)
+
+= Upgrading =
+
+It is recommended that anytime you want to update WPGraphQL Smart Cache that you get familiar with what's changed in the release.
+
+WPGraphQL Smart Cache publishes [release notes on Github](https://github.com/wp-graphql/wp-graphql-smart-cache/releases).
+
+WPGraphQL Smart Cache will follow Semver versioning.
+
+The summary of Semver versioning is as follows:
+
+- *MAJOR* version when you make incompatible API changes,
+- *MINOR* version when you add functionality in a backwards compatible manner, and
+- *PATCH* version when you make backwards compatible bug fixes.
+
+You can read more about the details of Semver at [semver.org](https://semver.org)
+
+== Privacy Policy ==
+
+WPGraphQL Smart Cache uses [Appsero](https://appsero.com) SDK to collect some telemetry data upon user's confirmation. This helps us to troubleshoot problems faster & make product improvements.
+
+Appsero SDK **does not gather any data by default.** The SDK only starts gathering basic telemetry data **when a user allows it via the admin notice**. We collect the data to ensure a great user experience for all our users.
+
+Integrating Appsero SDK **DOES NOT IMMEDIATELY** start gathering data, **without confirmation from users in any case.**
+
+Learn more about how [Appsero collects and uses this data](https://appsero.com/privacy-policy/).
+
 
 == Upgrade Notice ==
 
