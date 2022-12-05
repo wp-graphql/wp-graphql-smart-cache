@@ -36,7 +36,7 @@ To get the most out of this plugin, we recommend using GET requests with Network
 
 It is recommended that anytime you want to update WPGraphQL Smart Cache that you get familiar with what's changed in the release.
 
-WPGraphQL Smart Cache publishes [release notes on Github](https://github.com/wp-graphql/wp-graphql-smart-cache/releases).
+WPGraphQL Smart Cache publishes [release notes on GitHub](https://github.com/wp-graphql/wp-graphql-smart-cache/releases).
 
 WPGraphQL Smart Cache will follow Semver versioning.
 
