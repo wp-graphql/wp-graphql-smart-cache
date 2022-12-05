@@ -217,7 +217,7 @@ Now that you've completed the quick start, continue on learn more about the feat
 
 There are currently some issues around Batch Queries. If you use Batch Queries in your client application, we will need more time before we have WPGraphQL Smart Cache working for you.
 
-If you use Batch Queries in your application and would like to make use of WPGraphQL Smart Cache, let us know in the WPGraphQL Smart Cache slack channel or Github Discussions so we can learn more about your use cases.
+If you use Batch Queries in your application and would like to make use of WPGraphQL Smart Cache, let us know in the WPGraphQL Smart Cache slack channel or GitHub Discussions so we can learn more about your use cases.
 
 ### Missing Invalidation Hooks
 
@@ -235,15 +235,15 @@ If you have feedback after using WPGraphQL Smart Cache, we would love to hear it
 
 ### Issues & Bug Reports
 
-If you have an issue or a bug to report, the best place to do that is in the Github Repository: [https://github.com/wp-graphql/wp-graphql-smart-cache/issues](https://github.com/wp-graphql/wp-graphql-smart-cache/issues)
+If you have an issue or a bug to report, the best place to do that is in the GitHub Repository: [https://github.com/wp-graphql/wp-graphql-smart-cache/issues](https://github.com/wp-graphql/wp-graphql-smart-cache/issues)
 
 ### Feature Requests
 
-If you have an idea for a feature that feels like it would be a nice addition to the WPGraphQL Smart Cache plugin, you can let us know in the Discussion section of the Github Repository: [https://github.com/wp-graphql/wp-graphql-smart-cache/discussions](https://github.com/wp-graphql/wp-graphql-smart-cache/discussions)
+If you have an idea for a feature that feels like it would be a nice addition to the WPGraphQL Smart Cache plugin, you can let us know in the Discussion section of the GitHub Repository: [https://github.com/wp-graphql/wp-graphql-smart-cache/discussions](https://github.com/wp-graphql/wp-graphql-smart-cache/discussions)
 
 ### General Discussion
 
-For general discussion about the plugin, you can visit the WPGraphQL Slack ([join here](https://wp-graphql.slack.com/join/shared_invite/zt-3vloo60z-PpJV2PFIwEathWDOxCTTLA#/shared-invite/email)) and join the `#smart-cache-beta` channel, or post in the [Github Discussions](https://github.com/wp-graphql/wp-graphql-smart-cache/discussions).
+For general discussion about the plugin, you can visit the WPGraphQL Slack ([join here](https://wp-graphql.slack.com/join/shared_invite/zt-3vloo60z-PpJV2PFIwEathWDOxCTTLA#/shared-invite/email)) and join the `#smart-cache-beta` channel, or post in the [GitHub Discussions](https://github.com/wp-graphql/wp-graphql-smart-cache/discussions).
 
 ### Security Concerns
 
