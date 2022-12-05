@@ -38,7 +38,6 @@ webpack.config.js
 wp-cli.local.yml
 yarn.lock
 tests
-vendor
 node_modules
 *.sql
 *.tar.gz
