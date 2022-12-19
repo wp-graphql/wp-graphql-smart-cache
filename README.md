@@ -1,12 +1,20 @@
 <img src="./docs/images/logo-wp-graphql-smart-cache.jpg" width="150px" />
 
-# WPGraphQL Smart Cache (BETA)
+# WPGraphQL Smart Cache
 
 Do you want your API data _fast_ or _accurate_? With WPGraphQL Smart Cache, you can have both.
 
-WPGraphQL Smart Cache is a free, open-source WordPress plugin that provides support for [caching](./docs/ca) and cache invalidation of WPGraphQL Queries.
+WPGraphQL Smart Cache is a free, open-source WordPress plugin that provides support for caching and cache invalidation of WPGraphQL Queries.
 
-> _**NOTE:** To get the most out of this plugin, we recommend using GET requests with Network Caching, which requires your WordPress install to be on a [supported host](./docs/network-cache.md#supported-hosts)._
+To get the most out of this plugin, we recommend using GET requests with Network Caching, which requires your WordPress install to be on a [supported host](https://github.com/wp-graphql/wp-graphql-smart-cache/blob/main/docs/network-cache.md#supported-hosts).
+
+**BREAKING CHANGES:** We may make breaking changes in the future to improve functionality and experience. If we do, we will use semver to do so. Pay attention to release notes and upgrade notices before updating.
+
+----
+
+## Video Overview
+
+<a href="https://youtu.be/t_y6q02q7K4" target="_blank"><img src="./docs/images/banner-wp-graphql-smart-cache-v1.jpg" width="640px" /></a>
 
 ----
 ## Docs 📖
@@ -243,7 +251,7 @@ If you have an idea for a feature that feels like it would be a nice addition to
 
 ### General Discussion
 
-For general discussion about the plugin, you can visit the WPGraphQL Slack ([join here](https://wp-graphql.slack.com/join/shared_invite/zt-3vloo60z-PpJV2PFIwEathWDOxCTTLA#/shared-invite/email)) and join the `#smart-cache-beta` channel, or post in the [GitHub Discussions](https://github.com/wp-graphql/wp-graphql-smart-cache/discussions).
+For general discussion about the plugin, you can visit the WPGraphQL Slack ([join here](https://wp-graphql.slack.com/join/shared_invite/zt-3vloo60z-PpJV2PFIwEathWDOxCTTLA#/shared-invite/email)) and join the `#wp-graphql-smart-cache` channel, or post in the [GitHub Discussions](https://github.com/wp-graphql/wp-graphql-smart-cache/discussions).
 
 ### Security Concerns
 
