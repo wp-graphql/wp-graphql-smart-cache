@@ -2,10 +2,10 @@ name: Plugin asset/readme update
 on:
   push:
     branches:
-      - trunk
+      - main
 jobs:
   trunk:
-    name: Push to trunk
+    name: Push to main
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
