@@ -4,7 +4,7 @@ on:
     branches:
       - main
 jobs:
-  trunk:
+  main:
     name: Push to main
     runs-on: ubuntu-latest
     steps:
