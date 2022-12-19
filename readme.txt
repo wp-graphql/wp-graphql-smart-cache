@@ -20,7 +20,7 @@ To get the most out of this plugin, we recommend using GET requests with Network
 
 == Video Overview ==
 
-<a href="https://youtu.be/t_y6q02q7K4" target="_blank"><img src="./docs/images/banner-wp-graphql-smart-cache-v1.jpg" width="640px" /></a>
+<a href="https://youtu.be/t_y6q02q7K4" target="_blank"><img src="https://github.com/wp-graphql/wp-graphql-smart-cache/raw/main/docs/images/banner-wp-graphql-smart-cache-v1.jpg" width="640px" /></a>
 
 == Docs ==
 
