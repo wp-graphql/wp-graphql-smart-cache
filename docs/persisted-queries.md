@@ -1,4 +1,4 @@
-## Persisted Queries
+# Persisted Queries
 
 In the GraphQL ecosystem, the term “Persisted Queries” refers to the idea that a GraphQL Query Document can be “persisted” on the server, and can be referenced via a Query ID.
 
@@ -10,7 +10,7 @@ There are several advantages to using Persisted Queries:
 - Ability to customize the cache-expiration time per query
 - Future customizations at the individual query level
 
-WP GraphQL Smart Cache provides support for "Persisted Queries" and plays nice with the [Apollo Persisted Query Link](https://www.apollographql.com/docs/react/api/link/persisted-queries/).
+WPGraphQL Smart Cache provides support for "Persisted Queries" and plays nice with the [Apollo Persisted Query Link](https://www.apollographql.com/docs/react/api/link/persisted-queries/).
 
 _**NOTE:** You can see the [implementation](https://github.com/wp-graphql/wpgraphql.com/blob/bab1429c0f25ba93ddd3dfba2e6998eec67b331a/src/plugins/PersistedQueriesPlugin.js) of the Apollo Persisted Queries link on WPGraphQL.com, a headless WordPress front-end powered by [NextJS](https://nextjs.org) and [FaustWP](https://www.npmjs.com/package/@faustwp/core)._
 
@@ -139,6 +139,6 @@ For example, currently queries for "Settings" are not invalidating when settings
 
 ## 👉 Up Next:
 
-- [Network Cache](./docs/network-cache.md)
-- [Object Cache](./docs/object-cache.md)
-- [Cache Invalidation](./docs/cache-invalidation.md)
+- [Network Cache](./network-cache.md)
+- [Object Cache](./object-cache.md)
+- [Cache Invalidation](./cache-invalidation.md)

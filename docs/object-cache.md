@@ -128,6 +128,6 @@ If the `tracing.resolvers` output is empty, then no resolvers executed (cached r
 
 ## 👉 Up Next:
 
-- [Network Cache](./docs/network-cache.md)
-- [Persisted Queries](./docs/persisted-queries.md)
-- [Cache Invalidation](./docs/cache-invalidation.md)
+- [Network Cache](./network-cache.md)
+- [Persisted Queries](./persisted-queries.md)
+- [Cache Invalidation](./cache-invalidation.md)
