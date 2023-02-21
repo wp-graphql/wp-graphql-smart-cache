@@ -62,7 +62,7 @@ if ( ! defined( 'WPGRAPHQL_SMART_CACHE_PLUGIN_DIR' ) ) {
  * @return bool
  * @since 0.3
  */
-function graphql_smart_cache_can_load_plugin() {
+function can_load_plugin() {
 
 	// Is WPGraphQL active?
 	if ( ! class_exists( 'WPGraphQL' ) ) {
@@ -111,7 +111,7 @@ add_action(
 		/**
 		 * If WPGraphQL is not active, or is an incompatible version, show the admin notice and bail
 		 */
-		if ( false === graphql_smart_cache_can_load_plugin() ) {
+		if ( false === can_load_plugin() ) {
 			// Show the admin notice
 			add_action( 'admin_init', __NAMESPACE__ . '\show_admin_notice' );
 
@@ -177,7 +177,7 @@ function show_admin_notice() {
 add_action(
 	'admin_init',
 	function () {
-		if ( false === graphql_smart_cache_can_load_plugin() ) {
+		if ( false === can_load_plugin() ) {
 			return;
 		}
 
@@ -190,7 +190,7 @@ add_action(
 add_action(
 	'wp_loaded',
 	function () {
-		if ( false === graphql_smart_cache_can_load_plugin() ) {
+		if ( false === can_load_plugin() ) {
 			return;
 		}
 
