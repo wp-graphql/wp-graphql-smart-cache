@@ -67,6 +67,10 @@ class DocumentCest {
 				'__typename' => 'RootQuery'
 			]
 		]);
+
+		// Taxonomies should not be public visible
+		$I->amOnPage( "wp-sitemap-taxonomies-graphql_query_alias-1.xml" );
+		$I->seePageNotFound();
 	}
 
 	public function saveQueryWithAliasNameSavesTest( FunctionalTester $I ) {
