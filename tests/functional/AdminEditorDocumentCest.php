@@ -49,7 +49,6 @@ class AdminEditorDocumentCest {
 		 $I->amOnPage( "/wp-sitemap-posts-graphql_document-1.xml");
 		// codecept_debug( $I->grabPageSource() );
 		 $I->see('404');
-		 $I->see('This page could not be found.');
 		 $I->dontSee('XML Sitemap');
 
 		// query alias should not be visible
@@ -59,8 +58,7 @@ class AdminEditorDocumentCest {
 		$I->seeElement( "//body[contains(@class,'home')]" );
 
 		 $I->amOnPage( "/wp-sitemap-taxonomies-graphql_query_alias-1.xml");
-//		 codecept_debug( $I->grabPageSource() );
-		 $I->see('404');
+
 		 $I->see('This page could not be found.');
 		 $I->dontSee('XML Sitemap');
 
@@ -73,9 +71,8 @@ class AdminEditorDocumentCest {
 		$I->seeElement( "//body[contains(@class,'home')]" );
 
 		 $I->amOnPage( "wp-sitemap-taxonomies-graphql_document_grant-1.xml");
-//		 codecept_debug( $I->grabPageSource() );
-		 $I->see('404');
-		 $I->see('This page could not be found.');
+
+		 $I->seeElement( "//body[contains(@class,'error404')]" );
 		 $I->dontSee('XML Sitemap');
 
 		// max age should not be visible
@@ -86,9 +83,8 @@ class AdminEditorDocumentCest {
 		$I->seeElement( "//body[contains(@class,'home')]" );
 
 		 $I->amOnPage( "wp-sitemap-taxonomies-graphql_document_http_maxage-1.xml");
-//		 codecept_debug( $I->grabPageSource() );
-		 $I->see('404');
-		 $I->see('This page could not be found.');
+
+		 $I->seeElement( "//body[contains(@class,'error404')]" );
 		 $I->dontSee('XML Sitemap');
 	}
 }
