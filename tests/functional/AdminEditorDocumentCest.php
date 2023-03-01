@@ -58,7 +58,7 @@ class AdminEditorDocumentCest {
 
 		$I->amOnPage( "/wp-sitemap-taxonomies-graphql_query_alias-1.xml");
 
-		$I->see('This page could not be found.');
+		$I->seeElement( "//body[contains(@class,'error404')]" );
 		$I->dontSee('XML Sitemap');
 
 		// allow/deny grant should not be visible
