@@ -46,10 +46,9 @@ class AdminEditorDocumentCest {
 		// exposed
 		$I->seeElement( "//body[contains(@class,'home')]" );
 
-		 $I->amOnPage( "/wp-sitemap-posts-graphql_document-1.xml");
-		// codecept_debug( $I->grabPageSource() );
-		 $I->see('404');
-		 $I->dontSee('XML Sitemap');
+		$I->amOnPage( "/wp-sitemap-posts-graphql_document-1.xml");
+		$I->seeElement( "//body[contains(@class,'error404')]" );
+		$I->dontSee('XML Sitemap');
 
 		// query alias should not be visible
 		$I->amOnPage( "/graphql_query_alias/test-document-foo-bar/" );
@@ -57,10 +56,10 @@ class AdminEditorDocumentCest {
 		$I->dontSee('Alias Name: test-query-foo');
 		$I->seeElement( "//body[contains(@class,'home')]" );
 
-		 $I->amOnPage( "/wp-sitemap-taxonomies-graphql_query_alias-1.xml");
+		$I->amOnPage( "/wp-sitemap-taxonomies-graphql_query_alias-1.xml");
 
-		 $I->see('This page could not be found.');
-		 $I->dontSee('XML Sitemap');
+		$I->see('This page could not be found.');
+		$I->dontSee('XML Sitemap');
 
 		// allow/deny grant should not be visible
 		$I->amOnPage( "/graphql_document_grant/allow/" );
@@ -70,21 +69,21 @@ class AdminEditorDocumentCest {
 		$I->dontSeeElement( "//body[contains(@class,'tax-graphql_document_grant')]" );
 		$I->seeElement( "//body[contains(@class,'home')]" );
 
-		 $I->amOnPage( "wp-sitemap-taxonomies-graphql_document_grant-1.xml");
+		$I->amOnPage( "wp-sitemap-taxonomies-graphql_document_grant-1.xml");
 
-		 $I->seeElement( "//body[contains(@class,'error404')]" );
-		 $I->dontSee('XML Sitemap');
+		$I->seeElement( "//body[contains(@class,'error404')]" );
+		$I->dontSee('XML Sitemap');
 
 		// max age should not be visible
 		$I->amOnPage( "/graphql_document_http_maxage/200/" );
-		codecept_debug( $I->grabPageSource() );
+
 		$I->dontSee('Max-Age Header: 200');
 		$I->dontSeeElement( "//body[contains(@class,'tax-graphql_document_http_maxage')]" );
 		$I->seeElement( "//body[contains(@class,'home')]" );
 
-		 $I->amOnPage( "wp-sitemap-taxonomies-graphql_document_http_maxage-1.xml");
+		$I->amOnPage( "wp-sitemap-taxonomies-graphql_document_http_maxage-1.xml");
 
-		 $I->seeElement( "//body[contains(@class,'error404')]" );
-		 $I->dontSee('XML Sitemap');
+		$I->seeElement( "//body[contains(@class,'error404')]" );
+		$I->dontSee('XML Sitemap');
 	}
 }
