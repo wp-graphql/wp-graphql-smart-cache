@@ -58,6 +58,8 @@ class AdminEditorDocumentCest {
 		$I->amOnPage( "graphql_document_grant/allow/" );
 		codecept_debug( $I->grabPageSource() );
 		$I->dontSee('Allow/Deny: allow');
+		//  tax-graphql_document_grant
+		$I->seeElement( "//body[contains(@class,'tax-graphql_document_grant')]" );
 
 		// $I->amOnPage( "wp-sitemap-taxonomies-graphql_document_grant-1.xml");
 		// codecept_debug( $I->grabPageSource() );
