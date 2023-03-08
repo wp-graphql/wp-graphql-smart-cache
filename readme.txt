@@ -4,7 +4,7 @@ Tags: WPGraphQL, Cache, API, Invalidation, Persisted Queries, GraphQL, Performan
 Requires at least: 5.6
 Tested up to: 6.1
 Requires PHP: 7.4
-Stable tag: 1.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -72,6 +72,15 @@ This release removes a lot of code that has since been released as part of WPGra
 In order to use v0.2.0+ of WPGraphQL Smart Cache, you will need WPGraphQL v1.12.0 or newer.
 
 == Changelog ==
+
+= 1.0.1 =
+
+**Chores / Bugfixes**
+
+- Add workflow to update plugin assets/readme when those files are changed
+- update links to docs. Thanks @rodrigo-arias!
+- set internal taxonomies to public => false, add tests.
+- fix bug with the "purge cache" button in the settings page not properly purging all caches for WPEngine users
 
 = 1.0 =
 
