@@ -40,8 +40,11 @@ class Grant {
 					'name' => __( 'Allow/Deny', 'wp-graphql-smart-cache' ),
 				],
 				'hierarchical'       => false,
+				'public'             => false,
+				'publicly_queryable' => false,
 				'show_admin_column'  => true,
 				'show_in_menu'       => Settings::show_in_admin(),
+				'show_ui'            => Settings::show_in_admin(),
 				'show_in_quick_edit' => false,
 				'meta_box_cb'        => [
 					'WPGraphQL\SmartCache\Admin\Editor',

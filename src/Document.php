@@ -44,6 +44,7 @@ class Document {
 					'singular_name' => __( 'GraphQL Document', 'wp-graphql-smart-cache' ),
 				],
 				'public'              => false,
+				'publicly_queryable'  => false,
 				'show_ui'             => Settings::show_in_admin(),
 				'taxonomies'          => [
 					self::ALIAS_TAXONOMY_NAME,
@@ -64,8 +65,11 @@ class Document {
 					'name'          => __( 'Alias Names', 'wp-graphql-smart-cache' ),
 					'singular_name' => __( 'Alias Name', 'wp-graphql-smart-cache' ),
 				],
+				'public'             => false,
+				'publicly_queryable' => false,
 				'show_admin_column'  => true,
 				'show_in_menu'       => Settings::show_in_admin(),
+				'show_ui'            => Settings::show_in_admin(),
 				'show_in_quick_edit' => false,
 				'show_in_graphql'    => false, // false because we register a field with different name
 			]
