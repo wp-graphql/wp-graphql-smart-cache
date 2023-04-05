@@ -677,8 +677,8 @@ class Invalidation {
 		// get the post object being modified
 		$post = get_post( $post_id );
 
-		// if the post type is not nav menu item, ignore it
-		if ( 'nav_menu_item' !== $post->post_type ) {
+		// if the post is not found or the post type is not nav menu item, ignore it
+		if ( ! $post || 'nav_menu_item' !== $post->post_type ) {
 			return;
 		}
 
