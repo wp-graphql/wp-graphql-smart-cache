@@ -285,4 +285,18 @@ class UserCacheInvalidationTest extends \TestCase\WPGraphQLSmartCache\TestCase\W
 	    $this->assertEmpty( $evicted );
     }
 
+	// update user meta (with ignored meta key)
+	public function testUpdateIgnoredUserMetaAndPurgeCache() {
+
+		// re-populate the caches since we just ran an action that would evict caches
+		$this->_populateCaches();
+
+		// add some meta to the user to start
+		update_user_meta( $this->editor->ID, 'apple_news_notice', uniqid( null, true ) );
+
+		$evicted = $this->getEvictedCaches();
+
+		$this->assertEmpty( $evicted );
+	}
+
 }
