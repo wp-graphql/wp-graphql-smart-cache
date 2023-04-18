@@ -120,7 +120,6 @@ class Invalidation {
 	 * @return array|null
 	 */
 	public static function get_ignored_meta_keys() {
-
 		if ( null !== self::$ignored_meta_keys ) {
 			return self::$ignored_meta_keys;
 		}
@@ -128,7 +127,7 @@ class Invalidation {
 		// Default list of ignored meta keys
 		$ignored_meta_keys = [
 			// see: https://github.com/wp-graphql/wp-graphql-smart-cache/issues/206
-			'apple_news_notice'
+			'apple_news_notice',
 		];
 
 		$ignored_meta_keys = apply_filters( 'graphql_cache_ignored_meta_keys', $ignored_meta_keys );
@@ -138,7 +137,6 @@ class Invalidation {
 
 		// return the ignored meta keys array
 		return self::$ignored_meta_keys;
-
 	}
 
 	/**
