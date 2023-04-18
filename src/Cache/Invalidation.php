@@ -18,6 +18,11 @@ class Invalidation {
 	public $collection = [];
 
 	/**
+	 * @var array | null
+	 */
+	protected static $ignored_meta_keys = null;
+
+	/**
 	 * Instantiate the Cache Invalidation class
 	 *
 	 * @param Collection $collection
@@ -110,6 +115,31 @@ class Invalidation {
 	}
 
 	/**
+	 * Return a list of ignored meta keys
+	 *
+	 * @return array|null
+	 */
+	public static function get_ignored_meta_keys() {
+		if ( null !== self::$ignored_meta_keys ) {
+			return self::$ignored_meta_keys;
+		}
+
+		// Default list of ignored meta keys
+		$ignored_meta_keys = [
+			// see: https://github.com/wp-graphql/wp-graphql-smart-cache/issues/206
+			'apple_news_notice',
+		];
+
+		$ignored_meta_keys = apply_filters( 'graphql_cache_ignored_meta_keys', $ignored_meta_keys );
+
+		// make sure the filter returns an array
+		self::$ignored_meta_keys = is_array( $ignored_meta_keys ) ? $ignored_meta_keys : [];
+
+		// return the ignored meta keys array
+		return self::$ignored_meta_keys;
+	}
+
+	/**
 	 * Determines whether the meta should be tracked or not.
 	 *
 	 * By default, meta keys that start with an underscore are treated as
@@ -141,6 +171,11 @@ class Invalidation {
 		// If the filter has been applied return it
 		if ( null !== $should_track ) {
 			return (bool) $should_track;
+		}
+
+		// If the meta key is ignored, don't track it for cache purging
+		if ( in_array( $meta_key, self::get_ignored_meta_keys(), true ) ) {
+			return false;
 		}
 
 		// If the meta key starts with an underscore, don't track it
@@ -523,6 +558,11 @@ class Invalidation {
 		// get the post object being modified
 		$post = get_post( $post_id );
 
+		// Check if $post_id is valid: Make sure that $post_id is a valid post ID. 
+		if ( ! post_exists( $post_id ) ) {
+			return;
+		}
+		
 		// if the post type is not tracked, ignore it
 		if ( ! in_array( $post->post_type, \WPGraphQL::get_allowed_post_types(), true ) ) {
 			return;
