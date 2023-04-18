@@ -523,6 +523,11 @@ class Invalidation {
 		// get the post object being modified
 		$post = get_post( $post_id );
 
+		// Check if $post_id is valid: Make sure that $post_id is a valid post ID. 
+		if ( ! post_exists( $post_id ) ) {
+			return;
+		}
+		
 		// if the post type is not tracked, ignore it
 		if ( ! in_array( $post->post_type, \WPGraphQL::get_allowed_post_types(), true ) ) {
 			return;
