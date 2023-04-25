@@ -130,6 +130,7 @@ class Invalidation {
 			'apple_news_notice',
 		];
 
+		//phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 		$ignored_meta_keys = apply_filters( 'graphql_cache_ignored_meta_keys', $ignored_meta_keys );
 
 		// make sure the filter returns an array
@@ -556,13 +557,18 @@ class Invalidation {
 	public function on_postmeta_change_cb( $meta_id, $post_id, $meta_key, $meta_value ) {
 
 		// get the post object being modified
-		$post = get_post( $post_id );
+		$post = get_post( (int) $post_id );
 
-		// Check if $post_id is valid: Make sure that $post_id is a valid post ID. 
-		if ( ! post_exists( $post_id ) ) {
+		// Check if $post_id is valid: Make sure that $post_id is a valid post ID.
+		if ( ! $post instanceof WP_Post ) {
 			return;
 		}
-		
+
+		// if the post type is not tracked, ignore it
+		if ( ! in_array( $post->post_type, \WPGraphQL::get_allowed_post_types(), true ) ) {
+			return;
+		}
+
 		// if the post type is not tracked, ignore it
 		if ( ! in_array( $post->post_type, \WPGraphQL::get_allowed_post_types(), true ) ) {
 			return;
