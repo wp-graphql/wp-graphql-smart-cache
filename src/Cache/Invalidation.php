@@ -130,6 +130,7 @@ class Invalidation {
 			'apple_news_notice',
 		];
 
+		//phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 		$ignored_meta_keys = apply_filters( 'graphql_cache_ignored_meta_keys', $ignored_meta_keys );
 
 		// make sure the filter returns an array
