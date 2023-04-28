@@ -27,6 +27,18 @@ class Settings {
 		return ( 'on' === $option );
 	}
 
+	/**
+	 * Whether logging purge events to the error log is enabled
+	 *
+	 * @return bool
+	 */
+	public static function purge_logging_enabled() {
+		$option = function_exists( 'get_graphql_setting' ) ? \get_graphql_setting( 'log_purge_events', false, 'graphql_cache_section' ) : false;
+
+		// if there's no user logged in, and GraphQL Caching is enabled
+		return ( 'on' === $option );
+	}
+
 	// Date/Time of the last time purge all happened through admin.
 	public static function caching_purge_timestamp() {
 		return function_exists( 'get_graphql_setting' ) ? \get_graphql_setting( 'purge_all_timestamp', false, 'graphql_cache_section' ) : false;
@@ -96,6 +108,17 @@ class Settings {
 					[
 						'title' => __( 'Cache', 'wp-graphql-smart-cache' ),
 						'desc'  => __( 'Caching and other settings related to improved performance of GraphQL queries.', 'wp-graphql-smart-cache' ),
+					]
+				);
+
+				register_graphql_settings_field(
+					'graphql_cache_section',
+					[
+						'name'    => 'log_purge_events',
+						'label'   => __( 'Log Purge Events', 'wp-graphql-smart-cache' ),
+						'desc'    => __( 'Enabling this option will log purge events to the error log. This can be helpful when debugging what events are leading to specific purge events.', 'wp-graphql-smart-cache' ),
+						'type'    => 'checkbox',
+						'default' => 'off',
 					]
 				);
 
