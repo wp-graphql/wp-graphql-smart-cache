@@ -73,12 +73,12 @@ class Invalidation {
 		add_action( 'updated_term_meta', [ $this, 'on_updated_term_meta_cb' ], 10, 4 );
 		add_action( 'deleted_term_meta', [ $this, 'on_updated_term_meta_cb' ], 10, 4 );
 
-		// when a term is edited, purge caches for that term
-		// this action is called when term caches are updated on a delay.
-		// for example, if a scheduled post is assigned to a term,
-		// this won't be called when the post is initially inserted with the
-		// term assigned, but when the post is published
-		add_action( 'edited_term_taxonomy', [ $this, 'on_edited_term_taxonomy_cb' ], 10, 2 );
+		// When a term is saved, make sure it's an update, then purge nodes for that term
+		add_action( 'saved_term', [ $this, 'on_saved_term_cb' ], 10, 5 );
+
+		// When term relationships change
+		add_action( 'added_term_relationship', [ $this, 'on_added_term_relationship_cb' ], 10, 3 );
+		add_action( 'deleted_term_relationships', [ $this, 'on_deleted_term_relationship_cb' ], 10, 3 );
 
 		## USER ACTIONS
 
@@ -134,6 +134,7 @@ class Invalidation {
 			'apple_news_notice',
 		];
 
+		//phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 		$ignored_meta_keys = apply_filters( 'graphql_cache_ignored_meta_keys', $ignored_meta_keys );
 
 		// make sure the filter returns an array
@@ -311,7 +312,7 @@ class Invalidation {
 
 		// If the post type is not public and not publicly queryable
 		// don't track it
-		if ( false === $post_type_object->public && false === $post_type_object->publicly_queryable ) {
+		if ( ! $post_type_object instanceof \WP_Post_Type || ( false === $post_type_object->public && false === $post_type_object->publicly_queryable ) ) {
 			return;
 		}
 
@@ -406,19 +407,84 @@ class Invalidation {
 	}
 
 	/**
-	 * Listen for changes to the Term Taxonomy. This is called after posts that have
-	 * a taxonomy associated with them are published. We don't always want to purge
-	 * caches related to terms when they're associated with a post, but rather when the association
-	 * becomes public. For example, a term being associated with a draft post shouldn't purge
-	 * cache, but the publishing of the draft post that has a term associated with it
-	 * should purge the terms cache.
+	 * @param int $term_id The Term ID
+	 * @param int $tt_id The Term Taxonomy ID
+	 * @param string $taxonomy The name of the taxonomy
+	 * @param boolean $update Whether the save is an update
+	 * @param array $args Args for the term
 	 *
+	 * @return void
+	 */
+	public function on_saved_term_cb( $term_id, $tt_id, $taxonomy, $update, $args ) {
+
+		// if it's not an update, ignore it.
+		if ( ! $update ) {
+			return;
+		}
+
+		if ( ! $this->is_taxonomy_tracked( $taxonomy ) ) {
+			return;
+		}
+
+		$term = get_term_by( 'term_taxonomy_id', $tt_id, $taxonomy );
+
+		if ( ! $term instanceof WP_Term ) {
+			return;
+		}
+
+		$tax_object = get_taxonomy( $taxonomy );
+
+		// Delete the cached results associated with this post/key
+		$this->purge_nodes( 'term', $term->term_id );
+
+		$type_name = strtolower( $tax_object->graphql_single_name );
+
+		$this->purge( 'list:' . $type_name );
+
+
+	}
+
+	/**
+	 * Listen for when a term relationship has changed
+	 *
+	 * @param int    $object_id The ID of the object the taxonomy is associated with
 	 * @param int    $tt_id The Term Taxonomy ID of the term
 	 * @param string $taxonomy The name of the taxonomy the term belongs to
 	 *
 	 * @return void
 	 */
-	public function on_edited_term_taxonomy_cb( $tt_id, $taxonomy ) {
+	public function on_deleted_term_relationship_cb( $object_id, $tt_id, $taxonomy ) {
+
+		if ( ! $this->is_taxonomy_tracked( $taxonomy ) ) {
+			return;
+		}
+
+		$term = get_term_by( 'term_taxonomy_id', $tt_id, $taxonomy );
+
+		if ( ! $term instanceof WP_Term ) {
+			return;
+		}
+
+		$tax_object = get_taxonomy( $taxonomy );
+
+		// Delete the cached results associated with this post/key
+		$this->purge_nodes( 'term', $term->term_id );
+		$type_name = strtolower( $tax_object->graphql_single_name );
+		$this->purge( 'list:' . $type_name );
+
+	}
+
+	/**
+	 * Listen for when a term relationship has changed
+	 *
+	 * @param int    $object_id The ID of the object the taxonomy is associated with
+	 * @param int    $tt_id The Term Taxonomy ID of the term
+	 * @param string $taxonomy The name of the taxonomy the term belongs to
+	 *
+	 * @return void
+	 */
+	public function on_added_term_relationship_cb( $object_id, $tt_id, $taxonomy ) {
+
 		if ( ! $this->is_taxonomy_tracked( $taxonomy ) ) {
 			return;
 		}
@@ -431,6 +497,11 @@ class Invalidation {
 
 		// Delete the cached results associated with this post/key
 		$this->purge_nodes( 'term', $term->term_id, 'term_edited' );
+
+		$tax_object = get_taxonomy( $term->taxonomy );
+		$type_name = strtolower( $tax_object->graphql_single_name );
+		$this->purge( 'list:' . $type_name, 'term_edited' );
+
 	}
 
 	/**
@@ -500,6 +571,18 @@ class Invalidation {
 		// as the created node might affect the list
 		if ( 'CREATE' === $action_type ) {
 			$this->purge( 'list:' . $type_name, 'post_' . $action_type );
+
+			$terms = wp_get_object_terms( $post->ID, \WPGraphQL::get_allowed_taxonomies()  );
+
+			if ( ! empty( $terms ) ) {
+				array_map( function( $term ) use ( $post ) {
+					if ( ! $term instanceof WP_Term ) {
+						return;
+					}
+					$this->on_added_term_relationship_cb( $post->ID, $term->term_taxonomy_id, $term->taxonomy );
+				}, $terms );
+			}
+
 		}
 
 		// if we update or delete a post
@@ -509,6 +592,21 @@ class Invalidation {
 			// Delete the cached results associated with this post/key
 			$this->purge_nodes( 'post', $post->ID, 'post_' . $action_type );
 		}
+
+		if ( 'DELETE' === $action_type ) {
+
+			$terms = wp_get_object_terms( $post->ID, \WPGraphQL::get_allowed_taxonomies()  );
+
+			if ( ! empty( $terms ) ) {
+				array_map( function( $term ) use ( $post ) {
+					if ( ! $term instanceof WP_Term ) {
+						return;
+					}
+					$this->on_deleted_term_relationship_cb( $post->ID, $term->term_taxonomy_id, $term->taxonomy );
+				}, $terms );
+			}
+		}
+
 	}
 
 	/**
