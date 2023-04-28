@@ -256,13 +256,14 @@ class Invalidation {
 		}
 
 		$current_user_id = get_current_user_id();
-		$current_page = ! empty( $_SERVER['REQUEST_URI'] ) ? wp_parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH ) : 'unknown page';
 
-		$message = sprintf( '(graphql_purge) key: %1$s, event: %2$s, user: %3$d, page: %4$s', $key, $event, $current_user_id, $current_page );
+		// @phpcs:ignore
+		$uri          = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+		$current_page = ! empty( $uri ) ? wp_parse_url( $uri, PHP_URL_PATH ) : 'unknown page';
+		$message      = sprintf( '(graphql_purge) key: %1$s, event: %2$s, user: %3$d, page: %4$s', $key, $event, $current_user_id, $current_page );
 
 		// @phpcs:ignore
 		error_log( $message, 0 );
-
 	}
 
 	/**
@@ -440,7 +441,6 @@ class Invalidation {
 		$type_name = strtolower( $tax_object->graphql_single_name );
 
 		$this->purge( 'list:' . $type_name );
-
 	}
 
 	/**
@@ -453,7 +453,6 @@ class Invalidation {
 	 * @return void
 	 */
 	public function on_deleted_term_relationship_cb( $object_id, $tt_id, $taxonomy ) {
-
 		if ( ! $this->is_taxonomy_tracked( $taxonomy ) ) {
 			return;
 		}
@@ -470,7 +469,6 @@ class Invalidation {
 		$this->purge_nodes( 'term', $term->term_id );
 		$type_name = strtolower( $tax_object->graphql_single_name );
 		$this->purge( 'list:' . $type_name );
-
 	}
 
 	/**
@@ -483,7 +481,6 @@ class Invalidation {
 	 * @return void
 	 */
 	public function on_added_term_relationship_cb( $object_id, $tt_id, $taxonomy ) {
-
 		if ( ! $this->is_taxonomy_tracked( $taxonomy ) ) {
 			return;
 		}
@@ -498,9 +495,8 @@ class Invalidation {
 		$this->purge_nodes( 'term', $term->term_id, 'term_edited' );
 
 		$tax_object = get_taxonomy( $term->taxonomy );
-		$type_name = strtolower( $tax_object->graphql_single_name );
+		$type_name  = strtolower( $tax_object->graphql_single_name );
 		$this->purge( 'list:' . $type_name, 'term_edited' );
-
 	}
 
 	/**
@@ -571,17 +567,19 @@ class Invalidation {
 		if ( 'CREATE' === $action_type ) {
 			$this->purge( 'list:' . $type_name, 'post_' . $action_type );
 
-			$terms = wp_get_object_terms( $post->ID, \WPGraphQL::get_allowed_taxonomies()  );
+			$terms = wp_get_object_terms( $post->ID, \WPGraphQL::get_allowed_taxonomies() );
 
 			if ( ! empty( $terms ) ) {
-				array_map( function( $term ) use ( $post ) {
-					if ( ! $term instanceof WP_Term ) {
-						return;
-					}
-					$this->on_added_term_relationship_cb( $post->ID, $term->term_taxonomy_id, $term->taxonomy );
-				}, $terms );
+				array_map(
+					function ( $term ) use ( $post ) {
+						if ( ! $term instanceof WP_Term ) {
+							return;
+						}
+						$this->on_added_term_relationship_cb( $post->ID, $term->term_taxonomy_id, $term->taxonomy );
+					},
+					$terms
+				);
 			}
-
 		}
 
 		// if we update or delete a post
@@ -593,19 +591,20 @@ class Invalidation {
 		}
 
 		if ( 'DELETE' === $action_type ) {
-
-			$terms = wp_get_object_terms( $post->ID, \WPGraphQL::get_allowed_taxonomies()  );
+			$terms = wp_get_object_terms( $post->ID, \WPGraphQL::get_allowed_taxonomies() );
 
 			if ( ! empty( $terms ) ) {
-				array_map( function( $term ) use ( $post ) {
-					if ( ! $term instanceof WP_Term ) {
-						return;
-					}
-					$this->on_deleted_term_relationship_cb( $post->ID, $term->term_taxonomy_id, $term->taxonomy );
-				}, $terms );
+				array_map(
+					function ( $term ) use ( $post ) {
+						if ( ! $term instanceof WP_Term ) {
+							return;
+						}
+						$this->on_deleted_term_relationship_cb( $post->ID, $term->term_taxonomy_id, $term->taxonomy );
+					},
+					$terms
+				);
 			}
 		}
-
 	}
 
 	/**

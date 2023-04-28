@@ -37,7 +37,6 @@ class Settings {
 
 		// if there's no user logged in, and GraphQL Caching is enabled
 		return ( 'on' === $option );
-
 	}
 
 	// Date/Time of the last time purge all happened through admin.
@@ -115,11 +114,11 @@ class Settings {
 				register_graphql_settings_field(
 					'graphql_cache_section',
 					[
-						'name'              => 'log_purge_events',
-						'label'             => __( 'Log Purge Events', 'wp-graphql-smart-cache' ),
-						'desc'              => __( 'Enabling this option will log purge events to the error log. This can be helpful when debugging what events are leading to specific purge events.', 'wp-graphql-smart-cache' ),
-						'type'              => 'checkbox',
-						'default'           => 'off',
+						'name'    => 'log_purge_events',
+						'label'   => __( 'Log Purge Events', 'wp-graphql-smart-cache' ),
+						'desc'    => __( 'Enabling this option will log purge events to the error log. This can be helpful when debugging what events are leading to specific purge events.', 'wp-graphql-smart-cache' ),
+						'type'    => 'checkbox',
+						'default' => 'off',
 					]
 				);
 
