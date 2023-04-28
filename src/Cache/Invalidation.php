@@ -6,6 +6,7 @@ use WP_Comment;
 use WP_Post;
 use WP_Term;
 use WP_User;
+use WPGraphQL\SmartCache\Admin\Settings;
 
 /**
  * This class handles the invalidation of the WPGraphQL Caches
@@ -37,6 +38,9 @@ class Invalidation {
 	public function init() {
 		// @phpcs:ignore
 		do_action( 'graphql_cache_invalidation_init', $this );
+
+		## Log Purge Events
+		add_action( 'graphql_purge', [ $this, 'log_purge_events' ], 10, 2 );
 
 		## POST ACTIONS
 
@@ -194,13 +198,14 @@ class Invalidation {
 	 * The key represents either an individual url request, a list of nodes, list of types, etc.
 	 *
 	 * @param string $key An identifiers for data stored in memory.
+	 * @param string $event The event that caused the purge
 	 */
-	public function purge( $key ) {
+	public function purge( $key, $event = 'undefined event' ) {
 
 		// This action is emitted with the key to purge.
 		// Plugins can respond to this action to evict caches for that key
 		// phpcs:ignore
-		do_action( 'graphql_purge', $key );
+		do_action( 'graphql_purge', $key, $event );
 
 		$nodes = $this->collection->get( $key );
 		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
@@ -216,8 +221,9 @@ class Invalidation {
 	 *
 	 * @param string $id_prefix The type name specific to the id to form the "global ID" that is unique among all types
 	 * @param mixed|string|int $id The node entity identifier
+	 * @param string $event The event that caused the purge
 	 */
-	public function purge_nodes( $id_prefix, $id ) {
+	public function purge_nodes( $id_prefix, $id, $event = '' ) {
 		if ( ! method_exists( Relay::class, 'toGlobalId' ) ) {
 			return;
 		}
@@ -225,13 +231,39 @@ class Invalidation {
 		$relay_id = Relay::toGlobalId( $id_prefix, $id );
 
 		// purge the node
-		$this->purge( $relay_id );
+		$this->purge( $relay_id, $event );
 
 		// purge caches that had skipped keys of the type
 		// because of header limitations, WPGraphQL truncates the X-GraphQL-Key
 		// header, then depending on the types of node IDs that were skipped,
 		// skipped:$type_name keys are added to the list
-		$this->purge( 'skipped:' . $id_prefix );
+		$this->purge( 'skipped:' . $id_prefix, $event );
+	}
+
+	/**
+	 * Log purge events, if enabled
+	 *
+	 * @param string $key The key to purge from teh cache
+	 * @param string $event The Event that triggered the purge
+	 *
+	 * @return void
+	 */
+	public function log_purge_events( $key, $event ) {
+
+		// If purge logging is not enabled, bail
+		if ( ! Settings::purge_logging_enabled() ) {
+			return;
+		}
+
+		$current_user_id = get_current_user_id();
+
+		// @phpcs:ignore
+		$uri          = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+		$current_page = ! empty( $uri ) ? wp_parse_url( $uri, PHP_URL_PATH ) : 'unknown page';
+		$message      = sprintf( '(graphql_purge) key: %1$s, event: %2$s, user: %3$d, page: %4$s', $key, $event, $current_user_id, $current_page );
+
+		// @phpcs:ignore
+		error_log( $message, 0 );
 	}
 
 	/**
@@ -251,13 +283,13 @@ class Invalidation {
 		}
 
 		// evict caches for the before and after post author (purge their archive pages)
-		$this->purge_nodes( 'user', $post_after->post_author );
+		$this->purge_nodes( 'user', $post_after->post_author, 'post_updated' );
 
 		// evict caches for the before and after post author (purge their archive pages)
-		$this->purge_nodes( 'user', $post_before->post_author );
+		$this->purge_nodes( 'user', $post_before->post_author, 'post_updated' );
 
 		// Delete the cached results associated with this post/key
-		$this->purge_nodes( 'post', $post_id );
+		$this->purge_nodes( 'post', $post_id, 'post_updated' );
 	}
 
 	/**
@@ -286,7 +318,7 @@ class Invalidation {
 		}
 
 		// Delete the cached results associated with this post/key
-		$this->purge_nodes( 'post', $post->ID );
+		$this->purge_nodes( 'post', $post->ID, 'post_deleted' );
 	}
 
 	/**
@@ -310,7 +342,7 @@ class Invalidation {
 		}
 
 		$type_name = strtolower( $tax_object->graphql_single_name );
-		$this->purge( 'list:' . $type_name );
+		$this->purge( 'list:' . $type_name, 'term_created' );
 	}
 
 	/**
@@ -344,7 +376,7 @@ class Invalidation {
 		}
 
 		// Delete the cached results associated with this term/key
-		$this->purge_nodes( 'term', $term_id );
+		$this->purge_nodes( 'term', $term_id, 'term_deleted' );
 	}
 
 	/**
@@ -372,7 +404,7 @@ class Invalidation {
 		}
 
 		// Delete the cached results associated with this post/key
-		$this->purge_nodes( 'term', $term->term_id );
+		$this->purge_nodes( 'term', $term->term_id, 'term_updated' );
 	}
 
 	/**
@@ -460,11 +492,12 @@ class Invalidation {
 		}
 
 		// Delete the cached results associated with this post/key
-		$this->purge_nodes( 'term', $term->term_id );
+		$this->purge_nodes( 'term', $term->term_id, 'term_edited' );
 
 		$tax_object = get_taxonomy( $term->taxonomy );
 		$type_name  = strtolower( $tax_object->graphql_single_name );
-		$this->purge( 'list:' . $type_name );
+		$this->purge( 'list:' . $type_name, 'term_edited' );
+
 	}
 
 	/**
@@ -533,7 +566,7 @@ class Invalidation {
 		// we need to purge lists of the type
 		// as the created node might affect the list
 		if ( 'CREATE' === $action_type ) {
-			$this->purge( 'list:' . $type_name );
+			$this->purge( 'list:' . $type_name, 'post_' . $action_type );
 
 			$terms = wp_get_object_terms( $post->ID, \WPGraphQL::get_allowed_taxonomies() );
 
@@ -555,7 +588,7 @@ class Invalidation {
 		// specific node in it
 		if ( 'UPDATE' === $action_type || 'DELETE' === $action_type ) {
 			// Delete the cached results associated with this post/key
-			$this->purge_nodes( 'post', $post->ID );
+			$this->purge_nodes( 'post', $post->ID, 'post_' . $action_type );
 		}
 
 		if ( 'DELETE' === $action_type ) {
@@ -583,7 +616,7 @@ class Invalidation {
 	 */
 	public function on_user_profile_update_cb( $user_id, $old_user_data ) {
 		// Delete the cached results associated with this key
-		$this->purge_nodes( 'user', $user_id );
+		$this->purge_nodes( 'user', $user_id, 'user_profile_updated' );
 	}
 
 	/**
@@ -606,7 +639,7 @@ class Invalidation {
 		}
 
 		// Delete the cached results associated with this key
-		$this->purge_nodes( 'user', $user->ID );
+		$this->purge_nodes( 'user', $user->ID, 'user_meta_updated' );
 	}
 
 	/**
@@ -621,7 +654,7 @@ class Invalidation {
 		$this->purge_nodes( 'user', $deleted_id );
 
 		if ( $reassign_id ) {
-			$this->purge_nodes( 'user', $reassign_id );
+			$this->purge_nodes( 'user', $reassign_id, 'user_reassigned' );
 
 			// get the ids of the posts the user was the author of
 			// this query runs inside the wp_delete_user function
@@ -632,7 +665,7 @@ class Invalidation {
 			$reassigned_post_ids = $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_author = %d", $reassign_id ) );
 			if ( ! empty( $reassigned_post_ids ) ) {
 				foreach ( $reassigned_post_ids as $reassigned_post_id ) {
-					$this->purge_nodes( 'post', $reassigned_post_id );
+					$this->purge_nodes( 'post', $reassigned_post_id, 'post_reassigned_to_user' );
 				}
 			}
 		}
@@ -688,7 +721,7 @@ class Invalidation {
 		}
 
 		// Delete the cached results associated with this post/key
-		$this->purge_nodes( 'post', $post->ID );
+		$this->purge_nodes( 'post', $post->ID, sprintf( 'postmeta_changed (meta_key %s)', $meta_key ) );
 	}
 
 	/**
@@ -734,14 +767,14 @@ class Invalidation {
 		// Trigger an action for each added location
 		$added = array_diff( $new_locations, $old_locations );
 		if ( ! empty( $added ) ) {
-			$this->purge( 'list:menu' );
+			$this->purge( 'list:menu', 'set_nav_menu_location' );
 		}
 
 		// Trigger an action for each location deleted
 		$removed = array_diff( $old_locations, $new_locations );
 		if ( ! empty( $removed ) ) {
 			foreach ( $removed as $location => $removed_menu_id ) {
-				$this->purge_nodes( 'term', $removed_menu_id );
+				$this->purge_nodes( 'term', $removed_menu_id, 'set_nav_menu_location' );
 			}
 		}
 
@@ -763,7 +796,7 @@ class Invalidation {
 		$menu = get_term_by( 'id', absint( $menu_id ), 'nav_menu' );
 
 		// menus have a term:id relay global ID, as they use the term loader
-		$this->purge_nodes( 'term', $menu->term_id );
+		$this->purge_nodes( 'term', $menu->term_id, 'updated_nav_menu' );
 	}
 
 	/**
@@ -797,7 +830,7 @@ class Invalidation {
 			return;
 		}
 
-		$this->purge_nodes( 'term', $term->term_id );
+		$this->purge_nodes( 'term', $term->term_id, 'menu_meta_updated' );
 	}
 
 	/**
@@ -828,7 +861,7 @@ class Invalidation {
 			return;
 		}
 
-		$this->purge_nodes( 'post', $post->ID );
+		$this->purge_nodes( 'post', $post->ID, 'menu_item_meta_changed' );
 	}
 
 	/**
@@ -845,7 +878,7 @@ class Invalidation {
 			return;
 		}
 
-		$this->purge( 'list:mediaitem' );
+		$this->purge( 'list:mediaitem', 'add_attachment' );
 	}
 
 	/**
@@ -868,7 +901,7 @@ class Invalidation {
 			return;
 		}
 
-		$this->purge_nodes( 'post', $attachment_id );
+		$this->purge_nodes( 'post', $attachment_id, 'attachment_edited' );
 	}
 
 	/**
@@ -885,7 +918,7 @@ class Invalidation {
 			return;
 		}
 
-		$this->purge_nodes( 'post', $attachment_id );
+		$this->purge_nodes( 'post', $attachment_id, 'attachment_deleted' );
 	}
 
 	/**
@@ -898,8 +931,8 @@ class Invalidation {
 	public function on_comment_transition_cb( $new_status, $old_status, $comment ) {
 		// Only evict cache if transitioning to or from 'approved'
 		if ( in_array( 'approved', [ $new_status, $old_status ], true ) ) {
-			$this->purge_nodes( 'comment', $comment->comment_ID );
-			$this->purge( 'list:comment' );
+			$this->purge_nodes( 'comment', $comment->comment_ID, 'comment_transition' );
+			$this->purge( 'list:comment', 'comment_transition' );
 		}
 	}
 
@@ -911,8 +944,8 @@ class Invalidation {
 	 */
 	public function on_insert_comment_cb( $comment_id, $comment ) {
 		if ( isset( $comment->comment_approved ) && '1' === $comment->comment_approved ) {
-			$this->purge_nodes( 'comment', $comment_id );
-			$this->purge( 'list:comment' );
+			$this->purge_nodes( 'comment', $comment_id, 'comment_approved' );
+			$this->purge( 'list:comment', 'comment_approved' );
 		}
 	}
 }
