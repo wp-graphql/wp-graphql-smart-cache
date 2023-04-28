@@ -162,6 +162,46 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLSmartCache\TestCase\W
 
 	}
 
+	/**
+	 * When a post is updated that has a category already assigned,
+	 *
+	 * @return void
+	 */
+	public function testUpdatePostWithCategory() {
+
+		// set the object terms on the published post
+		wp_set_object_terms( $this->published_post->ID, [ $this->category->term_id ], 'category' );
+
+		// re-populate the caches
+		$this->_populateCaches();
+
+		// no caches should be evicted to start
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+		// update a published post to draft status
+		self::factory()->post->update_object( $this->published_post->ID, [
+			'post_title' => 'updated title',
+		] );
+
+		// assert that caches have been evicted
+		$evicted_caches = $this->getEvictedCaches();
+		$non_evicted_caches = $this->getNonEvictedCaches();
+
+		// make assertions about the evicted caches
+		$this->assertNotEmpty( $evicted_caches );
+
+		$this->assertEqualSets([
+			'listPost',
+			'singleContentNode',
+			'singlePost',
+			'singleNodeByUri',
+			'singleNodeById',
+			'listContentNode',
+			'adminUserWithPostsConnection',
+		], $evicted_caches );
+
+	}
+
 	public function testPublishedPostWithCategoryIsChangedToDraft() {
 
 		// set the object terms on the published post

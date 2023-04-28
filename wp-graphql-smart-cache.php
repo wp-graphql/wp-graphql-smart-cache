@@ -273,7 +273,3 @@ function appsero_init_tracker_wpgraphql_smart_cache() {
 }
 
 appsero_init_tracker_wpgraphql_smart_cache();
-
-add_action( 'graphql_purge', function( $key ) {
-	error_log( 'graphql_purge: ' . $key );
-});

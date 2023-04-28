@@ -438,9 +438,7 @@ class Invalidation {
 
 		// Delete the cached results associated with this post/key
 		$this->purge_nodes( 'term', $term->term_id );
-
 		$type_name = strtolower( $tax_object->graphql_single_name );
-
 		$this->purge( 'list:' . $type_name );
 
 	}
@@ -468,6 +466,10 @@ class Invalidation {
 
 		// Delete the cached results associated with this post/key
 		$this->purge_nodes( 'term', $term->term_id );
+
+		$tax_object = get_taxonomy( $term->taxonomy );
+		$type_name = strtolower( $tax_object->graphql_single_name );
+		$this->purge( 'list:' . $type_name );
 
 	}
 
@@ -538,6 +540,18 @@ class Invalidation {
 		// as the created node might affect the list
 		if ( 'CREATE' === $action_type ) {
 			$this->purge( 'list:' . $type_name );
+
+			$terms = wp_get_object_terms( $post->ID, \WPGraphQL::get_allowed_taxonomies()  );
+
+			if ( ! empty( $terms ) ) {
+				array_map( function( $term ) use ( $post ) {
+					if ( ! $term instanceof WP_Term ) {
+						return;
+					}
+					$this->on_added_term_relationship_cb( $post->ID, $term->term_taxonomy_id, $term->taxonomy );
+				}, $terms );
+			}
+
 		}
 
 		// if we update or delete a post
@@ -547,6 +561,21 @@ class Invalidation {
 			// Delete the cached results associated with this post/key
 			$this->purge_nodes( 'post', $post->ID );
 		}
+
+		if ( 'DELETE' === $action_type ) {
+
+			$terms = wp_get_object_terms( $post->ID, \WPGraphQL::get_allowed_taxonomies()  );
+
+			if ( ! empty( $terms ) ) {
+				array_map( function( $term ) use ( $post ) {
+					if ( ! $term instanceof WP_Term ) {
+						return;
+					}
+					$this->on_deleted_term_relationship_cb( $post->ID, $term->term_taxonomy_id, $term->taxonomy );
+				}, $terms );
+			}
+		}
+
 	}
 
 	/**
