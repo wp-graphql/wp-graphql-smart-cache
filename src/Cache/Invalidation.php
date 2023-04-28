@@ -384,7 +384,7 @@ class Invalidation {
 	 *
 	 * @return void
 	 */
-	public function on_saved_term_cb( $term_id, $tt_id, $taxonomy, $update, $args ) {
+	public function on_saved_term_cb( $term_id, $tt_id, $taxonomy, $update, $args = [] ) {
 
 		// if it's not an update, ignore it.
 		if ( ! $update ) {
@@ -409,7 +409,6 @@ class Invalidation {
 		$type_name = strtolower( $tax_object->graphql_single_name );
 
 		$this->purge( 'list:' . $type_name );
-
 
 	}
 
