@@ -1,11 +1,13 @@
 <?php
 namespace WPGraphQL\SmartCache\Cache;
 
+use Exception;
 use GraphQLRelay\Relay;
 use WP_Comment;
 use WP_Post;
 use WP_Term;
 use WP_User;
+use WPGraphQL\Model\Menu;
 use WPGraphQL\SmartCache\Admin\Settings;
 
 /**
@@ -731,20 +733,14 @@ class Invalidation {
 	 * @param int $menu_id ID of the menu
 	 *
 	 * @return bool
+	 * @throws Exception
 	 */
 	public function is_menu_public( $menu_id ) {
-		$locations         = get_theme_mod( 'nav_menu_locations' );
-		$assigned_menu_ids = ! empty( $locations ) ? array_values( $locations ) : [];
-
-		if ( empty( $assigned_menu_ids ) ) {
+		$nav_menu = get_term( $menu_id, 'nav_menu' );
+		if ( ! $nav_menu instanceof WP_Term ) {
 			return false;
 		}
-
-		if ( in_array( $menu_id, $assigned_menu_ids, true ) ) {
-			return true;
-		}
-
-		return false;
+		return ! (bool) ( new Menu( $nav_menu ) )->is_private();
 	}
 
 	/**
@@ -784,9 +780,10 @@ class Invalidation {
 	/**
 	 * Evict caches when nav menus are updated
 	 *
-	 * @param int   $menu_id The ID of the menu being updated
+	 * @param int $menu_id The ID of the menu being updated
 	 *
 	 * @return void
+	 * @throws Exception
 	 */
 	public function on_update_nav_menu_cb( $menu_id ) {
 		if ( ! $this->is_menu_public( $menu_id ) ) {
@@ -802,12 +799,13 @@ class Invalidation {
 	/**
 	 * Evict caches when terms are updated
 	 *
-	 * @param int $meta_id ID of updated metadata entry.
-	 * @param int $object_id ID of the object metadata is for.
-	 * @param string $meta_key Metadata key.
-	 * @param mixed $meta_value Metadata value. Serialized if non-scalar.
+	 * @param int    $meta_id    ID of updated metadata entry.
+	 * @param int    $object_id  ID of the object metadata is for.
+	 * @param string $meta_key   Metadata key.
+	 * @param mixed  $meta_value Metadata value. Serialized if non-scalar.
 	 *
 	 * @return void
+	 * @throws Exception
 	 */
 	public function on_updated_menu_meta_cb( $meta_id, $object_id, $meta_key, $meta_value ) {
 
