@@ -499,7 +499,6 @@ class Invalidation {
 		$tax_object = get_taxonomy( $term->taxonomy );
 		$type_name  = strtolower( $tax_object->graphql_single_name );
 		$this->purge( 'list:' . $type_name, 'term_edited' );
-
 	}
 
 	/**
