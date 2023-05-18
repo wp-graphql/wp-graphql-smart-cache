@@ -1,11 +1,13 @@
 <?php
 namespace WPGraphQL\SmartCache\Cache;
 
+use Exception;
 use GraphQLRelay\Relay;
 use WP_Comment;
 use WP_Post;
 use WP_Term;
 use WP_User;
+use WPGraphQL\Model\Menu;
 use WPGraphQL\SmartCache\Admin\Settings;
 
 /**
@@ -93,6 +95,7 @@ class Invalidation {
 
 		add_filter( 'pre_set_theme_mod_nav_menu_locations', [ $this, 'on_set_nav_menu_locations_cb' ], 10, 2 );
 		add_action( 'wp_update_nav_menu', [ $this, 'on_update_nav_menu_cb' ], 10, 1 );
+		add_action( 'wp_create_nav_menu', [ $this, 'on_create_nav_menu_cb' ], 10, 2 );
 
 		add_action( 'added_term_meta', [ $this, 'on_updated_menu_meta_cb' ], 10, 4 );
 		add_action( 'updated_term_meta', [ $this, 'on_updated_menu_meta_cb' ], 10, 4 );
@@ -440,7 +443,7 @@ class Invalidation {
 
 		$type_name = strtolower( $tax_object->graphql_single_name );
 
-		$this->purge( 'list:' . $type_name );
+		$this->purge( 'list:' . $type_name, 'term_updated' );
 	}
 
 	/**
@@ -468,7 +471,7 @@ class Invalidation {
 		// Delete the cached results associated with this post/key
 		$this->purge_nodes( 'term', $term->term_id );
 		$type_name = strtolower( $tax_object->graphql_single_name );
-		$this->purge( 'list:' . $type_name );
+		$this->purge( 'list:' . $type_name, 'term_relationship_deleted' );
 	}
 
 	/**
@@ -497,7 +500,6 @@ class Invalidation {
 		$tax_object = get_taxonomy( $term->taxonomy );
 		$type_name  = strtolower( $tax_object->graphql_single_name );
 		$this->purge( 'list:' . $type_name, 'term_edited' );
-
 	}
 
 	/**
@@ -731,20 +733,16 @@ class Invalidation {
 	 * @param int $menu_id ID of the menu
 	 *
 	 * @return bool
+	 * @throws Exception
 	 */
 	public function is_menu_public( $menu_id ) {
-		$locations         = get_theme_mod( 'nav_menu_locations' );
-		$assigned_menu_ids = ! empty( $locations ) ? array_values( $locations ) : [];
-
-		if ( empty( $assigned_menu_ids ) ) {
+		$nav_menu = get_term( $menu_id, 'nav_menu' );
+		if ( ! $nav_menu instanceof WP_Term ) {
 			return false;
 		}
+		$visibility = ( new Menu( $nav_menu ) )->get_visibility();
 
-		if ( in_array( $menu_id, $assigned_menu_ids, true ) ) {
-			return true;
-		}
-
-		return false;
+		return ( 'public' === $visibility );
 	}
 
 	/**
@@ -784,9 +782,10 @@ class Invalidation {
 	/**
 	 * Evict caches when nav menus are updated
 	 *
-	 * @param int   $menu_id The ID of the menu being updated
+	 * @param int $menu_id The ID of the menu being updated
 	 *
 	 * @return void
+	 * @throws Exception
 	 */
 	public function on_update_nav_menu_cb( $menu_id ) {
 		if ( ! $this->is_menu_public( $menu_id ) ) {
@@ -800,14 +799,30 @@ class Invalidation {
 	}
 
 	/**
-	 * Evict caches when terms are updated
-	 *
-	 * @param int $meta_id ID of updated metadata entry.
-	 * @param int $object_id ID of the object metadata is for.
-	 * @param string $meta_key Metadata key.
-	 * @param mixed $meta_value Metadata value. Serialized if non-scalar.
+	 * @param int   $menu_id   The ID of the nav menu being created
+	 * @param array $menu_data The menu data of the menu being created
 	 *
 	 * @return void
+	 * @throws Exception
+	 */
+	public function on_create_nav_menu_cb( $menu_id, array $menu_data ) {
+		if ( ! $this->is_menu_public( $menu_id ) ) {
+			return;
+		}
+
+		$this->purge( 'list:menu', 'nav_menu_created' );
+	}
+
+	/**
+	 * Evict caches when terms are updated
+	 *
+	 * @param int    $meta_id    ID of updated metadata entry.
+	 * @param int    $object_id  ID of the object metadata is for.
+	 * @param string $meta_key   Metadata key.
+	 * @param mixed  $meta_value Metadata value. Serialized if non-scalar.
+	 *
+	 * @return void
+	 * @throws Exception
 	 */
 	public function on_updated_menu_meta_cb( $meta_id, $object_id, $meta_key, $meta_value ) {
 
