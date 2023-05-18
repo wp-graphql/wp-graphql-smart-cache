@@ -1,6 +1,7 @@
 <?php
 namespace WPGraphQL\SmartCache;
 
+use GraphQLRelay\Relay;
 use TestCase\WPGraphQLSmartCache\TestCase\WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches;
 
 class MenuCacheInvalidationTest extends WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches {
@@ -263,5 +264,73 @@ class MenuCacheInvalidationTest extends WPGraphQLSmartCacheTestCaseWithSeedDataA
 
 	}
 
+	// create nav menu (doesn't purge by default, should purge if menu model is public)
+	public function testCreateNavMenuEvictsCachesWhenMenuModelIsMadePublic() {
+
+		// set the current user so they can update a resource
+		wp_set_current_user( $this->admin->ID );
+
+		// Filter Menu and MenuItem to be public models
+		add_filter( 'graphql_data_is_private', function( $is_private, $model_name, $data, $visibility, $owner, $current_user ) {
+
+			if ( 'MenuObject' === $model_name || 'MenuItemObject' === $model_name ) {
+				return false;
+			}
+
+			return $is_private;
+
+		}, 10, 6 );
+
+		$this->assertEmpty( $this->getEvictedCaches() );
+
+		// Create a nav menu
+		wp_create_nav_menu( 'Test Menu With No Location' );
+
+		$this->assertEqualSets([
+			// Creating a menu should purge list of menus
+			'listMenu'
+		], $this->getEvictedCaches() );
+
+	}
+
+	// create nav menu (doesn't purge by default, should purge if menu model is public)
+	public function testUpdateNavMenuEvictsCachesWhenMenuModelIsMadePublic() {
+
+		// set the current user so they can update a resource
+		wp_set_current_user( $this->admin->ID );
+
+		// Filter Menu and MenuItem to be public models
+		add_filter( 'graphql_data_is_private', function( $is_private, $model_name, $data, $visibility, $owner, $current_user ) {
+
+			if ( 'MenuObject' === $model_name || 'MenuItemObject' === $model_name ) {
+				return false;
+			}
+
+			return $is_private;
+
+		}, 10, 6 );
+
+		// Create a nav menu
+		$menu_id = wp_create_nav_menu( 'Test Menu With No Location' );
+
+		$purges = [];
+
+		add_action( 'graphql_purge', function( $key, $event ) use ( &$purges ) {
+			$purges[$key][] = $event;
+		}, 10, 2 );
+
+		// Update nav menu object
+		wp_update_nav_menu_object( $menu_id, [
+			'menu-name' => 'Update: Test Menu With No Location'
+		] );
+
+		// Assert that the menuId was purged, and skipped:term was purged
+		$this->assertEqualSets([
+			// Creating a menu should purge single menu
+			Relay::toGlobalId( 'term', $menu_id ),
+			'skipped:term',
+		], array_keys( $purges ) );
+
+	}
 
 }

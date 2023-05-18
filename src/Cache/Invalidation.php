@@ -95,6 +95,7 @@ class Invalidation {
 
 		add_filter( 'pre_set_theme_mod_nav_menu_locations', [ $this, 'on_set_nav_menu_locations_cb' ], 10, 2 );
 		add_action( 'wp_update_nav_menu', [ $this, 'on_update_nav_menu_cb' ], 10, 1 );
+		add_action( 'wp_create_nav_menu', [ $this, 'on_create_nav_menu_cb' ], 10, 2 );
 
 		add_action( 'added_term_meta', [ $this, 'on_updated_menu_meta_cb' ], 10, 4 );
 		add_action( 'updated_term_meta', [ $this, 'on_updated_menu_meta_cb' ], 10, 4 );
@@ -442,7 +443,7 @@ class Invalidation {
 
 		$type_name = strtolower( $tax_object->graphql_single_name );
 
-		$this->purge( 'list:' . $type_name );
+		$this->purge( 'list:' . $type_name, 'term_updated' );
 	}
 
 	/**
@@ -470,7 +471,7 @@ class Invalidation {
 		// Delete the cached results associated with this post/key
 		$this->purge_nodes( 'term', $term->term_id );
 		$type_name = strtolower( $tax_object->graphql_single_name );
-		$this->purge( 'list:' . $type_name );
+		$this->purge( 'list:' . $type_name, 'term_relationship_deleted' );
 	}
 
 	/**
@@ -739,7 +740,9 @@ class Invalidation {
 		if ( ! $nav_menu instanceof WP_Term ) {
 			return false;
 		}
-		return ! (bool) ( new Menu( $nav_menu ) )->is_private();
+		$visibility = ( new Menu( $nav_menu ) )->get_visibility();
+
+		return ( 'public' === $visibility );
 	}
 
 	/**
@@ -793,6 +796,23 @@ class Invalidation {
 
 		// menus have a term:id relay global ID, as they use the term loader
 		$this->purge_nodes( 'term', $menu->term_id, 'updated_nav_menu' );
+	}
+
+	/**
+	 * @param int   $menu_id   The ID of the nav menu being created
+	 * @param array $menu_data The menu data of the menu being created
+	 *
+	 * @return void
+	 * @throws Exception
+	 */
+	public function on_create_nav_menu_cb( $menu_id, array $menu_data ) {
+		if ( ! $this->is_menu_public( $menu_id ) ) {
+			codecept_debug( 'created menu is not public' );
+			error_log( 'created menu is not public' );
+			return;
+		}
+
+		$this->purge( 'list:menu', 'nav_menu_created' );
 	}
 
 	/**
