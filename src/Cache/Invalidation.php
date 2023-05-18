@@ -807,8 +807,6 @@ class Invalidation {
 	 */
 	public function on_create_nav_menu_cb( $menu_id, array $menu_data ) {
 		if ( ! $this->is_menu_public( $menu_id ) ) {
-			codecept_debug( 'created menu is not public' );
-			error_log( 'created menu is not public' );
 			return;
 		}
 
