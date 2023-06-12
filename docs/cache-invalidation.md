@@ -2,7 +2,7 @@
 
 One of the primary features of the WPGraphQL Smart Cache plugin is the cache invalidation.
 
-Unlike RESTful APIs where each enpdoint is related to specific resource type, GraphQL Queries can be constructed in nearly infinite ways, and can contain resources of many types.
+Unlike RESTful APIs where each endpoint is related to a specific resource type, GraphQL Queries can be constructed in nearly infinite ways, and can contain resources of many types.
 
 Because of the flexibility that GraphQL offers, caching and invalidating caches can be tricky.
 
