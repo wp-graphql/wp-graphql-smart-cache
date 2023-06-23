@@ -496,7 +496,6 @@ class Invalidation {
 
 		// Delete the cached results associated with this post/key
 		$this->purge_nodes( 'term', $term->term_id, 'term_relationship_added' );
-
 	}
 
 	/**
