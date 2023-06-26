@@ -226,7 +226,7 @@ class Invalidation {
 	 * @param mixed|string|int $id The node entity identifier
 	 * @param string $event The event that caused the purge
 	 */
-	public function purge_nodes( $id_prefix, $id, $event = '' ) {
+	public function purge_nodes( $id_prefix, $id, $event = 'unknown event' ) {
 		if ( ! method_exists( Relay::class, 'toGlobalId' ) ) {
 			return;
 		}
@@ -439,7 +439,7 @@ class Invalidation {
 		$tax_object = get_taxonomy( $taxonomy );
 
 		// Delete the cached results associated with this post/key
-		$this->purge_nodes( 'term', $term->term_id );
+		$this->purge_nodes( 'term', $term->term_id, 'term_saved' );
 
 		$type_name = strtolower( $tax_object->graphql_single_name );
 
@@ -469,7 +469,7 @@ class Invalidation {
 		$tax_object = get_taxonomy( $taxonomy );
 
 		// Delete the cached results associated with this post/key
-		$this->purge_nodes( 'term', $term->term_id );
+		$this->purge_nodes( 'term', $term->term_id, 'term_relationship_deleted' );
 		$type_name = strtolower( $tax_object->graphql_single_name );
 		$this->purge( 'list:' . $type_name, 'term_relationship_deleted' );
 	}
@@ -495,11 +495,7 @@ class Invalidation {
 		}
 
 		// Delete the cached results associated with this post/key
-		$this->purge_nodes( 'term', $term->term_id, 'term_edited' );
-
-		$tax_object = get_taxonomy( $term->taxonomy );
-		$type_name  = strtolower( $tax_object->graphql_single_name );
-		$this->purge( 'list:' . $type_name, 'term_edited' );
+		$this->purge_nodes( 'term', $term->term_id, 'term_relationship_added' );
 	}
 
 	/**
