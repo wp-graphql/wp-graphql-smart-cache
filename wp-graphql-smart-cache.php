@@ -273,3 +273,29 @@ function appsero_init_tracker_wpgraphql_smart_cache() {
 }
 
 appsero_init_tracker_wpgraphql_smart_cache();
+
+/**
+ * When the garbage collection event runs daily, cleanup aged out jobs.
+ */
+add_action( 'wp_graphql_smart_cache_query_cleanup', function() {
+	// Check that the clean up toggle is still enabled.
+	$garbage_toggle = get_graphql_setting( 'garbage_collection_toggle', null, 'graphql_persisted_queries_section' );
+
+	// Only run the event when the toggle is enabled.
+	if ( 'on' !== $garbage_toggle ) {
+		// Remove the scheduled cron job from firing again if the toggle is not on.
+		wp_clear_scheduled_hook( 'wp_graphql_smart_cache_query_cleanup' );
+		return;
+	}
+
+	$age = get_graphql_setting( 'garbage_collection_age', null, 'graphql_persisted_queries_section' );
+	if ( 1 >= $age || ! is_numeric( $age )) {
+		return;
+	}
+
+	$posts = Utils::getDocumentsBeforeDays( $age );
+	foreach ( $posts as $post_id ) {
+		wp_delete_post( $post_id );
+	}
+
+}, 10);

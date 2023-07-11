@@ -102,6 +102,49 @@ class Settings {
 					]
 				);
 
+				register_graphql_settings_field(
+					'graphql_persisted_queries_section',
+					[
+						'name'              => 'garbage_collection_toggle',
+						'label'             => __( 'Clean Up Queries', 'wp-graphql-smart-cache' ),
+						'desc'              => __( 'Toggle on to enable garbage collection of saved queries older than number of days specified below', 'wp-graphql-smart-cache' ),
+						'type'              => 'checkbox',
+						'default'           => 'off',
+						'sanitize_callback' => function ( $value ) {
+							/**
+							 * When enable garbage collection,
+							 * schedule the garbage collection action/event to run once daily.
+							 * Otherwise remove it.
+							 */
+							if ( 'on' === $value ) {
+								if ( ! wp_next_scheduled( 'wp_graphql_smart_cache_query_cleanup' ) ) {
+									// Add scheduled job to run in one minute
+									wp_schedule_event( time() + 60, 'daily', 'wp_graphql_smart_cache_query_cleanup' );
+								}
+							} else {
+								wp_clear_scheduled_hook( 'wp_graphql_smart_cache_query_cleanup' );
+							}
+							return $value;
+						},
+					]
+				);
+
+				register_graphql_settings_field(
+					'graphql_persisted_queries_section',
+					[
+						'name'              => 'garbage_collection_age',
+						'desc'              => __( 'Age, in number of days, of saved query when it will be removed', 'wp-graphql-smart-cache' ),
+						'type'              => 'number',
+						'default'           => '30',
+						'sanitize_callback' => function ( $value ) {
+							if ( 1 > $value || ! is_numeric( $value ) ) {
+								return null;
+							}
+							return (int) $value;
+						},
+					]
+				);
+
 				// Add a tab section to the graphql admin settings page
 				register_graphql_settings_section(
 					'graphql_cache_section',

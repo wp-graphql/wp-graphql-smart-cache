@@ -44,6 +44,30 @@ class Utils {
 	}
 
 	/**
+	 * @param integer $days_ago  Posts older than this many days ago will be deleted.
+	 *
+	 * @return [WP_Post]
+	 */
+	public static function getDocumentsBeforeDays( $days_ago = 30 ) {
+		$wp_query = new \WP_Query(
+			[
+				'post_type'      => Document::TYPE_NAME,
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'date_query'     => [
+					[
+						'column' => 'post_modified_gmt',
+						'before' => $days_ago . ' days ago',
+					],
+				],
+			]
+		);
+
+		return $wp_query->get_posts();
+	}
+
+	/**
 	 * Generate query hash for graphql query string
 	 *
 	 * @param string | \GraphQL\Language\AST\DocumentNode query string or document node
