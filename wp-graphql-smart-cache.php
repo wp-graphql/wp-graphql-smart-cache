@@ -275,27 +275,60 @@ function appsero_init_tracker_wpgraphql_smart_cache() {
 appsero_init_tracker_wpgraphql_smart_cache();
 
 /**
- * When the garbage collection event runs daily, cleanup aged out jobs.
+ * The callback function for saved query garbage collection event.
+ * Look for saved queries to cleanup and schedule a job to do small batches of deletes.
  */
-add_action( 'wp_graphql_smart_cache_query_cleanup', function() {
-	// Check that the clean up toggle is still enabled.
-	$garbage_toggle = get_graphql_setting( 'garbage_collection_toggle', null, 'graphql_persisted_queries_section' );
+add_action(
+	'wp_graphql_smart_cache_cron_query_cleanup',
+	function () {
+		// Check that the clean up toggle is still enabled.
+		$garbage_toggle = get_graphql_setting( 'garbage_collection_toggle', null, 'graphql_persisted_queries_section' );
+		if ( 'on' !== $garbage_toggle ) {
+			// Remove the scheduled cron job from firing again if the toggle is not on.
+			wp_clear_scheduled_hook( 'wp_graphql_smart_cache_cron_query_cleanup' );
+			return;
+		}
 
-	// Only run the event when the toggle is enabled.
-	if ( 'on' !== $garbage_toggle ) {
-		// Remove the scheduled cron job from firing again if the toggle is not on.
-		wp_clear_scheduled_hook( 'wp_graphql_smart_cache_query_cleanup' );
-		return;
-	}
+		$age = get_graphql_setting( 'garbage_collection_age', null, 'graphql_persisted_queries_section' );
+		if ( 1 >= $age || ! is_numeric( $age ) ) {
+			return;
+		}
 
-	$age = get_graphql_setting( 'garbage_collection_age', null, 'graphql_persisted_queries_section' );
-	if ( 1 >= $age || ! is_numeric( $age )) {
-		return;
-	}
+		// If more posts exist to remove, schedule the removal event
+		$posts = Utils::getDocumentsBeforeDays( $age, 1 );
+		if ( $posts ) {
+			wp_schedule_single_event( time() + 1, 'wp_graphql_smart_cache_cron_query_cleanup_deletes' );
+		}
+	},
+	10
+);
 
-	$posts = Utils::getDocumentsBeforeDays( $age );
-	foreach ( $posts as $post_id ) {
-		wp_delete_post( $post_id );
-	}
+/**
+ * The callback function to do the actual deletes of posts that are aged out and need garbage collection.
+ * This job will run, load a 'batch' number of posts, instead of loading ALL posts to delete.
+ * After processing the deletes, if more remain, this job is scheduled again to process another batch.
+ * Do these 'batch' runs of deletes in hope of reducing server load, timeouts, large numbers of deletes in one loop.
+ */
+add_action(
+	'wp_graphql_smart_cache_cron_query_cleanup_deletes',
+	function () {
+		$age = get_graphql_setting( 'garbage_collection_age', null, 'graphql_persisted_queries_section' );
+		if ( 1 >= $age || ! is_numeric( $age ) ) {
+			return;
+		}
 
-}, 10);
+		// If posts exist to remove, schedule the removal event
+		$batch_size = 1000;
+		$posts      = Utils::getDocumentsBeforeDays( $age, $batch_size );
+		foreach ( $posts as $post_id ) {
+			wp_delete_post( $post_id );
+		}
+
+		// If more posts exist to remove, schedule the removal event
+		$posts = Utils::getDocumentsBeforeDays( $age, 1 );
+		if ( ! empty( $posts ) ) {
+			wp_schedule_single_event( time() + 1, 'wp_graphql_smart_cache_cron_query_cleanup_deletes' );
+		}
+	},
+	10
+);

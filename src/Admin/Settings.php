@@ -117,12 +117,12 @@ class Settings {
 							 * Otherwise remove it.
 							 */
 							if ( 'on' === $value ) {
-								if ( ! wp_next_scheduled( 'wp_graphql_smart_cache_query_cleanup' ) ) {
+								if ( ! wp_next_scheduled( 'wp_graphql_smart_cache_cron_query_cleanup' ) ) {
 									// Add scheduled job to run in one minute
-									wp_schedule_event( time() + 60, 'daily', 'wp_graphql_smart_cache_query_cleanup' );
+									wp_schedule_event( time() + 60, 'daily', 'wp_graphql_smart_cache_cron_query_cleanup' );
 								}
 							} else {
-								wp_clear_scheduled_hook( 'wp_graphql_smart_cache_query_cleanup' );
+								wp_clear_scheduled_hook( 'wp_graphql_smart_cache_cron_query_cleanup' );
 							}
 							return $value;
 						},

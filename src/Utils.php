@@ -45,15 +45,16 @@ class Utils {
 
 	/**
 	 * @param integer $days_ago  Posts older than this many days ago will be deleted.
+	 * @param integer $number_of_posts  Number of post ids matching criteria.
 	 *
-	 * @return [WP_Post]
+	 * @return [int]  Array of post ids
 	 */
-	public static function getDocumentsBeforeDays( $days_ago = 30 ) {
+	public static function getDocumentsBeforeDays( $days_ago = 30, $number_of_posts = 100 ) {
 		$wp_query = new \WP_Query(
 			[
 				'post_type'      => Document::TYPE_NAME,
 				'post_status'    => 'publish',
-				'posts_per_page' => -1,
+				'posts_per_page' => $number_of_posts,
 				'fields'         => 'ids',
 				'date_query'     => [
 					[
