@@ -18,6 +18,9 @@ jobs:
       matrix:
         php: [ '8.0', '7.4' ]
         wordpress: [ '5.9', '5.8', '5.7.2', '5.6' ]
+        # 1.14.5 had some changes to the Query Analyzer that broke some tests.
+        # this is a stop-gap until we are able to address that
+        wpgraphql: [ 'latest', '1.14.4' ]
         include:
           - php: '8.0'
             wordpress: '6.0'
@@ -36,6 +39,7 @@ jobs:
             --build-arg WP_VERSION=${{ matrix.wordpress }} \
             --build-arg PHP_VERSION=${{ matrix.php }} \
             --build-arg DOCKER_REGISTRY=ghcr.io/wp-graphql/
+            --build-arg WPGRAPHQL_VERSION=${{ matrix.wpgraphql }}
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -62,4 +66,5 @@ jobs:
         env:
           WP_VERSION: ${{ matrix.wordpress }}
           PHP_VERSION: ${{ matrix.php }}
+          WPGRAPHQL_VERSION: ${{ matrix.wpgraphql }}
           SUITES: use value from .env

@@ -10,7 +10,10 @@ class CacheFromConnectionFieldNameTest extends \Codeception\TestCase\WPTestCase 
 
 	public function setUp(): void {
 		// clear schema so that the register connection works
-        \WPGraphQL::clear_schema();
+		// enable graphql cache maps
+		add_filter( 'graphql_cache_enable_cache_maps', '__return_true' );
+
+		\WPGraphQL::clear_schema();
 		parent::setUp();
 	}
 

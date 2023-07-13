@@ -10,11 +10,13 @@ namespace WPGraphQL\SmartCache\Cache;
 use GraphQL\Executor\ExecutionResult;
 use GraphQL\Type\Schema;
 use WPGraphQL\Request;
+use WPGraphQL\SmartCache\Admin\Settings;
 
 class Collection extends Query {
 
 	// initialize the cache collection
 	public function init() {
+
 		add_action( 'graphql_return_response', [ $this, 'save_query_mapping_cb' ], 10, 8 );
 		parent::init();
 	}
@@ -62,6 +64,12 @@ class Collection extends Query {
 		$request,
 		$query_id
 	) {
+
+		// If cache maps are not enabled, do nothing
+		if ( ! Settings::cache_maps_enabled() ) {
+			return;
+		}
+
 		$request_key = $this->build_key( $query_id, $query, $variables, $operation );
 
 		// get the runtime nodes from the query analyzer

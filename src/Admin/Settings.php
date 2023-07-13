@@ -18,13 +18,35 @@ class Settings {
 	 *
 	 * @return bool
 	 */
-	public static function caching_enabled() {
+	public static function caching_enabled(): bool {
 
 		// get the cache_toggle setting
 		$option = function_exists( 'get_graphql_setting' ) ? \get_graphql_setting( 'cache_toggle', false, 'graphql_cache_section' ) : false;
 
+		$enabled = ( 'on' === $option );
+
+		$enabled = apply_filters( 'graphql_cache_wordpress_cache_enabled', (bool) $enabled );
+
 		// if there's no user logged in, and GraphQL Caching is enabled
-		return ( 'on' === $option );
+		return (bool) $enabled;
+	}
+
+	/**
+	 * Whether cache maps are enabled.
+	 *
+	 * Cache maps are used to track which nodes and list keys are associated with which queries,
+	 * and can be referenced to purge specific queries.
+	 *
+	 * Default behavior is to only enable building and storage of the cache maps if "WordPress Cache" (non-network cache) is enabled, but this can be filtered to be enabled without WordPress cache being enabled.
+	 *
+	 * @return bool
+	 */
+	public static function cache_maps_enabled(): bool {
+
+		// Whether "WordPress Cache" (object/transient) cache is enabled
+		$enabled = self::caching_enabled();
+		return (bool) apply_filters( 'graphql_cache_enable_cache_maps', (bool) $enabled );
+
 	}
 
 	/**
@@ -32,7 +54,7 @@ class Settings {
 	 *
 	 * @return bool
 	 */
-	public static function purge_logging_enabled() {
+	public static function purge_logging_enabled(): bool {
 		$option = function_exists( 'get_graphql_setting' ) ? \get_graphql_setting( 'log_purge_events', false, 'graphql_cache_section' ) : false;
 
 		// if there's no user logged in, and GraphQL Caching is enabled
