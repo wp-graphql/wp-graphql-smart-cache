@@ -14,9 +14,9 @@ jobs:
   run:
     runs-on: ubuntu-latest
     name: WordPress ${{ matrix.wordpress }} Integration Tests on PHP ${{ matrix.php }}
+    continue-on-error: ${{ matrix.continue_on_error }}
     strategy:
       fail-fast: true
-      continue-on-error: ${{ matrix.continue_on_error }}
       matrix:
         php: [ '8.0', '7.4' ]
         wordpress: [ '5.9', '5.8', '5.7.2', '5.6' ]
