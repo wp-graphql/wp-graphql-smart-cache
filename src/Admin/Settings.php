@@ -18,14 +18,14 @@ class Settings {
 	 *
 	 * @return bool
 	 */
-	public static function caching_enabled(): bool {
+	public static function caching_enabled() {
 
 		// get the cache_toggle setting
 		$option = function_exists( 'get_graphql_setting' ) ? \get_graphql_setting( 'cache_toggle', false, 'graphql_cache_section' ) : false;
 
 		$enabled = ( 'on' === $option );
 
-		$enabled = apply_filters( 'graphql_cache_wordpress_cache_enabled', (bool) $enabled );
+		$enabled = apply_filters( 'wpgraphql_cache_wordpress_cache_enabled', (bool) $enabled );
 
 		// if there's no user logged in, and GraphQL Caching is enabled
 		return (bool) $enabled;
@@ -41,12 +41,11 @@ class Settings {
 	 *
 	 * @return bool
 	 */
-	public static function cache_maps_enabled(): bool {
+	public static function cache_maps_enabled() {
 
 		// Whether "WordPress Cache" (object/transient) cache is enabled
 		$enabled = self::caching_enabled();
-		return (bool) apply_filters( 'graphql_cache_enable_cache_maps', (bool) $enabled );
-
+		return (bool) apply_filters( 'wpgraphql_cache_enable_cache_maps', (bool) $enabled );
 	}
 
 	/**
@@ -54,7 +53,7 @@ class Settings {
 	 *
 	 * @return bool
 	 */
-	public static function purge_logging_enabled(): bool {
+	public static function purge_logging_enabled() {
 		$option = function_exists( 'get_graphql_setting' ) ? \get_graphql_setting( 'log_purge_events', false, 'graphql_cache_section' ) : false;
 
 		// if there's no user logged in, and GraphQL Caching is enabled

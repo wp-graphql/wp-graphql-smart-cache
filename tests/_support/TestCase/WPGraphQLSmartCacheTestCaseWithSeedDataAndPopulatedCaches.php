@@ -188,7 +188,7 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 		$this->clearSchema();
 
 		// enable graphql cache maps
-		add_filter( 'graphql_cache_enable_cache_maps', '__return_true' );
+		add_filter( 'wpgraphql_cache_enable_cache_maps', '__return_true' );
 
 		// prevent default category from being added to posts on creation
 		update_option( 'default_category', 0 );
