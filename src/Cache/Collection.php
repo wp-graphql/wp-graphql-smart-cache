@@ -16,7 +16,6 @@ class Collection extends Query {
 
 	// initialize the cache collection
 	public function init() {
-
 		add_action( 'graphql_return_response', [ $this, 'save_query_mapping_cb' ], 10, 8 );
 		parent::init();
 	}
