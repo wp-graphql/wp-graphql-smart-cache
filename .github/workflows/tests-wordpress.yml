@@ -15,17 +15,24 @@ jobs:
     runs-on: ubuntu-latest
     name: WordPress ${{ matrix.wordpress }} Integration Tests on PHP ${{ matrix.php }}
     strategy:
+      fail-fast: true
+      continue-on-error: ${{ matrix.continue_on_error }}
       matrix:
         php: [ '8.0', '7.4' ]
         wordpress: [ '5.9', '5.8', '5.7.2', '5.6' ]
-        # 1.14.5 had some changes to the Query Analyzer that broke some tests.
-        # this is a stop-gap until we are able to address that
-        wpgraphql: [ '1.14.4' ]
+        continue_on_error: [ false ]
         include:
           - php: '8.0'
             wordpress: '6.0'
           - php: '8.1'
             wordpress: '6.1'
+          # Temporary inclusion while we resolve the tests that broke in the WPGraphQL v1.14.5 release
+          # this allows us to continue testing new features to this codebase while we work
+          # toward updating the tests impacted by that release
+          - php: '8.1'
+            wordpress: '6.2'
+            wpgraphql_version: '1.14.5'
+            continue_on_error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v2
