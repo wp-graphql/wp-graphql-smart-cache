@@ -38,7 +38,7 @@ jobs:
           docker-compose build \
             --build-arg WP_VERSION=${{ matrix.wordpress }} \
             --build-arg PHP_VERSION=${{ matrix.php }} \
-            --build-arg DOCKER_REGISTRY=ghcr.io/wp-graphql/
+            --build-arg DOCKER_REGISTRY=ghcr.io/wp-graphql/ \
             --build-arg WPGRAPHQL_VERSION=${{ matrix.wpgraphql }}
 
       - name: Setup PHP
