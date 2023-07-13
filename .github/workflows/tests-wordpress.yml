@@ -21,6 +21,7 @@ jobs:
         php: [ '8.0', '7.4' ]
         wordpress: [ '5.9', '5.8', '5.7.2', '5.6' ]
         continue_on_error: [ false ]
+        wpgraphql_version: [ 'latest' ]
         include:
           - php: '8.0'
             wordpress: '6.0'
@@ -33,7 +34,7 @@ jobs:
           # toward updating the tests impacted by that release
           - php: '8.1'
             wordpress: '6.2'
-            wpgraphql_version: '1.14.5'
+            wpgraphql_version: '1.14.4'
             continue_on_error: true
     steps:
       - name: Checkout
@@ -48,7 +49,7 @@ jobs:
             --build-arg WP_VERSION=${{ matrix.wordpress }} \
             --build-arg PHP_VERSION=${{ matrix.php }} \
             --build-arg DOCKER_REGISTRY=ghcr.io/wp-graphql/ \
-            --build-arg WPGRAPHQL_VERSION=${{ matrix.wpgraphql }}
+            --build-arg WPGRAPHQL_VERSION=${{ matrix.wpgraphql_version }}
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -75,5 +76,5 @@ jobs:
         env:
           WP_VERSION: ${{ matrix.wordpress }}
           PHP_VERSION: ${{ matrix.php }}
-          WPGRAPHQL_VERSION: ${{ matrix.wpgraphql }}
+          WPGRAPHQL_VERSION: ${{ matrix.wpgraphql_version }}
           SUITES: use value from .env
