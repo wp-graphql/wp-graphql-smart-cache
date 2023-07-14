@@ -25,7 +25,7 @@ class Settings {
 
 		$enabled = ( 'on' === $option );
 
-		$enabled = apply_filters( 'wpgraphql_cache_wordpress_cache_enabled', (bool) $enabled );
+		$enabled = apply_filters( 'graphql_cache_wordpress_cache_enabled', (bool) $enabled );
 
 		// if there's no user logged in, and GraphQL Caching is enabled
 		return (bool) $enabled;
@@ -45,7 +45,7 @@ class Settings {
 
 		// Whether "WordPress Cache" (object/transient) cache is enabled
 		$enabled = self::caching_enabled();
-		return (bool) apply_filters( 'wpgraphql_cache_enable_cache_maps', (bool) $enabled );
+		return (bool) apply_filters( 'graphql_cache_enable_cache_maps', (bool) $enabled );
 	}
 
 	/**
