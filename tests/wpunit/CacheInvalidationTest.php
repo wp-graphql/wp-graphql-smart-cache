@@ -13,7 +13,7 @@ class CacheInvalidationTest extends \Codeception\TestCase\WPTestCase {
 		\WPGraphQL::clear_schema();
 
 		// enable graphql cache maps
-		add_filter( 'graphql_cache_enable_cache_maps', '__return_true' );
+		add_filter( 'wpgraphql_cache_enable_cache_maps', '__return_true' );
 
 		if ( ! defined( 'GRAPHQL_DEBUG' ) ) {
 			define( 'GRAPHQL_DEBUG', true );
