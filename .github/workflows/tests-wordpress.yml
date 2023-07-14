@@ -21,7 +21,7 @@ jobs:
         php: [ '8.0', '7.4' ]
         wordpress: [ '5.9', '5.8', '5.7.2', '5.6' ]
         continue_on_error: [ false ]
-        wpgraphql_version: [ 'latest' ]
+        wpgraphql_version: [ '1.14.4' ]
         include:
           - php: '8.0'
             wordpress: '6.0'
@@ -48,8 +48,7 @@ jobs:
           docker-compose build \
             --build-arg WP_VERSION=${{ matrix.wordpress }} \
             --build-arg PHP_VERSION=${{ matrix.php }} \
-            --build-arg DOCKER_REGISTRY=ghcr.io/wp-graphql/ \
-            --build-arg WPGRAPHQL_VERSION=${{ matrix.wpgraphql_version }}
+            --build-arg DOCKER_REGISTRY=ghcr.io/wp-graphql/
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
