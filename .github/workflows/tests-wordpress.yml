@@ -72,9 +72,8 @@ jobs:
         run: composer update
 
       - name: Run acceptance, functional tests
-        run: docker-compose run -e DEBUG=1 testing
+        run: docker-compose run -e DEBUG=1 WPGRAPHQL_VERSION=${{ matrix.wpgraphql_version }} testing
         env:
           WP_VERSION: ${{ matrix.wordpress }}
           PHP_VERSION: ${{ matrix.php }}
-          WPGRAPHQL_VERSION: ${{ matrix.wpgraphql_version }}
           SUITES: use value from .env
