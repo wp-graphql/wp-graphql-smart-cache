@@ -65,7 +65,7 @@ class AdminSettingsQueriesCest
 			}
 		}
 		codecept_debug( $cron_names );
-		$I->assertContains( 'wp_graphql_smart_cache_cron_query_cleanup', $cron_names );
+		$I->assertContains( 'wp_graphql_smart_cache_query_gc', $cron_names );
 
 		$I->uncheckOption("//input[@type='checkbox' and @name='graphql_persisted_queries_section[query_gc]']");
 		$I->click('Save Changes');
@@ -81,7 +81,7 @@ class AdminSettingsQueriesCest
 			}
 		}
 		codecept_debug( $cron_names );
-		$I->assertNotContains( 'wp_graphql_smart_cache_cron_query_cleanup', $cron_names );
+		$I->assertNotContains( 'wp_graphql_smart_cache_query_gc', $cron_names );
 	}
 
 	// Test the garbage collection number of days validate and saves

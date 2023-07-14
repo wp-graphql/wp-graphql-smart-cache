@@ -49,7 +49,7 @@ class Utils {
 	 *
 	 * @return [int]  Array of post ids
 	 */
-	public static function getDocumentsBeforeDays( $days_ago = 30, $number_of_posts = 100 ) {
+	public static function getDocumentsByAge( $days_ago = 30, $number_of_posts = 100 ) {
 		$wp_query = new \WP_Query(
 			[
 				'post_type'      => Document::TYPE_NAME,

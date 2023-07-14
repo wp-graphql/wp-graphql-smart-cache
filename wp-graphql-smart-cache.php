@@ -279,25 +279,25 @@ appsero_init_tracker_wpgraphql_smart_cache();
  * Look for saved queries to cleanup and schedule a job to do small batches of deletes.
  */
 add_action(
-	'wp_graphql_smart_cache_cron_query_cleanup',
+	'wp_graphql_smart_cache_query_gc',
 	function () {
 		// Check that the clean up toggle is still enabled.
-		$garbage_toggle = get_graphql_setting( 'garbage_collection_toggle', null, 'graphql_persisted_queries_section' );
+		$garbage_toggle = get_graphql_setting( 'query_gc', null, 'graphql_persisted_queries_section' );
 		if ( 'on' !== $garbage_toggle ) {
 			// Remove the scheduled cron job from firing again if the toggle is not on.
-			wp_clear_scheduled_hook( 'wp_graphql_smart_cache_cron_query_cleanup' );
+			wp_clear_scheduled_hook( 'wp_graphql_smart_cache_query_gc' );
 			return;
 		}
 
-		$age = get_graphql_setting( 'garbage_collection_age', null, 'graphql_persisted_queries_section' );
+		$age = get_graphql_setting( 'query_gc_age', null, 'graphql_persisted_queries_section' );
 		if ( 1 >= $age || ! is_numeric( $age ) ) {
 			return;
 		}
 
 		// If more posts exist to remove, schedule the removal event
-		$posts = Utils::getDocumentsBeforeDays( $age, 1 );
+		$posts = Utils::getDocumentsByAge( $age, 1 );
 		if ( $posts ) {
-			wp_schedule_single_event( time() + 1, 'wp_graphql_smart_cache_cron_query_cleanup_deletes' );
+			wp_schedule_single_event( time() + 1, 'wp_graphql_smart_cache_query_gc_deletes' );
 		}
 	},
 	10
@@ -310,24 +310,24 @@ add_action(
  * Do these 'batch' runs of deletes in hope of reducing server load, timeouts, large numbers of deletes in one loop.
  */
 add_action(
-	'wp_graphql_smart_cache_cron_query_cleanup_deletes',
+	'wp_graphql_smart_cache_query_gc_deletes',
 	function () {
-		$age = get_graphql_setting( 'garbage_collection_age', null, 'graphql_persisted_queries_section' );
+		$age = get_graphql_setting( 'query_gc_age', null, 'graphql_persisted_queries_section' );
 		if ( 1 >= $age || ! is_numeric( $age ) ) {
 			return;
 		}
 
 		// If posts exist to remove, schedule the removal event
-		$batch_size = 1000;
-		$posts      = Utils::getDocumentsBeforeDays( $age, $batch_size );
+		$batch_size = apply_filters( 'wpgraphql_document_garbage_collection_batch_size', 1000 );
+		$posts      = Utils::getDocumentsByAge( $age, $batch_size );
 		foreach ( $posts as $post_id ) {
 			wp_delete_post( $post_id );
 		}
 
 		// If more posts exist to remove, schedule the removal event
-		$posts = Utils::getDocumentsBeforeDays( $age, 1 );
+		$posts = Utils::getDocumentsByAge( $age, 1 );
 		if ( ! empty( $posts ) ) {
-			wp_schedule_single_event( time() + 1, 'wp_graphql_smart_cache_cron_query_cleanup_deletes' );
+			wp_schedule_single_event( time() + 1, 'wp_graphql_smart_cache_query_gc_deletes' );
 		}
 	},
 	10
