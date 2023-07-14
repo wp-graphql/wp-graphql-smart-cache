@@ -105,7 +105,7 @@ class Settings {
 				register_graphql_settings_field(
 					'graphql_persisted_queries_section',
 					[
-						'name'              => 'garbage_collection_toggle',
+						'name'              => 'query_gc',
 						'label'             => __( 'Clean Up Queries', 'wp-graphql-smart-cache' ),
 						'desc'              => __( 'Toggle on to enable garbage collection of saved queries older than number of days specified below', 'wp-graphql-smart-cache' ),
 						'type'              => 'checkbox',
@@ -132,13 +132,13 @@ class Settings {
 				register_graphql_settings_field(
 					'graphql_persisted_queries_section',
 					[
-						'name'              => 'garbage_collection_age',
+						'name'              => 'query_gc_age',
 						'desc'              => __( 'Age, in number of days, of saved query when it will be removed', 'wp-graphql-smart-cache' ),
 						'type'              => 'number',
 						'default'           => '30',
 						'sanitize_callback' => function ( $value ) {
 							if ( 1 > $value || ! is_numeric( $value ) ) {
-								return null;
+								return function_exists( 'get_graphql_setting' ) ? \get_graphql_setting( 'query_gc_age', false, 'graphql_persisted_queries_section' ) : null;
 							}
 							return (int) $value;
 						},
