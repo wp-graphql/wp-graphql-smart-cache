@@ -25,15 +25,19 @@ class QueryGarbageCollectionTest extends \Codeception\TestCase\WPTestCase {
 		delete_option( 'graphql_persisted_queries_section' );
 	}
 
-	public function testQueriesAreDeletedByJob() {
-		// Enable garbage collection for queries after an age
+	public function updateAge( $age ) {
 		update_option(
 			'graphql_persisted_queries_section',
 			[ 
 				'query_gc' => 'on',
-				'query_gc_age' => '20',
+				'query_gc_age' => $age,
 			]
 		);
+	}
+
+	public function testQueriesAreDeletedByJob() {
+		// Enable garbage collection for queries after an age
+		$this->updateAge( 20 );
 
 		$age_list = [
 			'11 days ago',
@@ -58,8 +62,13 @@ class QueryGarbageCollectionTest extends \Codeception\TestCase\WPTestCase {
 			}
 		}
 
-		$this->assertCount( 6, Utils::getDocumentsByAge( 10 ) );
-		$this->assertCount( 3, Utils::getDocumentsByAge( 20 ) );
+		// Should be 6 posts older that 11 days
+		$this->updateAge( 10 );
+		$this->assertCount( 6, Utils::getDocumentsByAge() );
+
+		// Should be 3 posts older than 20 days
+		$this->updateAge( 20 );
+		$this->assertCount( 3, Utils::getDocumentsByAge() );
 
 		// Verify delete event is not scheduled before the garbage collection event runs
 		$this->assertFalse( wp_next_scheduled( 'wp_graphql_smart_cache_query_gc_deletes' ) );
@@ -74,11 +83,13 @@ class QueryGarbageCollectionTest extends \Codeception\TestCase\WPTestCase {
 
 		// Fire the delete action and verify the number of posts deleted
 		do_action( 'wp_graphql_smart_cache_query_gc_deletes' );
-		$this->assertCount( 1, Utils::getDocumentsByAge( 20 ) );
+		$this->assertCount( 1, Utils::getDocumentsByAge() );
 
 		// Fire the delete action again, verify expected queries are removed.
 		do_action( 'wp_graphql_smart_cache_query_gc_deletes' );
-		$this->assertCount( 3, Utils::getDocumentsByAge( 10 ) );
+		$this->updateAge( 10 );
+		$this->assertCount( 3, Utils::getDocumentsByAge() );
+		$this->updateAge( 20 );
 		$this->assertCount( 0, Utils::getDocumentsByAge( 20 ) );
 	}
 

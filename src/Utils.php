@@ -44,12 +44,17 @@ class Utils {
 	}
 
 	/**
-	 * @param integer $days_ago  Posts older than this many days ago will be deleted.
 	 * @param integer $number_of_posts  Number of post ids matching criteria.
 	 *
 	 * @return [int]  Array of post ids
 	 */
-	public static function getDocumentsByAge( $days_ago = 30, $number_of_posts = 100 ) {
+	public static function getDocumentsByAge( $number_of_posts = 100 ) {
+		// $days_ago  Posts older than this many days ago
+		$days_ago = get_graphql_setting( 'query_gc_age', null, 'graphql_persisted_queries_section' );
+		if ( 1 >= $days_ago || ! is_numeric( $days_ago ) ) {
+			return [];
+		}
+
 		$wp_query = new \WP_Query(
 			[
 				'post_type'      => Document::TYPE_NAME,

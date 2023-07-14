@@ -289,13 +289,8 @@ add_action(
 			return;
 		}
 
-		$age = get_graphql_setting( 'query_gc_age', null, 'graphql_persisted_queries_section' );
-		if ( 1 >= $age || ! is_numeric( $age ) ) {
-			return;
-		}
-
 		// If more posts exist to remove, schedule the removal event
-		$posts = Utils::getDocumentsByAge( $age, 1 );
+		$posts = Utils::getDocumentsByAge( 1 );
 		if ( $posts ) {
 			wp_schedule_single_event( time() + 1, 'wp_graphql_smart_cache_query_gc_deletes' );
 		}
@@ -312,20 +307,15 @@ add_action(
 add_action(
 	'wp_graphql_smart_cache_query_gc_deletes',
 	function () {
-		$age = get_graphql_setting( 'query_gc_age', null, 'graphql_persisted_queries_section' );
-		if ( 1 >= $age || ! is_numeric( $age ) ) {
-			return;
-		}
-
 		// If posts exist to remove, schedule the removal event
 		$batch_size = apply_filters( 'wpgraphql_document_garbage_collection_batch_size', 1000 );
-		$posts      = Utils::getDocumentsByAge( $age, $batch_size );
+		$posts      = Utils::getDocumentsByAge( $batch_size );
 		foreach ( $posts as $post_id ) {
 			wp_delete_post( $post_id );
 		}
 
 		// If more posts exist to remove, schedule the removal event
-		$posts = Utils::getDocumentsByAge( $age, 1 );
+		$posts = Utils::getDocumentsByAge( 1 );
 		if ( ! empty( $posts ) ) {
 			wp_schedule_single_event( time() + 1, 'wp_graphql_smart_cache_query_gc_deletes' );
 		}
