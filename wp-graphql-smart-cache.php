@@ -30,6 +30,7 @@ use WPGraphQL\SmartCache\Document\Description;
 use WPGraphQL\SmartCache\Document\Grant;
 use WPGraphQL\SmartCache\Document\MaxAge;
 use WPGraphQL\SmartCache\Document\Loader;
+use WPGraphQL\SmartCache\Document\SkipGarbageCollection;
 
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
@@ -131,11 +132,15 @@ add_action(
 		$max_age = new MaxAge();
 		$max_age->init();
 
+		$garbage = new SkipGarbageCollection();
+		$garbage->init();
+
 		$errors = new AdminErrors();
 		$errors->init();
 
 		$settings = new Settings();
 		$settings->init();
+
 	}
 );
 
