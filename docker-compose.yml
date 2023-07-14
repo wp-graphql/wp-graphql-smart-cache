@@ -20,7 +20,7 @@ services:
       local:
 
   app_db:
-    image: mariadb:10.2
+    image: mariadb:10.11
     env_file:
       - .env.dist
     ports:
@@ -46,7 +46,7 @@ services:
       local:
 
   testing_db:
-    image: mariadb:10.2
+    image: mariadb:10.11
     env_file:
       - .env.testing
     ports:
