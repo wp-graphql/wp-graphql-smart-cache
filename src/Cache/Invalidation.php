@@ -565,7 +565,7 @@ class Invalidation {
 		// as the created node might affect the list
 		if ( 'CREATE' === $action_type ) {
 			$this->purge( 'list:' . $type_name, 'post_' . $action_type );
-
+			$this->purge_nodes( 'post', $post->ID, 'post_' . $action_type );
 			$terms = wp_get_object_terms( $post->ID, \WPGraphQL::get_allowed_taxonomies() );
 
 			if ( ! empty( $terms ) ) {

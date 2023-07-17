@@ -44,17 +44,6 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLSmartCache\TestCase\W
 		$this->assertEqualSets([
 			'listPost',
 			'listContentNode',
-			'adminUserWithPostsConnection',
-
-			// @todo: in an ideal world, this wouldn't purge here
-			// as we published a post authored by the admin.
-			// this event, in an ideal world, shouldn't purge a
-			// query for posts authored by the editor user.
-			//
-			// right now, we're purging all lists of posts when a post is published,
-			// so this is correct behavior today, but I'd love to widdle down on this
-			// over time
-			'editorUserWithPostsConnection'
 		], $evicted_caches );
 
 	}
@@ -116,20 +105,6 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLSmartCache\TestCase\W
 			'listContentNode',
 			'listCategory',
 			'singleCategory',
-			'adminUserWithPostsConnection',
-
-			// @todo: ideally, this connection would not be evicted.
-			// It would be nice, in the future to be able to know
-			// a bit more about the from node that a connection is coming from
-			// and determine if the connection should indeed be purged.
-			// since we're querying a list of posts authored by the editor
-			// but publishing a post by another author,
-			// we (in an ideal world) shouldn't purge this connection query
-			//
-			// right now, we're purging all lists of posts when a post is published,
-			// so this is correct behavior today, but I'd love to widdle down on this
-			// over time
-			'editorUserWithPostsConnection',
 		], $evicted_caches );
 
 
@@ -473,8 +448,6 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLSmartCache\TestCase\W
 		$this->assertEqualSets([
 			'listContentNode',
 			'listPost',
-			'adminUserWithPostsConnection',
-			'editorUserWithPostsConnection'
 		], $evicted_caches );
 
 	}
@@ -670,7 +643,7 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLSmartCache\TestCase\W
 			'role' => 'administrator'
 		]);
 
-		$query = $this->getSingleUserByDatabaseIdWithAuthoredPostsQuery();
+		$query = $this->getQuery('adminUserWithPostsConnection' );
 		$variables = [ 'id' => $new_user->ID ];
 
 		$cache_key = $this->collection->build_key( null, $query, $variables );
@@ -732,7 +705,7 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLSmartCache\TestCase\W
 			'post_author' => $new_user->ID,
 		]);
 
-		$query = $this->getSingleUserByDatabaseIdWithAuthoredPostsQuery();
+		$query = $this->getQuery( 'adminUserWithPostsConnection' );
 		$variables = [ 'id' => $new_user->ID ];
 
 		$cache_key = $this->collection->build_key( null, $query, $variables );
@@ -1142,8 +1115,6 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLSmartCache\TestCase\W
 		$this->assertEqualSets([
 			'listPost',
 			'listContentNode',
-			'adminUserWithPostsConnection',
-			'editorUserWithPostsConnection'
 		], $evicted_caches );
 
 	}

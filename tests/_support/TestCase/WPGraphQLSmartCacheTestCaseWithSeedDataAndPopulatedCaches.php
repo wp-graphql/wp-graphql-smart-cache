@@ -317,7 +317,7 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			'post_type' => 'post',
 			'post_status' => 'future',
 			'post_title' => 'Test Scheduled Post',
-			'post_author' => $this->admin,
+			'post_author' => (int) $this->admin->ID,
 			'post_date' => date( "Y-m-d H:i:s", strtotime( '+1 day' ) ),
 		]);
 
@@ -325,7 +325,7 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			'post_type' => 'post',
 			'post_status' => 'future',
 			'post_title' => 'Test Scheduled Post',
-			'post_author' => $this->admin,
+			'post_author' => $this->admin->ID,
 			'post_date' => date( "Y-m-d H:i:s", strtotime( '+1 day' ) ),
 			'post_category' => [ $this->category->term_id ]
 		]);
@@ -334,7 +334,7 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			'post_type' => 'test_post_type',
 			'post_status' => 'future',
 			'post_title' => 'Test Custom Post Type Post',
-			'post_author' => $this->admin,
+			'post_author' => $this->admin->ID,
 			'post_date' => date( "Y-m-d H:i:s", strtotime( '+1 day' ) ),
 		]);
 
@@ -342,7 +342,7 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			'post_type' => 'test_post_type',
 			'post_status' => 'future',
 			'post_title' => 'Test Custom Post Type Post',
-			'post_author' => $this->admin,
+			'post_author' => $this->admin->ID,
 			'post_date' => date( "Y-m-d H:i:s", strtotime( '+1 day' ) ),
 			'tax_input' => [
 				'test_taxonomy' => [ $this->test_taxonomy_term->slug ]
@@ -357,7 +357,7 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			'post_type' => 'test_post_type',
 			'post_status' => 'publish',
 			'post_title' => 'Test Custom Post Type Post with Term',
-			'post_author' => $this->admin,
+			'post_author' => $this->admin->ID,
 			'tax_input' => [
 				'test_taxonomy' => [ $this->test_taxonomy_term->slug ]
 			]
@@ -502,12 +502,32 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 
 	}
 
+	/**
+	 * @param string $query_name The name of the query to get
+	 *
+	 * @return string|null
+	 */
+	public function getQuery( string $query_name ): ?string {
+		$queries = $this->getQueries();
+		return $queries['queryName']['query'] ?? null;
+
+	}
+
 	public function getQueries() {
 
 		return [
 			'listPost' => [
 				'name' => 'listPost',
-				'query' => $this->getListPostQuery(),
+				'query' => '
+					query GetPosts {
+					  posts {
+					    nodes {
+					      __typename
+					      databaseId
+					    }
+					  }
+					}
+				',
 				'variables' => null,
 				'assertions' => [
 					$this->expectedObject( 'posts.nodes', [
@@ -521,7 +541,14 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			],
 			'singlePost' => [
 				'name' => 'singlePost',
-				'query' => $this->getSinglePostByDatabaseIdQuery(),
+				'query' => '
+					query GetPost($id:ID!) {
+					  post(id:$id idType: DATABASE_ID) {
+					    __typename
+					    databaseId
+					  }
+					}
+				',
 				'variables' => [ 'id' => $this->published_post->ID ],
 				'assertions' => [
 					$this->expectedField( 'post.__typename', 'Post' ),
@@ -533,7 +560,14 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			],
 			'singlePostByEditor' => [
 				'name' => 'singlePostByEditor',
-				'query' => $this->getSinglePostByDatabaseIdQuery(),
+				'query' => '
+					query GetPost($id:ID!) {
+					  post(id:$id idType: DATABASE_ID) {
+					    __typename
+					    databaseId
+					  }
+					}
+				',
 				'variables' => [ 'id' => $this->published_post_by_editor->ID ],
 				'assertions' => [
 					$this->expectedField( 'post.__typename', 'Post' ),
@@ -545,7 +579,16 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			],
 			'listPage' => [
 				'name' => 'listPage',
-				'query' => $this->getListPageQuery(),
+				'query' => '
+					query GetPages {
+					  pages {
+					    nodes {
+					      __typename
+					      databaseId
+					    }
+					  }
+					}
+				',
 				'variables' => null,
 				'assertions' => [
 					$this->expectedObject( 'pages.nodes', [
@@ -559,7 +602,14 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			],
 			'singlePage' => [
 				'name' => 'singlePage',
-				'query' => $this->getSinglePageByDatabaseIdQuery(),
+				'query' => '
+					query GetPage($id:ID!) {
+					  page(id:$id idType: DATABASE_ID) {
+					    __typename
+					    databaseId
+					  }
+					}
+				',
 				'variables' => [ 'id' => $this->published_page->ID ],
 				'assertions' => [
 					$this->expectedField( 'page.__typename', 'Page' ),
@@ -571,7 +621,16 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			],
 			'listTestPostType' => [
 				'name' => 'listTestPostType',
-				'query' => $this->getListTestPostTypeQuery(),
+				'query' => '
+					query GetTestPostTypes {
+					  testPostTypes {
+					    nodes {
+					      __typename
+					      databaseId
+					    }
+					  }
+					}
+				',
 				'variables' => null,
 				'assertions' => [
 					$this->expectedObject( 'testPostTypes.nodes', [
@@ -585,7 +644,14 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			],
 			'singleTestPostType' => [
 				'name' => 'singleTestPostType',
-				'query' => $this->getSingleTestPostTypeByDatabaseIdQuery(),
+				'query' => '
+					query GetTestPostType($id:ID!) {
+					  testPostType(id:$id idType: DATABASE_ID) {
+					    __typename
+					    databaseId
+					  }
+					}
+				',
 				'variables' => [ 'id' => $this->published_test_post_type->ID ],
 				'assertions' => [
 					$this->expectedField( 'testPostType.__typename', 'TestPostType' ),
@@ -597,7 +663,16 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			],
 			'listPrivatePostType' => [
 				'name' => 'listPrivatePostType',
-				'query' => $this->getListPrivatePostTypeQuery(),
+				'query' => '
+					query GetPrivatePostTypes {
+					  privatePostTypes {
+					    nodes {
+					      __typename
+					      databaseId
+					    }
+					  }
+					}
+				',
 				'variables' => null,
 				'assertions' => [
 					// the nodes should be empty because it's a private post type
@@ -611,7 +686,14 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			],
 			'singlePrivatePostType' => [
 				'name' => 'singlePrivatePostType',
-				'query' => $this->getSinglePrivatePostTypeByDatabaseIdQuery(),
+				'query' => '
+					query GetPrivatePostType($id:ID!) {
+					  privatePostType(id:$id idType: DATABASE_ID) {
+					    __typename
+					    databaseId
+					  }
+					}
+				',
 				'variables' => [ 'id' => $this->published_private_post_type->ID ],
 				'assertions' => [
 					// since it's a private post type, the data should be null
@@ -621,7 +703,14 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			],
 			'singleContentNode' => [
 				'name' => 'singleContentNode',
-				'query' => $this->getSingleContentNodeByDatabaseId(),
+				'query' => '
+					query GetContentNode($id:ID!) {
+					  contentNode(id:$id idType: DATABASE_ID) {
+					    __typename
+					    databaseId
+					  }
+					}
+				',
 				'variables' => [
 					'id' => $this->published_post->ID,
 				],
@@ -635,7 +724,16 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			],
 			'listContentNode' => [
 				'name' => 'listContentNode',
-				'query' => $this->getListContentNodeQuery(),
+				'query' => '
+					query GetContentNodes {
+					  contentNodes {
+					    nodes {
+					      __typename
+					      databaseId
+					    }
+					  }
+					}
+				',
 				'variables' => [
 					'id' => $this->published_post->ID,
 				],
@@ -656,7 +754,17 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			],
 			'singleNodeById' => [
 				'name' => 'singleNodeById',
-				'query' => $this->getSingleNodeByIdQuery(),
+				'query' => '
+					query GetNode($id: ID!) {
+					  node(id: $id) {
+					    __typename
+					    id
+					    ... on DatabaseIdentifier {
+					      databaseId
+					    }
+					  }
+					}
+				',
 				'variables' => [ 'id' => $this->toRelayId( 'post', $this->published_post->ID ) ],
 				'assertions' => [
 					$this->expectedField( 'node.__typename', 'Post' ),
@@ -668,7 +776,17 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			],
 			'singleNodeByUri' => [
 				'name' => 'singleNodeByUri',
-				'query' => $this->getSingleNodeByUriQuery(),
+				'query' => '
+					query GetNodeByUri($uri: String!) {
+					  nodeByUri(uri: $uri) {
+					    __typename
+					    id
+					    ... on DatabaseIdentifier {
+					      databaseId
+					    }
+					  }
+					}
+				',
 				'variables' => [ 'uri' => get_permalink( $this->published_post->ID ) ],
 				'assertions' => [
 					$this->expectedField( 'nodeByUri.__typename', 'Post' ),
@@ -677,7 +795,17 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			],
 			'listTag' => [
 				'name' => 'listTag',
-				'query' => $this->getListTagQuery(),
+				'query' => '
+					query GetTags {
+					  tags {
+					    nodes {
+					      __typename
+					      databaseId
+					      name
+					    }
+					  }
+					}
+				',
 				'variables' => null,
 				'assertions' => [
 					$this->expectedObject( 'tags.nodes', [
@@ -692,7 +820,14 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			],
 			'singleTag' => [
 				'name' => 'singleTag',
-				'query' => $this->getSingleTagByDatabaseIdQuery(),
+				'query' => '
+					query GetTag($id:ID!) {
+					  tag(id:$id idType: DATABASE_ID) {
+					    __typename
+					    databaseId
+					  }
+					}
+				',
 				'variables' => [ 'id' => $this->tag->term_id ],
 				'assertions' => [
 					$this->expectedField( 'tag.__typename', 'Tag' ),
@@ -704,7 +839,17 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			],
 			'listCategory' => [
 				'name' => 'listCategory',
-				'query' => $this->getListCategoryQuery(),
+				'query' => '
+					query GetCategories {
+					  categories {
+					    nodes {
+					      __typename
+					      databaseId
+					      name
+					    }
+					  }
+					}
+				',
 				'variables' => null,
 				'assertions' => [
 					$this->expectedObject( 'categories.nodes', [
@@ -719,7 +864,14 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			],
 			'singleCategory' => [
 				'name' => 'singleCategory',
-				'query' => $this->getSingleCategoryByDatabaseIdQuery(),
+				'query' => '
+					query GetCategory($id:ID!) {
+					  category(id:$id idType: DATABASE_ID) {
+					    __typename
+					    databaseId
+					  }
+					}
+				',
 				'variables' => [ 'id' => $this->category->term_id ],
 				'assertions' => [
 					$this->expectedField( 'category.__typename', 'Category' ),
@@ -731,7 +883,14 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			],
 			'singleTestTaxonomyTerm' => [
 				'name' => 'singleTestTaxonomyTerm',
-				'query' => $this->getSingleTestTaxonomyTermByDatabaseIdQuery(),
+				'query' => '
+					query GetTestTaxonomyTerm($id:ID!) {
+					  testTaxonomyTerm(id:$id idType: DATABASE_ID) {
+					    __typename
+					    databaseId
+					  }
+					}
+				',
 				'variables' => [ 'id' => $this->test_taxonomy_term->term_id ],
 				'assertions' => [
 					$this->expectedField( 'testTaxonomyTerm.__typename', 'TestTaxonomyTerm' ),
@@ -743,7 +902,17 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			],
 			'listTestTaxonomyTerm' => [
 				'name' => 'listTestTaxonomyTerm',
-				'query' => $this->getListTestTaxonomyTermsQuery(),
+				'query' => '
+					query GetTestTaxonomyTerms {
+					  testTaxonomyTerms {
+					    nodes {
+					      __typename
+					      databaseId
+					      name
+					    }
+					  }
+					}
+				',
 				'variables' => null,
 				'assertions' => [
 					$this->expectedObject( 'testTaxonomyTerms.nodes', [
@@ -758,7 +927,20 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			],
 			'adminUserWithPostsConnection' => [
 				'name' => 'adminUserWithPostsConnection',
-				'query' => $this->getSingleUserByDatabaseIdWithAuthoredPostsQuery(),
+				'query' => '
+					query GetUser($id:ID!) {
+					  user(id:$id idType:DATABASE_ID) {
+				        __typename
+				        databaseId
+				        posts {
+				          nodes {
+				            __typename
+				            databaseId
+				          }
+				        }
+					  }
+					}
+				',
 				'variables' => [ 'id' => $this->admin->ID ],
 				'assertions' => [
 					$this->expectedField( 'user.__typename', 'User' ),
@@ -769,13 +951,25 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 					])
 				],
 				'expectedCacheKeys' => [
-					'list:post',
 					$this->toRelayId( 'user', $this->admin->ID )
 				]
 			],
 			'editorUserWithPostsConnection' => [
 				'name' => 'editorUserWithPostsConnection',
-				'query' => $this->getSingleUserByDatabaseIdWithAuthoredPostsQuery(),
+				'query' => '
+					query GetUser($id:ID!) {
+					  user(id:$id idType:DATABASE_ID) {
+				        __typename
+				        databaseId
+				        posts {
+				          nodes {
+				            __typename
+				            databaseId
+				          }
+				        }
+					  }
+					}
+				',
 				'variables' => [ 'id' => $this->editor->ID ],
 				'assertions' => [
 					$this->expectedField( 'user.__typename', 'User' ),
@@ -786,13 +980,19 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 					])
 				],
 				'expectedCacheKeys' => [
-					'list:post',
 					$this->toRelayId( 'user', $this->editor->ID )
 				]
 			],
 			'adminUserByDatabaseId' => [
 				'name' => 'adminUserByDatabaseId',
-				'query' => $this->getSingleUserByDatabaseIdQuery(),
+				'query' => '
+					query GetUser($id:ID!) {
+					  user(id:$id idType:DATABASE_ID) {
+				        __typename
+				        databaseId
+					  }
+					}
+				',
 				'variables' => [ 'id' => $this->admin->ID ],
 				'assertions' => [
 					$this->expectedField( 'user.__typename', 'User' ),
@@ -805,7 +1005,16 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			],
 			'listUser' => [
 				'name' => 'listUser',
-				'query' => $this->getListUserQuery(),
+				'query' => '
+					{
+					  users {
+					    nodes {
+					      __typename
+					      databaseId
+					    }
+					  }
+					}
+				',
 				'variables' => null,
 				'assertions' => [
 					$this->expectedObject( 'users.nodes', [
@@ -820,63 +1029,172 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			],
 			'generalSettings' => [
 				'name' => 'generalSettings',
-				'query' => $this->getGeneralSettingsQuery(),
+				'query' => '
+					query GetGeneralSettings {
+					  generalSettings {
+					    dateFormat
+					    description
+					    language
+					    startOfWeek
+					    timeFormat
+					    timezone
+					    title
+					    url
+					  }
+					}
+				',
 			],
 			'writingSettings' => [
 				'name' => 'writingSettings',
-				'query' => $this->getWritingSettingsQuery(),
+				'query' => '
+				query GetWritingSettings {
+				  writingSettings {
+				    defaultCategory
+				    defaultPostFormat
+				    useSmilies
+				  }
+				}
+				',
 			],
 			'discussionSettings' => [
 				'name' => 'discussionSettings',
-				'query' => $this->getDiscussionSettingsQuery(),
+				'query' => '
+					query GetDiscussionSettings {
+						discussionSettings {
+					        defaultCommentStatus
+					        defaultPingStatus
+					    }
+					}
+				',
  			],
 			'allSettings' => [
 				'name' => 'allSettings',
-				'query' => $this->getAllSettingsQuery()
+				'query' => '
+					query GetAllSettings {
+					  allSettings {
+					    discussionSettingsDefaultCommentStatus
+					    discussionSettingsDefaultPingStatus
+					    generalSettingsDateFormat
+					    generalSettingsDescription
+					    generalSettingsLanguage
+					    generalSettingsStartOfWeek
+					    generalSettingsTimeFormat
+					    readingSettingsPostsPerPage
+					    writingSettingsDefaultCategory
+					    writingSettingsDefaultPostFormat
+					    writingSettingsUseSmilies
+					  }
+					}
+				'
 			],
 			'singleMenu' => [
 				'name' => 'singleMenu',
-				'query' => $this->getSingleMenuByDatabaseIdQuery(),
+				'query' => '
+					query GetMenu($id:ID!) {
+					  menu(id:$id idType: DATABASE_ID) {
+					    __typename
+					    databaseId
+					  }
+					}
+				',
 				'variables' => [
 					'id' => (int) $this->menu->term_id
 				]
 			],
 			'listMenu' => [
 				'name' => 'listMenu',
-				'query' => $this->getListMenusQuery()
+				'query' => '
+					query GetMenus {
+					  menus {
+					    nodes {
+					      __typename
+					      databaseId
+					    }
+					  }
+					}
+				'
 			],
 			'listMenuItem' => [
 				'name' => 'listMenuItem',
-				'query' => $this->getListMenuItemsQuery(),
+				'query' => '
+					query GetMenuItems {
+					  menuItems {
+					    nodes {
+					      __typename
+					      databaseId
+					      parentDatabaseId
+					    }
+					  }
+					}
+				',
 			],
 			'singleMenuItem' => [
 				'name' => 'singleMenuItem',
-				'query' => $this->getSingleMenuItemByDatabaseIdQuery(),
+				'query' => '
+					query GetMenuItem($id:ID!) {
+					  menuItem(id:$id idType: DATABASE_ID) {
+					    __typename
+					    databaseId
+					    parentDatabaseId
+					  }
+					}
+				',
 				'variables' => [
 					'id' => $this->menu_item_1->ID,
 				]
 			],
 			'singleChildMenuItem' => [
 				'name' => 'singleChildMenuItem',
-				'query' => $this->getSingleMenuItemByDatabaseIdQuery(),
+				'query' => '
+					query GetMenuItem($id:ID!) {
+					  menuItem(id:$id idType: DATABASE_ID) {
+					    __typename
+					    databaseId
+					    parentDatabaseId
+					  }
+					}
+				',
 				'variables' => [
 					'id' => $this->child_menu_item->ID
 				]
 			],
 			'singleMediaItem' => [
 				'name' => 'singleMediaItem',
-				'query' => $this->getSingleMediaItemQueryByDatabaseId(),
+				'query' => '
+					query GetSingleMediaItem($id:ID!) {
+					  mediaItem(id:$id idType:DATABASE_ID) {
+					    __typename
+					    databaseId
+					  }
+					}
+				',
 				'variables' => [
 					'id' => $this->mediaItem->ID
 				],
 			],
 			'listMediaItem' => [
 				'name' => 'listMediaItem',
-				'query' => $this->getListMediaItemQuery(),
+				'query' => '
+					query GetListMediaItems {
+					  mediaItems {
+					    nodes {
+					      __typename
+					      databaseId
+					    }
+					  }
+					}
+				',
 			],
 			'singleApprovedCommentByGlobalId' => [
 				'name' => 'singleApprovedCommentByGlobalId',
-				'query' => $this->getSingleCommentByGlobalIdQuery(),
+				'query' => '
+					query GetComment($id:ID!) {
+					  comment(id:$id) {
+				        __typename
+				        databaseId
+					  }
+					}
+				',
 				'variables' => [ 'id' => $this->toRelayId( 'comment', $this->approved_comment->comment_ID ) ],
 				'expectedCacheKeys' => [
 					$this->toRelayId( 'comment', $this->approved_comment->comment_ID )
@@ -884,7 +1202,16 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			],
 			'listComment' => [
 				'name' => 'listComment',
-				'query' => $this->getListCommentQuery(),
+				'query' => '
+					query GetComments {
+					  comments {
+					    nodes {
+					      __typename
+					      databaseId
+					    }
+					  }
+					}
+				',
 				'variables' => null,
 			],
 
@@ -1003,570 +1330,6 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 	 */
 	public function getNonEvictedCaches() {
 		return array_diff( array_keys( $this->query_results ), $this->getEvictedCaches() );
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getSinglePostByDatabaseIdQuery() {
-		return '
-		query GetPost($id:ID!) {
-		  post(id:$id idType: DATABASE_ID) {
-		    __typename
-		    databaseId
-		  }
-		}
-		';
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getListPostQuery() {
-		return '
-		query GetPosts {
-		  posts {
-		    nodes {
-		      __typename
-		      databaseId
-		    }
-		  }
-		}
-		';
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getSinglePageByDatabaseIdQuery() {
-		return '
-		query GetPage($id:ID!) {
-		  page(id:$id idType: DATABASE_ID) {
-		    __typename
-		    databaseId
-		  }
-		}
-		';
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getListPageQuery() {
-		return '
-		query GetPages {
-		  pages {
-		    nodes {
-		      __typename
-		      databaseId
-		    }
-		  }
-		}
-		';
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getSingleTestPostTypeByDatabaseIdQuery() {
-		return '
-		query GetTestPostType($id:ID!) {
-		  testPostType(id:$id idType: DATABASE_ID) {
-		    __typename
-		    databaseId
-		  }
-		}
-		';
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getListTestPostTypeQuery() {
-		return '
-		query GetTestPostTypes {
-		  testPostTypes {
-		    nodes {
-		      __typename
-		      databaseId
-		    }
-		  }
-		}
-		';
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getSinglePrivatePostTypeByDatabaseIdQuery() {
-		return '
-		query GetPrivatePostType($id:ID!) {
-		  privatePostType(id:$id idType: DATABASE_ID) {
-		    __typename
-		    databaseId
-		  }
-		}
-		';
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getListPrivatePostTypeQuery() {
-		return '
-		query GetPrivatePostTypes {
-		  privatePostTypes {
-		    nodes {
-		      __typename
-		      databaseId
-		    }
-		  }
-		}
-		';
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getListContentNodeQuery() {
-		return '
-		query GetContentNodes {
-		  contentNodes {
-		    nodes {
-		      __typename
-		      databaseId
-		    }
-		  }
-		}
-		';
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getSingleContentNodeByDatabaseId() {
-		return '
-		query GetContentNode($id:ID!) {
-		  contentNode(id:$id idType: DATABASE_ID) {
-		    __typename
-		    databaseId
-		  }
-		}
-		';
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getSingleNodeByUriQuery() {
-		return '
-		query GetNodeByUri($uri: String!) {
-		  nodeByUri(uri: $uri) {
-		    __typename
-		    id
-		    ... on DatabaseIdentifier {
-		      databaseId
-		    }
-		  }
-		}
-		';
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getSingleNodeByIdQuery() {
-		return '
-		query GetNode($id: ID!) {
-		  node(id: $id) {
-		    __typename
-		    id
-		    ... on DatabaseIdentifier {
-		      databaseId
-		    }
-		  }
-		}
-		';
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getListTagQuery() {
-		return '
-		query GetTags {
-		  tags {
-		    nodes {
-		      __typename
-		      databaseId
-		      name
-		    }
-		  }
-		}
-		';
-	}
-
-	/**
-	/**
-	 * @return string
-	 */
-	public function getSingleTagByDatabaseIdQuery() {
-		return '
-		query GetTag($id:ID!) {
-		  tag(id:$id idType: DATABASE_ID) {
-		    __typename
-		    databaseId
-		  }
-		}
-		';
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getListCategoryQuery() {
-		return '
-		query GetCategories {
-		  categories {
-		    nodes {
-		      __typename
-		      databaseId
-		      name
-		    }
-		  }
-		}
-		';
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getSingleCategoryByDatabaseIdQuery() {
-		return '
-		query GetCategory($id:ID!) {
-		  category(id:$id idType: DATABASE_ID) {
-		    __typename
-		    databaseId
-		  }
-		}
-		';
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getListTestTaxonomyTermsQuery() {
-		return '
-		query GetTestTaxonomyTerms {
-		  testTaxonomyTerms {
-		    nodes {
-		      __typename
-		      databaseId
-		      name
-		    }
-		  }
-		}
-		';
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getSingleTestTaxonomyTermByDatabaseIdQuery() {
-		return '
-		query GetTestTaxonomyTerm($id:ID!) {
-		  testTaxonomyTerm(id:$id idType: DATABASE_ID) {
-		    __typename
-		    databaseId
-		  }
-		}
-		';
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getListPrivateTaxonomyTermsQuery() {
-		return '
-		query GetPrivateTaxonomyTerms {
-		  privateTaxonomyTerms {
-		    nodes {
-		      __typename
-		      databaseId
-		      name
-		    }
-		  }
-		}
-		';
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getSinglePrivateTaxonomyTermByDatabaseIdQuery() {
-		return '
-		query GetPrivateTaxonomyTerm($id:ID!) {
-		  privateTaxonomyTerm(id:$id idType: DATABASE_ID) {
-		    __typename
-		    databaseId
-		  }
-		}
-		';
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getListMenusQuery() {
-		return '
-		query GetMenus {
-		  menus {
-		    nodes {
-		      __typename
-		      databaseId
-		    }
-		  }
-		}
-		';
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getSingleMenuByDatabaseIdQuery() {
-		return '
-		query GetMenu($id:ID!) {
-		  menu(id:$id idType: DATABASE_ID) {
-		    __typename
-		    databaseId
-		  }
-		}
-		';
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getListMenuItemsQuery() {
-		return '
-		query GetMenuItems {
-		  menuItems {
-		    nodes {
-		      __typename
-		      databaseId
-		      parentDatabaseId
-		    }
-		  }
-		}
-		';
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getSingleMenuItemByDatabaseIdQuery() {
-		return '
-		query GetMenuItem($id:ID!) {
-		  menuItem(id:$id idType: DATABASE_ID) {
-		    __typename
-		    databaseId
-		    parentDatabaseId
-		  }
-		}
-		';
-	}
-
-	public function getListUserQuery() {
-		return '
-		{
-		  users {
-		    nodes {
-		      __typename
-		      databaseId
-		    }
-		  }
-		}
-		';
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getSingleUserByDatabaseIdQuery() {
-		return '
-		query GetUser($id:ID!) {
-		  user(id:$id idType:DATABASE_ID) {
-	        __typename
-	        databaseId
-		  }
-		}
-		';
-	}
-
-	/**
-	 * Returns a query for a user by database ID, as well
-	 * as the users connected posts
-	 *
-	 * @return string
-	 */
-	public function getSingleUserByDatabaseIdWithAuthoredPostsQuery() {
-
-		return '
-		query GetUser($id:ID!) {
-		  user(id:$id idType:DATABASE_ID) {
-	        __typename
-	        databaseId
-	        posts {
-	          nodes {
-	            __typename
-	            databaseId
-	          }
-	        }
-		  }
-		}
-		';
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getListCommentQuery() {
-		return '
-		query GetComments {
-		  comments {
-		    nodes {
-		      __typename
-		      databaseId
-		    }
-		  }
-		}
-		';
-	}
-
-	/**
-	 * @todo: As of writing this, the comment query doesn't allow
-	 *      fetching a single comment by database id
-	 *
-	 * @return string
-	 */
-	public function getSingleCommentByGlobalIdQuery() {
-		return '
-		query GetComment($id:ID!) {
-		  comment(id:$id) {
-	        __typename
-	        databaseId
-		  }
-		}
-		';
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getGeneralSettingsQuery() {
-		return '
-		query GetGeneralSettings {
-		  generalSettings {
-		    dateFormat
-		    description
-		    language
-		    startOfWeek
-		    timeFormat
-		    timezone
-		    title
-		    url
-		  }
-		}
-		';
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getReadingSettingsQuery() {
-		return '
-		query GetReadingSettings {
-		  readingSettings {
-		    postsPerPage
-		  }
-		}
-		';
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getWritingSettingsQuery() {
-		return '
-		query GetWritingSettings {
-		  writingSettings {
-		    defaultCategory
-		    defaultPostFormat
-		    useSmilies
-		  }
-		}
-		';
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getDiscussionSettingsQuery() {
-		return '
-		query GetDiscussionSettings {
-			discussionSettings {
-		        defaultCommentStatus
-		        defaultPingStatus
-		    }
-		}
-		';
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getAllSettingsQuery() {
-		return '
-		query GetAllSettings {
-		  allSettings {
-		    discussionSettingsDefaultCommentStatus
-		    discussionSettingsDefaultPingStatus
-		    generalSettingsDateFormat
-		    generalSettingsDescription
-		    generalSettingsLanguage
-		    generalSettingsStartOfWeek
-		    generalSettingsTimeFormat
-		    readingSettingsPostsPerPage
-		    writingSettingsDefaultCategory
-		    writingSettingsDefaultPostFormat
-		    writingSettingsUseSmilies
-		  }
-		}
-		';
-	}
-
-	public function getListMediaItemQuery() {
-		return '
-		query GetListMediaItems {
-		  mediaItems {
-		    nodes {
-		      __typename
-		      databaseId
-		    }
-		  }
-		}
-		';
-	}
-
-	public function getSingleMediaItemQueryByDatabaseId() {
-		return '
-		query GetSingleMediaItem($id:ID!) {
-		  mediaItem(id:$id idType:DATABASE_ID) {
-		    __typename
-		    databaseId
-		  }
-		}
-		';
 	}
 
 }
