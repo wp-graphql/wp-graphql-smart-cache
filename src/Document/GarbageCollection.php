@@ -11,7 +11,7 @@ use WPGraphQL\SmartCache\Admin\Settings;
 use WPGraphQL\SmartCache\Document;
 use GraphQL\Server\RequestError;
 
-class SkipGarbageCollection {
+class GarbageCollection {
 
 	const TAXONOMY_NAME = 'graphql_document_skip_gc';
 	const DISABLED      = 'disabled';

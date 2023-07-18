@@ -11,7 +11,7 @@ use WPGraphQL\SmartCache\AdminErrors;
 use WPGraphQL\SmartCache\Document;
 use WPGraphQL\SmartCache\Document\Grant;
 use WPGraphQL\SmartCache\Document\MaxAge;
-use WPGraphQL\SmartCache\Document\SkipGarbageCollection;
+use WPGraphQL\SmartCache\Document\GarbageCollection;
 use GraphQL\Error\SyntaxError;
 use GraphQL\Server\RequestError;
 
@@ -130,9 +130,9 @@ class Editor {
 			$data    = sanitize_text_field( wp_unslash( $_POST['graphql_query_maxage'] ) );
 			$max_age->save( $post_id, $data );
 
-			$garbage = new SkipGarbageCollection();
+			$garbage = new GarbageCollection();
 			// phpcs:ignore
-			if ( isset( $_POST['graphql_query_skip_gc'] ) && SkipGarbageCollection::DISABLED === sanitize_text_field( wp_unslash( $_POST['graphql_query_skip_gc'] ) ) ) {
+			if ( isset( $_POST['graphql_query_skip_gc'] ) && GarbageCollection::DISABLED === sanitize_text_field( wp_unslash( $_POST['graphql_query_skip_gc'] ) ) ) {
 				$garbage->disable( $post_id );
 			} else {
 				$garbage->enable( $post_id );
@@ -264,12 +264,12 @@ class Editor {
 	public static function skip_garbage_collection_input_box_cb( $post ) {
 		wp_nonce_field( 'graphql_query_skip_gc', 'savedquery_skip_gc_noncename' );
 
-		$object = new SkipGarbageCollection();
+		$object = new GarbageCollection();
 
 		$html  = sprintf(
 			'<input type="checkbox" id="graphql_query_skip_gc" name="graphql_query_skip_gc" value="%s" %s>',
-			SkipGarbageCollection::DISABLED,
-			checked( $object->get( $post->ID ), SkipGarbageCollection::DISABLED, false )
+			GarbageCollection::DISABLED,
+			checked( $object->get( $post->ID ), GarbageCollection::DISABLED, false )
 		);
 		$html .= '<label for="graphql_query_skip_gc">Disable</label><br >';
 
