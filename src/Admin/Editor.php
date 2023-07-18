@@ -132,10 +132,10 @@ class Editor {
 
 			$garbage = new SkipGarbageCollection();
 			// phpcs:ignore
-			if ( isset( $_POST['graphql_query_skip_gc'] ) && '1' === sanitize_text_field( wp_unslash( $_POST['graphql_query_skip_gc'] ) ) ) {
-				$garbage->save( $post_id );
+			if ( isset( $_POST['graphql_query_skip_gc'] ) && SkipGarbageCollection::DISABLED === sanitize_text_field( wp_unslash( $_POST['graphql_query_skip_gc'] ) ) ) {
+				$garbage->disable( $post_id );
 			} else {
-				$garbage->delete( $post_id );
+				$garbage->enable( $post_id );
 			}
 		} catch ( SyntaxError $e ) {
 			AdminErrors::add_message( 'Did not save invalid graphql query string. ' . $post['post_content'] );
@@ -268,10 +268,10 @@ class Editor {
 
 		$html  = sprintf(
 			'<input type="checkbox" id="graphql_query_skip_gc" name="graphql_query_skip_gc" value="%s" %s>',
-			'1',
-			checked( $object->get( $post->ID ), true, false )
+			SkipGarbageCollection::DISABLED,
+			checked( $object->get( $post->ID ), SkipGarbageCollection::DISABLED, false )
 		);
-		$html .= '<label for="graphql_query_skip_gc">Skip</label><br >';
+		$html .= '<label for="graphql_query_skip_gc">Disable</label><br >';
 
 		echo wp_kses(
 			$html,

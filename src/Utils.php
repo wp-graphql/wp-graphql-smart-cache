@@ -44,36 +44,6 @@ class Utils {
 	}
 
 	/**
-	 * @param integer $number_of_posts  Number of post ids matching criteria.
-	 *
-	 * @return [int]  Array of post ids
-	 */
-	public static function getDocumentsByAge( $number_of_posts = 100 ) {
-		// $days_ago  Posts older than this many days ago
-		$days_ago = get_graphql_setting( 'query_gc_age', null, 'graphql_persisted_queries_section' );
-		if ( 1 >= $days_ago || ! is_numeric( $days_ago ) ) {
-			return [];
-		}
-
-		$wp_query = new \WP_Query(
-			[
-				'post_type'      => Document::TYPE_NAME,
-				'post_status'    => 'publish',
-				'posts_per_page' => $number_of_posts,
-				'fields'         => 'ids',
-				'date_query'     => [
-					[
-						'column' => 'post_modified_gmt',
-						'before' => $days_ago . ' days ago',
-					],
-				],
-			]
-		);
-
-		return $wp_query->get_posts();
-	}
-
-	/**
 	 * Generate query hash for graphql query string
 	 *
 	 * @param string | \GraphQL\Language\AST\DocumentNode query string or document node

@@ -14,6 +14,7 @@ use GraphQL\Server\RequestError;
 class SkipGarbageCollection {
 
 	const TAXONOMY_NAME = 'graphql_document_skip_gc';
+	const DISABLED      = 'disabled';
 
 	public function init() {
 		register_taxonomy(
@@ -52,16 +53,20 @@ class SkipGarbageCollection {
 	}
 
 	/**
-	 * If 'skip garbage collection' is desired/selected, a value of true/1 is saved as the term.
-	 * Otherwise, the term is deleted, does not exist, which means 'do not skip'.
+	 * If 'no garbage collection' is desired/selected, a value is saved as the term.
 	 *
 	 * @param int  The post id
 	 */
-	public function save( $post_id ) {
-		return wp_set_post_terms( $post_id, true, self::TAXONOMY_NAME );
+	public function disable( $post_id ) {
+		return wp_set_post_terms( $post_id, self::DISABLED, self::TAXONOMY_NAME );
 	}
 
-	public function delete( $post_id ) {
+	/**
+	 * If 'garbage collection' is select, the term is deleted, does not exist, which means 'allow garbage collection'.
+	 *
+	 * @param int  The post id
+	 */
+	public function enable( $post_id ) {
 		$terms = wp_get_post_terms( $post_id, self::TAXONOMY_NAME );
 		if ( $terms ) {
 			foreach ( $terms as $term ) {
@@ -69,5 +74,46 @@ class SkipGarbageCollection {
 				wp_delete_term( $term->term_id, self::TAXONOMY_NAME );
 			}
 		}
+	}
+
+	/**
+	 * @param integer $number_of_posts  Number of post ids matching criteria.
+	 *
+	 * @return [int]  Array of post ids
+	 */
+	public static function getDocumentsByAge( $number_of_posts = 100 ) {
+		// $days_ago  Posts older than this many days ago
+		$days_ago = get_graphql_setting( 'query_gc_age', null, 'graphql_persisted_queries_section' );
+		if ( 1 > $days_ago || ! is_numeric( $days_ago ) ) {
+			return [];
+		}
+
+		// Query for saved query documents that are older than age and not skipping garbage collection.
+		// Get documents where the skip_qc taxonomy term name is not set to 'disabled'.
+		$wp_query = new \WP_Query(
+			[
+				'post_type'      => Document::TYPE_NAME,
+				'post_status'    => 'publish',
+				'posts_per_page' => $number_of_posts,
+				'fields'         => 'ids',
+				'date_query'     => [
+					[
+						'column' => 'post_modified_gmt',
+						'before' => $days_ago . ' days ago',
+					],
+				],
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+				'tax_query'      => [
+					[
+						'taxonomy' => self::TAXONOMY_NAME,
+						'field'    => 'name',
+						'terms'    => self::DISABLED,
+						'operator' => 'NOT IN',
+					],
+				],
+			]
+		);
+
+		return $wp_query->get_posts();
 	}
 }
