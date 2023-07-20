@@ -509,7 +509,7 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 	 */
 	public function getQuery( string $query_name ): ?string {
 		$queries = $this->getQueries();
-		return $queries['queryName']['query'] ?? null;
+		return $queries[ $query_name ]['query'] ?? null;
 
 	}
 
@@ -925,8 +925,8 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 					'list:testTaxonomyTerm'
 				],
 			],
-			'adminUserWithPostsConnection' => [
-				'name' => 'adminUserWithPostsConnection',
+			'userWithPostsConnection' => [
+				'name' => 'userWithPostsConnection',
 				'query' => '
 					query GetUser($id:ID!) {
 					  user(id:$id idType:DATABASE_ID) {

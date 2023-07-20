@@ -380,7 +380,7 @@ class TermCacheInvalidationTest extends WPGraphQLSmartCacheTestCaseWithSeedDataA
 		$this->assertEmpty( $this->getEvictedCaches() );
 
 		$actual = $this->graphql([
-			'query' => $this->getListCategoryQuery(),
+			'query' => $this->getQuery( 'listCategory' ),
 		]);
 
 		codecept_debug( [ 'listCategory' => $actual ]);
