@@ -94,16 +94,6 @@ class Editor {
 			return;
 		}
 
-		// ---- Garbage Collection Options ----
-		if ( ! isset( $_REQUEST['savedquery_skip_gc_noncename'] ) ) {
-			return;
-		}
-
-		// phpcs:ignore
-		if ( ! wp_verify_nonce( $_REQUEST['savedquery_skip_gc_noncename'], 'graphql_query_skip_gc' ) ) {
-			return;
-		}
-
 		return true;
 	}
 
@@ -129,14 +119,6 @@ class Editor {
 			// phpcs:ignore
 			$data    = sanitize_text_field( wp_unslash( $_POST['graphql_query_maxage'] ) );
 			$max_age->save( $post_id, $data );
-
-			$garbage = new GarbageCollection();
-			// phpcs:ignore
-			if ( isset( $_POST['graphql_query_skip_gc'] ) && GarbageCollection::DISABLED === sanitize_text_field( wp_unslash( $_POST['graphql_query_skip_gc'] ) ) ) {
-				$garbage->disable( $post_id );
-			} else {
-				$garbage->enable( $post_id );
-			}
 		} catch ( SyntaxError $e ) {
 			AdminErrors::add_message( 'Did not save invalid graphql query string. ' . $post['post_content'] );
 		} catch ( RequestError $e ) {
@@ -257,35 +239,4 @@ class Editor {
 
 		return $settings;
 	}
-
-	/**
-	 * Draw the input field to skip garbage collection
-	 */
-	public static function skip_garbage_collection_input_box_cb( $post ) {
-		wp_nonce_field( 'graphql_query_skip_gc', 'savedquery_skip_gc_noncename' );
-
-		$object = new GarbageCollection();
-
-		$html  = sprintf(
-			'<input type="checkbox" id="graphql_query_skip_gc" name="graphql_query_skip_gc" value="%s" %s>',
-			GarbageCollection::DISABLED,
-			checked( $object->get( $post->ID ), GarbageCollection::DISABLED, false )
-		);
-		$html .= '<label for="graphql_query_skip_gc">Disable</label><br >';
-
-		echo wp_kses(
-			$html,
-			[
-				'input' => [
-					'type'    => true,
-					'id'      => true,
-					'name'    => true,
-					'value'   => true,
-					'checked' => true,
-				],
-				'br'    => true,
-			]
-		);
-	}
-
 }

@@ -3,14 +3,15 @@
  * @package Wp_Graphql_Smart_Cache
  *
  * Test saved query garbage collection clean up of queries after certain age.
- * Test cron job wakes and deletes was is expected.
+ * Test cron job wakes and deletes as expected.
  */
 
 namespace WPGraphQL\SmartCache;
 
 use WPGraphQL\SmartCache\Document\GarbageCollection;
+use WPGraphQL\SmartCache\Document\Group;
 
-class QueryGarbageCollectionTest extends \Codeception\TestCase\WPTestCase {
+class DocumentGarbageCollectionTest extends \Codeception\TestCase\WPTestCase {
 
 	public function _before() {
 		update_option(
@@ -50,7 +51,7 @@ class QueryGarbageCollectionTest extends \Codeception\TestCase\WPTestCase {
 			$date_string = date( 'Y-m-d H:i:s', strtotime( $one_date ) );
 			// Create more than one saved query for this age
 			for ( $i = 0; $i < 3; $i++ ) {
-				self::factory()->post->create(
+				$post_id = self::factory()->post->create(
 					[
 						'post_type' => 'graphql_document',
 						'post_date' => $date_string,
@@ -62,7 +63,7 @@ class QueryGarbageCollectionTest extends \Codeception\TestCase\WPTestCase {
 			}
 		}
 
-		// Create some queries that are excluded from garbage collection
+		// Create some queries that are excluded from garbage collection delete, in a 'group'
 		for ( $i = 0; $i < 3; $i++ ) {
 			$post_id = self::factory()->post->create(
 				[
@@ -72,16 +73,15 @@ class QueryGarbageCollectionTest extends \Codeception\TestCase\WPTestCase {
 					'post_title' => sprintf( "query %d", $counter ),
 				]
 			);
-			$gc = new GarbageCollection();
-			$gc->disable( $post_id );
+			wp_set_post_terms( $post_id, 'foo-bar', Group::TAXONOMY_NAME );
 			$counter++;
 		}
 
-		// Should be 6 posts older that 11 days
+		// Check number of posts we would delete older than 10 days.
 		$this->updateAge( 10 );
 		$this->assertCount( 6, GarbageCollection::getDocumentsByAge() );
 
-		// Should be 3 posts older than 20 days
+		// Check number of posts we would delete older than 20 days.
 		$this->updateAge( 20 );
 		$this->assertCount( 3, GarbageCollection::getDocumentsByAge() );
 

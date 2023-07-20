@@ -28,6 +28,7 @@ use WPGraphQL\SmartCache\Admin\Editor;
 use WPGraphQL\SmartCache\Admin\Settings;
 use WPGraphQL\SmartCache\Document\Description;
 use WPGraphQL\SmartCache\Document\Grant;
+use WPGraphQL\SmartCache\Document\Group;
 use WPGraphQL\SmartCache\Document\MaxAge;
 use WPGraphQL\SmartCache\Document\Loader;
 use WPGraphQL\SmartCache\Document\GarbageCollection;
@@ -132,8 +133,8 @@ add_action(
 		$max_age = new MaxAge();
 		$max_age->init();
 
-		$garbage = new GarbageCollection();
-		$garbage->init();
+		$doc_group = new Group();
+		$doc_group->init();
 
 		$errors = new AdminErrors();
 		$errors->init();
