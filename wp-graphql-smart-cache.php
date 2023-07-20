@@ -141,7 +141,6 @@ add_action(
 
 		$settings = new Settings();
 		$settings->init();
-
 	}
 );
 
