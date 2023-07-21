@@ -115,6 +115,11 @@ class Results extends Query {
 			return $result;
 		}
 
+		// For mutation, do not cache
+		if ( 'Mutation' === $request->get_query_analyzer()->get_root_operation() ) {
+			return;
+		}
+
 		// Loop over each request and load the response. If any one are empty, not in cache, return so all get reloaded.
 		if ( is_array( $request->params ) ) {
 			$result = [];
@@ -221,6 +226,11 @@ class Results extends Query {
 		//
 		// Possibly in the future we'll have solutions for authenticated request caching
 		if ( ! $this->is_object_cache_enabled() ) {
+			return;
+		}
+
+		// For mutation, do not cache
+		if ( 'Mutation' === $request->get_query_analyzer()->get_root_operation() ) {
 			return;
 		}
 
