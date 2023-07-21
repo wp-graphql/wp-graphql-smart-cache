@@ -635,6 +635,52 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLSmartCache\TestCase\W
 
 	}
 
+	public function testPublishSecondPostToUserShouldPurgeUserToPostConnection() {
+
+		$query = $this->getQuery('userWithPostsConnection' );
+		$variables = [ 'id' => $this->admin->ID ];
+
+		$cache_key = $this->collection->build_key( null, $query, $variables );
+
+		$this->assertEmpty( $this->collection->get( $cache_key ) );
+
+		$actual = graphql([
+			'query' => $query,
+			'variables' => $variables
+		]);
+
+		$this->assertNotEmpty( $this->collection->get( $cache_key ) );
+		$this->assertSame( $actual['data'], $this->collection->get( $cache_key )['data'] );
+
+		$new_post = self::factory()->post->create_and_get([
+			'post_type' => 'post',
+			'post_status' => 'publish',
+			'post_author' => $this->admin->ID,
+		]);
+
+		// assert that the query for a user and the users post has been evicted
+		$this->assertEmpty( $this->collection->get( $cache_key ) );
+
+		$query_again = graphql([
+			'query' => $query,
+			'variables' => $variables
+		]);
+
+		// the query should be cached again
+		$this->assertNotEmpty( $this->collection->get( $cache_key ) );
+		$this->assertSame( $query_again['data'], $this->collection->get( $cache_key )['data'] );
+
+		// the results should have the user data
+		self::assertQuerySuccessful( $query_again, [
+			$this->expectedField( 'user.__typename', 'User' ),
+			$this->expectedNode( 'user.posts.nodes', [
+				'__typename' => 'Post',
+				'databaseId' => $new_post->ID,
+			]),
+		]);
+
+	}
+
 
 	// publish first post to a user (user->post connection should purge)
 	public function testPublishFirstPostToUserShouldPurgeUserToPostConnection() {

@@ -317,7 +317,7 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			'post_type' => 'post',
 			'post_status' => 'future',
 			'post_title' => 'Test Scheduled Post',
-			'post_author' => (int) $this->admin->ID,
+			'post_author' => $this->admin->ID,
 			'post_date' => date( "Y-m-d H:i:s", strtotime( '+1 day' ) ),
 		]);
 
