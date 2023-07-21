@@ -568,9 +568,6 @@ class Invalidation {
 			// Purge any documents tagged with list:$type_name
 			$this->purge( 'list:' . $type_name, 'post_' . $action_type );
 
-			// Evict any caches with this post id already in it (i.e. queries for the post by ID but the ID is a draft, for example)
-			$this->purge_nodes( 'post', $post->ID, 'post_' . $action_type );
-
 			// Purge the terms associated with the node
 			$terms = wp_get_object_terms( $post->ID, \WPGraphQL::get_allowed_taxonomies() );
 
