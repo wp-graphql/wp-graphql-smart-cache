@@ -51,9 +51,9 @@ class AdminSettingsQueriesCest
 		$I->loginAsAdmin();
 
 		$I->amOnPage('/wp-admin/admin.php?page=graphql-settings#graphql_persisted_queries_section');
-		$I->checkOption("//input[@type='checkbox' and @name='graphql_persisted_queries_section[query_gc]']");
+		$I->checkOption("//input[@type='checkbox' and @name='graphql_persisted_queries_section[query_garbage_collect]']");
 		$I->click('Save Changes');
-		$I->seeCheckboxIsChecked("//input[@type='checkbox' and @name='graphql_persisted_queries_section[query_gc]']");
+		$I->seeCheckboxIsChecked("//input[@type='checkbox' and @name='graphql_persisted_queries_section[query_garbage_collect]']");
 
 		// Verify the cron event has been scheduled
 		$cron_names = [];
@@ -65,11 +65,11 @@ class AdminSettingsQueriesCest
 			}
 		}
 		codecept_debug( $cron_names );
-		$I->assertContains( 'wp_graphql_smart_cache_query_gc', $cron_names );
+		$I->assertContains( 'wpgraphql_smart_cache_query_garbage_collect', $cron_names );
 
-		$I->uncheckOption("//input[@type='checkbox' and @name='graphql_persisted_queries_section[query_gc]']");
+		$I->uncheckOption("//input[@type='checkbox' and @name='graphql_persisted_queries_section[query_garbage_collect]']");
 		$I->click('Save Changes');
-		$I->dontSeeCheckboxIsChecked("//input[@type='checkbox' and @name='graphql_persisted_queries_section[query_gc]']");
+		$I->dontSeeCheckboxIsChecked("//input[@type='checkbox' and @name='graphql_persisted_queries_section[query_garbage_collect]']");
 
 		// Verify the cron event has been removed
 		$cron_names = [];
@@ -81,7 +81,7 @@ class AdminSettingsQueriesCest
 			}
 		}
 		codecept_debug( $cron_names );
-		$I->assertNotContains( 'wp_graphql_smart_cache_query_gc', $cron_names );
+		$I->assertNotContains( 'wpgraphql_smart_cache_query_garbage_collect', $cron_names );
 	}
 
 	// Test the garbage collection number of days validate and saves
@@ -90,15 +90,15 @@ class AdminSettingsQueriesCest
 
 		$I->amOnPage('/wp-admin/admin.php?page=graphql-settings#graphql_persisted_queries_section');
 
-		$I->seeInField(['name' => 'graphql_persisted_queries_section[query_gc_age]'], '30');
-		$I->fillField(['name' => 'graphql_persisted_queries_section[query_gc_age]'], '50');
+		$I->seeInField(['name' => 'graphql_persisted_queries_section[query_garbage_collect_age]'], '30');
+		$I->fillField(['name' => 'graphql_persisted_queries_section[query_garbage_collect_age]'], '50');
 		$I->click('Save Changes');
-		$I->seeInField(['name' => 'graphql_persisted_queries_section[query_gc_age]'], '50');
+		$I->seeInField(['name' => 'graphql_persisted_queries_section[query_garbage_collect_age]'], '50');
 
 		// If invalid value, should return previous saved value
-		$I->fillField(['name' => 'graphql_persisted_queries_section[query_gc_age]'], '-1');
+		$I->fillField(['name' => 'graphql_persisted_queries_section[query_garbage_collect_age]'], '-1');
 		$I->click('Save Changes');
-		$I->seeInField(['name' => 'graphql_persisted_queries_section[query_gc_age]'], '50');
+		$I->seeInField(['name' => 'graphql_persisted_queries_section[query_garbage_collect_age]'], '50');
 
 	}
 

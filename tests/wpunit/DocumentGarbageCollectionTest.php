@@ -17,7 +17,7 @@ class DocumentGarbageCollectionTest extends \Codeception\TestCase\WPTestCase {
 		update_option(
 			'graphql_persisted_queries_section',
 			[ 
-				'query_gc' => 'off',
+				'query_garbage_collect' => 'off',
 			]
 		);
 	}
@@ -30,8 +30,8 @@ class DocumentGarbageCollectionTest extends \Codeception\TestCase\WPTestCase {
 		update_option(
 			'graphql_persisted_queries_section',
 			[ 
-				'query_gc' => 'on',
-				'query_gc_age' => $age,
+				'query_garbage_collect' => 'on',
+				'query_garbage_collect_age' => $age,
 			]
 		);
 	}
@@ -86,22 +86,22 @@ class DocumentGarbageCollectionTest extends \Codeception\TestCase\WPTestCase {
 		$this->assertCount( 3, GarbageCollection::getDocumentsByAge() );
 
 		// Verify delete event is not scheduled before the garbage collection event runs
-		$this->assertFalse( wp_next_scheduled( 'wp_graphql_smart_cache_query_gc_deletes' ) );
+		$this->assertFalse( wp_next_scheduled( 'wpgraphql_smart_cache_query_garbage_collect_deletes' ) );
 
-		do_action( 'wp_graphql_smart_cache_query_gc' );
+		do_action( 'wpgraphql_smart_cache_query_garbage_collect' );
 
 		// Verify delete job scheduled, this WP api returns timestamp integer
-		$this->assertIsInt( wp_next_scheduled( 'wp_graphql_smart_cache_query_gc_deletes' ) );
+		$this->assertIsInt( wp_next_scheduled( 'wpgraphql_smart_cache_query_garbage_collect_deletes' ) );
 
 		// filter batch size to we only delete a few of our aged queries and reschedule the next job
 		add_filter( 'wpgraphql_document_garbage_collection_batch_size', function () { return 2; } );
 
 		// Fire the delete action and verify the number of posts deleted
-		do_action( 'wp_graphql_smart_cache_query_gc_deletes' );
+		do_action( 'wpgraphql_smart_cache_query_garbage_collect_deletes' );
 		$this->assertCount( 1, GarbageCollection::getDocumentsByAge() );
 
 		// Fire the delete action again, verify expected queries are removed.
-		do_action( 'wp_graphql_smart_cache_query_gc_deletes' );
+		do_action( 'wpgraphql_smart_cache_query_garbage_collect_deletes' );
 		$this->updateAge( 10 );
 		$this->assertCount( 3, GarbageCollection::getDocumentsByAge() );
 		$this->updateAge( 20 );

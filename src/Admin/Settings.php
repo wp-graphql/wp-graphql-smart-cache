@@ -126,7 +126,7 @@ class Settings {
 				register_graphql_settings_field(
 					'graphql_persisted_queries_section',
 					[
-						'name'              => 'query_gc',
+						'name'              => 'query_garbage_collect',
 						'label'             => __( 'Delete Old Queries', 'wp-graphql-smart-cache' ),
 						'desc'              => __( 'Toggle on to enable garbage collection (delete) of saved queries older than number of days specified below. Queries that are part of a "Group" will be excluded from garbage collection.', 'wp-graphql-smart-cache' ),
 						'type'              => 'checkbox',
@@ -138,12 +138,12 @@ class Settings {
 							 * Otherwise remove it.
 							 */
 							if ( 'on' === $value ) {
-								if ( ! wp_next_scheduled( 'wp_graphql_smart_cache_query_gc' ) ) {
+								if ( ! wp_next_scheduled( 'wpgraphql_smart_cache_query_garbage_collect' ) ) {
 									// Add scheduled job to run in one minute
-									wp_schedule_event( time() + 60, 'daily', 'wp_graphql_smart_cache_query_gc' );
+									wp_schedule_event( time() + 60, 'daily', 'wpgraphql_smart_cache_query_garbage_collect' );
 								}
 							} else {
-								wp_clear_scheduled_hook( 'wp_graphql_smart_cache_query_gc' );
+								wp_clear_scheduled_hook( 'wpgraphql_smart_cache_query_garbage_collect' );
 							}
 							return $value;
 						},
@@ -153,13 +153,13 @@ class Settings {
 				register_graphql_settings_field(
 					'graphql_persisted_queries_section',
 					[
-						'name'              => 'query_gc_age',
+						'name'              => 'garbage_collect_age',
 						'desc'              => __( 'Age, in number of days, of saved query when it will be removed', 'wp-graphql-smart-cache' ),
 						'type'              => 'number',
 						'default'           => '30',
 						'sanitize_callback' => function ( $value ) {
 							if ( 1 > $value || ! is_numeric( $value ) ) {
-								return function_exists( 'get_graphql_setting' ) ? \get_graphql_setting( 'query_gc_age', false, 'graphql_persisted_queries_section' ) : null;
+								return function_exists( 'get_graphql_setting' ) ? \get_graphql_setting( 'garbage_collect_age', false, 'graphql_persisted_queries_section' ) : null;
 							}
 							return (int) $value;
 						},
