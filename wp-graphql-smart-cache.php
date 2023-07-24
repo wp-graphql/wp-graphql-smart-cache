@@ -295,7 +295,7 @@ add_action(
 		}
 
 		// If more posts exist to remove, schedule the removal event
-		$posts = GarbageCollection::getDocumentsByAge( 1 );
+		$posts = GarbageCollection::get_documents_by_age( 1 );
 		if ( $posts ) {
 			wp_schedule_single_event( time() + 1, 'wpgraphql_smart_cache_query_garbage_collect_deletes' );
 		}
@@ -314,14 +314,14 @@ add_action(
 	function () {
 		// If posts exist to remove, schedule the removal event
 		$batch_size = apply_filters( 'wpgraphql_document_garbage_collection_batch_size', 1000 );
-		$posts      = GarbageCollection::getDocumentsByAge( $batch_size );
+		$posts      = GarbageCollection::get_documents_by_age( $batch_size );
 		foreach ( $posts as $post_id ) {
 			// Check if the post is selected to skip garbage collection
 			wp_delete_post( $post_id );
 		}
 
 		// If more posts exist to remove, schedule the removal event
-		$posts = GarbageCollection::getDocumentsByAge( 1 );
+		$posts = GarbageCollection::get_documents_by_age( 1 );
 		if ( ! empty( $posts ) ) {
 			wp_schedule_single_event( time() + 1, 'wpgraphql_smart_cache_garbage_collect_deletes' );
 		}

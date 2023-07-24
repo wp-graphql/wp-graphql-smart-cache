@@ -79,11 +79,11 @@ class DocumentGarbageCollectionTest extends \Codeception\TestCase\WPTestCase {
 
 		// Check number of posts we would delete older than 10 days.
 		$this->updateAge( 10 );
-		$this->assertCount( 6, GarbageCollection::getDocumentsByAge() );
+		$this->assertCount( 6, GarbageCollection::get_documents_by_age() );
 
 		// Check number of posts we would delete older than 20 days.
 		$this->updateAge( 20 );
-		$this->assertCount( 3, GarbageCollection::getDocumentsByAge() );
+		$this->assertCount( 3, GarbageCollection::get_documents_by_age() );
 
 		// Verify delete event is not scheduled before the garbage collection event runs
 		$this->assertFalse( wp_next_scheduled( 'wpgraphql_smart_cache_query_garbage_collect_deletes' ) );
@@ -98,14 +98,14 @@ class DocumentGarbageCollectionTest extends \Codeception\TestCase\WPTestCase {
 
 		// Fire the delete action and verify the number of posts deleted
 		do_action( 'wpgraphql_smart_cache_query_garbage_collect_deletes' );
-		$this->assertCount( 1, GarbageCollection::getDocumentsByAge() );
+		$this->assertCount( 1, GarbageCollection::get_documents_by_age() );
 
 		// Fire the delete action again, verify expected queries are removed.
 		do_action( 'wpgraphql_smart_cache_query_garbage_collect_deletes' );
 		$this->updateAge( 10 );
-		$this->assertCount( 3, GarbageCollection::getDocumentsByAge() );
+		$this->assertCount( 3, GarbageCollection::get_documents_by_age() );
 		$this->updateAge( 20 );
-		$this->assertCount( 0, GarbageCollection::getDocumentsByAge( 20 ) );
+		$this->assertCount( 0, GarbageCollection::get_documents_by_age( 20 ) );
 	}
 
 }

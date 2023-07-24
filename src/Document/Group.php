@@ -32,8 +32,8 @@ class Group {
 				'show_ui'             => Settings::show_in_admin(),
 				'show_in_quick_edit'  => false,
 				'show_in_graphql'     => true,
-				'graphql_single_name' => 'graphql_document_group',
-				'graphql_plural_name' => 'graphql_document_groups',
+				'graphql_single_name' => 'graphqlDocumentGroup',
+				'graphql_plural_name' => 'graphqlDocumentGroups',
 			]
 		);
 	}

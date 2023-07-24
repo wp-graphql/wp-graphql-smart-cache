@@ -11,7 +11,6 @@ use WPGraphQL\SmartCache\AdminErrors;
 use WPGraphQL\SmartCache\Document;
 use WPGraphQL\SmartCache\Document\Grant;
 use WPGraphQL\SmartCache\Document\MaxAge;
-use WPGraphQL\SmartCache\Document\GarbageCollection;
 use GraphQL\Error\SyntaxError;
 use GraphQL\Server\RequestError;
 
