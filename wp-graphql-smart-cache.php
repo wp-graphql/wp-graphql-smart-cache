@@ -310,10 +310,10 @@ add_action(
  * Do these 'batch' runs of deletes in hope of reducing server load, timeouts, large numbers of deletes in one loop.
  */
 add_action(
-	'wpgraphql_smart_cache_garbage_collect_deletes',
+	'wpgraphql_smart_cache_query_garbage_collect_deletes',
 	function () {
 		// If posts exist to remove, schedule the removal event
-		$batch_size = apply_filters( 'wpgraphql_document_garbage_collection_batch_size', 1000 );
+		$batch_size = apply_filters( 'wpgraphql_document_garbage_collect_batch_size', 1000 );
 		$posts      = GarbageCollection::get_documents_by_age( $batch_size );
 		foreach ( $posts as $post_id ) {
 			// Check if the post is selected to skip garbage collection
@@ -323,7 +323,7 @@ add_action(
 		// If more posts exist to remove, schedule the removal event
 		$posts = GarbageCollection::get_documents_by_age( 1 );
 		if ( ! empty( $posts ) ) {
-			wp_schedule_single_event( time() + 1, 'wpgraphql_smart_cache_garbage_collect_deletes' );
+			wp_schedule_single_event( time() + 1, 'wpgraphql_smart_cache_query_garbage_collect_deletes' );
 		}
 	},
 	10

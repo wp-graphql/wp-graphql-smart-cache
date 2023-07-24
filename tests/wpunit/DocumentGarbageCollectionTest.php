@@ -94,7 +94,7 @@ class DocumentGarbageCollectionTest extends \Codeception\TestCase\WPTestCase {
 		$this->assertIsInt( wp_next_scheduled( 'wpgraphql_smart_cache_query_garbage_collect_deletes' ) );
 
 		// filter batch size to we only delete a few of our aged queries and reschedule the next job
-		add_filter( 'wpgraphql_document_garbage_collection_batch_size', function () { return 2; } );
+		add_filter( 'wpgraphql_document_garbage_collect_batch_size', function () { return 2; } );
 
 		// Fire the delete action and verify the number of posts deleted
 		do_action( 'wpgraphql_smart_cache_query_garbage_collect_deletes' );

@@ -21,7 +21,7 @@ class GarbageCollection {
 	 */
 	public static function get_documents_by_age( $number_of_posts = 100 ) {
 		// $days_ago  Posts older than this many days ago
-		$days_ago = get_graphql_setting( 'garbage_collect_age', null, 'graphql_persisted_queries_section' );
+		$days_ago = get_graphql_setting( 'query_garbage_collect_age', null, 'graphql_persisted_queries_section' );
 		if ( 1 > $days_ago || ! is_numeric( $days_ago ) ) {
 			return [];
 		}

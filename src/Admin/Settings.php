@@ -153,13 +153,13 @@ class Settings {
 				register_graphql_settings_field(
 					'graphql_persisted_queries_section',
 					[
-						'name'              => 'garbage_collect_age',
+						'name'              => 'query_garbage_collect_age',
 						'desc'              => __( 'Age, in number of days, of saved query when it will be removed', 'wp-graphql-smart-cache' ),
 						'type'              => 'number',
 						'default'           => '30',
 						'sanitize_callback' => function ( $value ) {
 							if ( 1 > $value || ! is_numeric( $value ) ) {
-								return function_exists( 'get_graphql_setting' ) ? \get_graphql_setting( 'garbage_collect_age', false, 'graphql_persisted_queries_section' ) : null;
+								return function_exists( 'get_graphql_setting' ) ? \get_graphql_setting( 'query_garbage_collect_age', false, 'graphql_persisted_queries_section' ) : null;
 							}
 							return (int) $value;
 						},
