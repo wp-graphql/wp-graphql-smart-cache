@@ -1,0 +1,77 @@
+<?php
+
+class MutationsCest {
+
+	public $post_id;
+
+	public function _before( FunctionalTester $I ) {
+		$this->post_id = $I->havePostInDatabase( [ 'post_title' => 'test post' ] );
+	}
+
+	public function mutationShouldNotBeCachedTest( FunctionalTester $I ) {
+
+		$I->wantTo( 'Execute a mutation without it being cached' );
+
+		$I->haveOptionInDatabase( 'graphql_cache_section', [ 'cache_toggle' => 'on' ] );
+
+		$query = '
+		mutation CreateComment($input: CreateCommentInput!) {
+		  createComment(input: $input) {
+		    clientMutationId
+		  }
+		}
+		';
+
+		$clientMutationId = uniqid( 'test', true );
+
+		$variables = [
+			'input' => [
+				'clientMutationId' => $clientMutationId,
+				'commentOn' => $this->post_id,
+				'author' => 'test author',
+			],
+		];
+
+		$I->sendPost( 'graphql', [
+			'query' => $query,
+			'variables' => $variables
+		] );
+
+		$I->seeResponseContainsJson([
+			'data' => [
+				'createComment' => [
+					'clientMutationId' => $clientMutationId,
+				],
+			],
+		]);
+
+		$cache_response = $I->grabDataFromResponseByJsonPath( '$.extensions.graphqlSmartCache.graphqlObjectCache' );
+
+		codecept_debug($cache_response[0]);
+
+		$I->assertEmpty( $cache_response[0] );
+
+		$I->sendPost( 'graphql', [
+			'query' => $query,
+			'variables' => $variables,
+		] );
+
+		$I->seeResponseContainsJson([
+			'data' => [
+				'createComment' => [
+					'clientMutationId' => $clientMutationId,
+				],
+			],
+		]);
+
+		// this fails because there is a message
+		// output when the response has been served from the cache.
+		// If this is empty, then the response was _not_ served by the cache.
+		$cache_response = $I->grabDataFromResponseByJsonPath( '$.extensions.graphqlSmartCache.graphqlObjectCache' );
+
+
+		$I->assertEmpty( $cache_response[0] );
+
+	}
+
+}
