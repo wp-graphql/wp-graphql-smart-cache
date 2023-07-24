@@ -128,7 +128,7 @@ class Settings {
 					[
 						'name'              => 'query_gc',
 						'label'             => __( 'Delete Old Queries', 'wp-graphql-smart-cache' ),
-						'desc'              => __( 'Toggle on to enable garbage collection (delete) of saved queries older than number of days specified below. Queries that are part of a "Group" will be excluded from garbage collection.', 'wp-graphql-smart-cache' ),
+						'desc'              => __( 'Toggle on to enable garbage collection (delete) of saved queries older than number of days specified below. Queries that are tagged in a "Group" will be excluded from garbage collection.', 'wp-graphql-smart-cache' ),
 						'type'              => 'checkbox',
 						'default'           => 'off',
 						'sanitize_callback' => function ( $value ) {
