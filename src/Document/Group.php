@@ -30,7 +30,7 @@ class Group {
 				'show_admin_column'   => true,
 				'show_in_menu'        => Settings::show_in_admin(),
 				'show_ui'             => Settings::show_in_admin(),
-				'show_in_quick_edit'  => false,
+				'show_in_quick_edit'  => true,
 				'show_in_graphql'     => true,
 				'graphql_single_name' => 'graphqlDocumentGroup',
 				'graphql_plural_name' => 'graphqlDocumentGroups',
