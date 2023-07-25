@@ -46,6 +46,9 @@
     ],
     "fix-cs": [
       "php ./vendor/bin/phpcbf"
+    ],
+    "phpstan": [
+      "phpstan analyze --ansi --memory-limit=1G"
     ]
   },
 	"archive": {
