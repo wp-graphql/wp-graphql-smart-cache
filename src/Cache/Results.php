@@ -115,7 +115,7 @@ class Results extends Query {
 			return $result;
 		}
 
-		$root_operation =  $request->get_query_analyzer()->get_root_operation();
+		$root_operation = $request->get_query_analyzer()->get_root_operation();
 
 		// For mutation, do not cache
 		if ( ! empty( $root_operation ) && 'Query' !== $root_operation ) {
