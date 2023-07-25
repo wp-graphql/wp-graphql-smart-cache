@@ -115,8 +115,10 @@ class Results extends Query {
 			return $result;
 		}
 
+		$root_operation =  $request->get_query_analyzer()->get_root_operation();
+
 		// For mutation, do not cache
-		if ( 'Query' !== $request->get_query_analyzer()->get_root_operation() ) {
+		if ( ! empty( $root_operation ) && 'Query' !== $root_operation ) {
 			return $result;
 		}
 
@@ -229,8 +231,10 @@ class Results extends Query {
 			return;
 		}
 
+		$root_operation = $request->get_query_analyzer()->get_root_operation();
+
 		// For mutation, do not cache
-		if ( 'Query' !== $request->get_query_analyzer()->get_root_operation() ) {
+		if ( ! empty( $root_operation ) && 'Query' !== $root_operation ) {
 			return;
 		}
 
