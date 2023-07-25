@@ -558,14 +558,17 @@ class Invalidation {
 		}
 
 		$post_type_object = get_post_type_object( $post->post_type );
-		$type_name        = strtolower( $post_type_object->graphql_single_name );
+		$type_name        = $post_type_object instanceof \WP_Post_Type ? strtolower( $post_type_object->graphql_single_name ) : $post_type_object;
 
 		// if we create a post
 		// we need to purge lists of the type
 		// as the created node might affect the list
 		if ( 'CREATE' === $action_type ) {
+
+			// Purge any documents tagged with list:$type_name
 			$this->purge( 'list:' . $type_name, 'post_' . $action_type );
 
+			// Purge the terms associated with the node
 			$terms = wp_get_object_terms( $post->ID, \WPGraphQL::get_allowed_taxonomies() );
 
 			if ( ! empty( $terms ) ) {
