@@ -116,8 +116,8 @@ class Results extends Query {
 		}
 
 		// For mutation, do not cache
-		if ( 'Query' !== $request->get_query_analyzer()->get_root_operation() ) {
-			return;
+		if ( 'Mutation' !== $request->get_query_analyzer()->get_root_operation() ) {
+			return $result;
 		}
 
 		// Loop over each request and load the response. If any one are empty, not in cache, return so all get reloaded.
