@@ -116,7 +116,7 @@ class Results extends Query {
 		}
 
 		// For mutation, do not cache
-		if ( 'Mutation' !== $request->get_query_analyzer()->get_root_operation() ) {
+		if ( 'Query' !== $request->get_query_analyzer()->get_root_operation() ) {
 			return $result;
 		}
 
