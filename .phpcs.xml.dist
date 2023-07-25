@@ -23,6 +23,13 @@
 	<!-- https://github.com/PHPCompatibility/PHPCompatibilityWP -->
 	<rule ref="PHPCompatibilityWP"/>
 
+	<!--
+	Prevent errors caused by WordPress Coding Standards not supporting PHP 8.0+.
+	See: https://github.com/WordPress/WordPress-Coding-Standards/issues/2035
+	See: https://github.com/WordPress/WordPress-Coding-Standards/issues/2035#issuecomment-1325532520
+	-->
+	<ini name="error_reporting" value="E_ALL &#38; ~E_DEPRECATED" />
+
 	<rule ref="Squiz.Functions.MultiLineFunctionDeclaration.SpaceAfterFunction"/>
 	<rule ref="Generic.Arrays.DisallowLongArraySyntax"/>
 
