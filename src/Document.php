@@ -37,7 +37,7 @@ class Document {
 		add_action( 'before_delete_post', [ $this, 'delete_post_cb' ], 10, 1 );
 
 		register_post_type(
-			self::TYPE_NAME,
+			'graphql_document',
 			[
 				'description'         => __( 'Saved GraphQL Documents', 'wp-graphql-smart-cache' ),
 				'labels'              => [
