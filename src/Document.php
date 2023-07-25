@@ -7,6 +7,7 @@
 
 namespace WPGraphQL\SmartCache;
 
+use GraphQL\Server\OperationParams;
 use WPGraphQL\SmartCache\Admin\Settings;
 use GraphQL\Error\SyntaxError;
 use GraphQL\Server\RequestError;
@@ -196,19 +197,23 @@ class Document {
 	/**
 	 * During invoking 'graphql()', not as an http request, if queryId is present, look it up and return the query string
 	 *
-	 * @param string $query  The graphql query sring.
+	 * @param string $query  The graphql query string.
 	 * @param mixed|array|OperationParams| $params  The graphql request params, containing queryId
 	 */
 	public function graphql_execute_query_params_cb( $query, $params ) {
+		$query_id = null;
 		if ( empty( $query ) ) {
 			//phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
 			if ( isset( $params->queryId ) ) {
 				//phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
 				$query_id = $params->queryId;
-			} elseif ( isset( $params['queryId'] ) ) {
+			} elseif ( is_array( $params ) && isset( $params['queryId'] ) ) {
 				$query_id = $params['queryId'];
 			}
-			$query = $this->get( $query_id );
+
+			if ( ! empty( $query_id ) ) {
+				$query = $this->get( $query_id );
+			}
 		}
 		return $query;
 	}
