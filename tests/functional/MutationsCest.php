@@ -56,19 +56,12 @@ class MutationsCest {
 			'variables' => $variables,
 		] );
 
-		$I->seeResponseContainsJson([
-			'data' => [
-				'createComment' => [
-					'clientMutationId' => $clientMutationId,
-				],
-			],
-		]);
+		// this fails because there is already same comment
+		$error = $I->grabDataFromResponseByJsonPath( '$.errors..message' )[0];
+		$I->assertEquals( $error, "Duplicate comment detected; it looks as though you&#8217;ve already said that!" );
 
-		// this fails because there is a message
-		// output when the response has been served from the cache.
 		// If this is empty, then the response was _not_ served by the cache.
 		$cache_response = $I->grabDataFromResponseByJsonPath( '$.extensions.graphqlSmartCache.graphqlObjectCache' );
-
 
 		$I->assertEmpty( $cache_response[0] );
 
