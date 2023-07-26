@@ -38,7 +38,8 @@
         "phpstan/phpstan": "^1.10",
         "szepeviktor/phpstan-wordpress": "^1.3",
         "automattic/vipwpcs": "^2.3",
-        "phpstan/extension-installer": "^1.3"
+        "phpstan/extension-installer": "^1.3",
+        "wp-graphql/wp-graphql": "^1.11"
     },
   "scripts": {
     "phpcs-i": [

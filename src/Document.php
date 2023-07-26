@@ -374,9 +374,8 @@ class Document {
 
 			// The post ID on success. The value 0 or WP_Error on failure.
 			$post_id = wp_insert_post( $data );
-			if ( is_wp_error( $post ) ) {
-				// throw some error?
-				return;
+			if ( is_wp_error( $post_id ) ) {
+				throw new RequestError( sprintf( __( 'Error save the document data "%s"', 'wp-graphql-smart-cache' ), $post->post_title ) );
 			}
 		} elseif ( $query !== $post->post_content ) {
 			// If the hash for the query string loads a post with a different query string,
