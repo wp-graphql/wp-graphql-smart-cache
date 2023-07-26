@@ -18,7 +18,7 @@ class Editor {
 
 	public function admin_init() {
 		add_filter( 'wp_insert_post_data', [ $this, 'validate_before_save_cb' ], 10, 2 );
-		add_action( sprintf( 'save_post_%s', Document::TYPE_NAME ), [ $this, 'save_document_cb' ], 10, 2 );
+		add_action( sprintf( 'save_post_%s', Document::TYPE_NAME ), [ $this, 'save_document_cb' ], 10, 3 );
 
 		// Enable excerpts for the persisted query post type for the wp admin editor
 		add_post_type_support( Document::TYPE_NAME, 'excerpt' );
@@ -51,45 +51,52 @@ class Editor {
 	}
 
 	public function is_valid_form( $post_id ) {
-		if ( empty( $_POST ) ) {
-			return;
-		}
+		try {
+			if ( empty( $_POST ) ) {
+				throw new \Exception();
+			}
 
-		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-			return;
-		}
+			if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+				throw new \Exception();
+			}
 
-		if ( ! current_user_can( 'edit_post', $post_id ) ) {
-			return;
-		}
+			if ( ! current_user_can( 'edit_post', $post_id ) ) {
+				throw new \Exception();
+			}
 
-		if ( ! isset( $_POST['post_type'] ) || Document::TYPE_NAME !== $_POST['post_type'] ) {
-			return;
-		}
+			if ( ! isset( $_POST['post_type'] ) || Document::TYPE_NAME !== $_POST['post_type'] ) {
+				throw new \Exception();
+			}
 
-		if ( ! isset( $_REQUEST['savedquery_grant_noncename'] ) ) {
-			return;
-		}
+			if ( ! isset( $_REQUEST['savedquery_grant_noncename'] ) ) {
+				throw new \Exception();
+			}
 
-		// phpcs:ignore
-		if ( ! wp_verify_nonce( $_REQUEST['savedquery_grant_noncename'], 'graphql_query_grant' ) ) {
+			// phpcs:ignore
+			if ( ! wp_verify_nonce( $_REQUEST['savedquery_grant_noncename'], 'graphql_query_grant' ) ) {
+				throw new \Exception();
+			}
+
+			if ( ! isset( $_REQUEST['savedquery_maxage_noncename'] ) ) {
+				throw new \Exception();
+			}
+
+			// phpcs:ignore
+			if ( ! wp_verify_nonce( $_REQUEST['savedquery_maxage_noncename'], 'graphql_query_maxage' ) ) {
+				throw new \Exception();
+			}
+		} catch ( \Exception $e ) {
+			AdminErrors::add_message( 'Something is wrong with the form data' );
 			return;
 		}
 
 		if ( ! isset( $_POST['graphql_query_grant'] ) ) {
-			return;
-		}
-
-		if ( ! isset( $_REQUEST['savedquery_maxage_noncename'] ) ) {
-			return;
-		}
-
-		// phpcs:ignore
-		if ( ! wp_verify_nonce( $_REQUEST['savedquery_maxage_noncename'], 'graphql_query_maxage' ) ) {
+			AdminErrors::add_message( 'Must specify access grant' );
 			return;
 		}
 
 		if ( ! isset( $_POST['graphql_query_maxage'] ) ) {
+			AdminErrors::add_message( 'Must specify a max age' );
 			return;
 		}
 
@@ -97,11 +104,19 @@ class Editor {
 	}
 
 	/**
-	* When a post is saved, sanitize and store the data.
+	 * When a post is saved, sanitize and store the data.
+	 *
+	 * @param int     $post_ID Post ID.
+	 * @param WP_Post $post    Post object.
+	 * @param bool    $update  Whether this is an existing post being updated.
 	*/
-	public function save_document_cb( $post_id, $post ) {
+	public function save_document_cb( $post_id, $post, $update ) {
+		// if new post in the admin editor, ie 'auto-draft', do not save
+		if ( false === $update && 'auto-draft' === $post->post_status ) {
+			return;
+		}
+
 		if ( ! $this->is_valid_form( $post_id ) ) {
-			AdminErrors::add_message( 'Something is wrong with the form data' );
 			return;
 		}
 
@@ -119,7 +134,7 @@ class Editor {
 			$data    = sanitize_text_field( wp_unslash( $_POST['graphql_query_maxage'] ) );
 			$max_age->save( $post_id, $data );
 		} catch ( SyntaxError $e ) {
-			AdminErrors::add_message( 'Did not save invalid graphql query string. ' . $post['post_content'] );
+			AdminErrors::add_message( 'Did not save invalid graphql query string. ' . $post->post_content );
 		} catch ( RequestError $e ) {
 			AdminErrors::add_message( $e->getMessage() );
 		}
