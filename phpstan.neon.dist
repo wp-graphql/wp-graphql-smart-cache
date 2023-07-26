@@ -10,14 +10,14 @@ parameters:
     bootstrapFiles:
         - phpstan/constants.php
         - wp-graphql-smart-cache.php
-        - access-functions.php
-        - activation.php
-        - deactivation.php
+        # - access-functions.php
+        # - activation.php
+        # - deactivation.php
     paths:
         - wp-graphql-smart-cache.php
-        - access-functions.php
-        - activation.php
-        - deactivation.php
+        # - access-functions.php
+        # - activation.php
+        # - deactivation.php
         - src/
     excludePaths:
       analyseAndScan:
