@@ -64,6 +64,9 @@
 		]
 	},
   "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
     },
     "require": {
         "appsero/client": "^1.2"
