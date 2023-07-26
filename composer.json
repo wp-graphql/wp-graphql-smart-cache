@@ -12,7 +12,8 @@
     },
     "autoload-dev": {
       "files": [
-        "tests/_data/config.php"
+        "tests/_data/config.php",
+        "vendor/wp-graphql/wp-graphql/src/WPGraphQL.php"
       ],
       "psr-4": {
         "TestCase\\WPGraphQLSmartCache\\": "tests/_support/"
