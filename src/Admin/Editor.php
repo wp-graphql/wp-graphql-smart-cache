@@ -50,54 +50,54 @@ class Editor {
 		return $data;
 	}
 
+	/**
+	 * When a post is saved, verify POST submitted data
+	 *
+	 * @throw string  Error message on validation failure
+	 * @return bool  True is passed validataion
+	*/
+
 	public function is_valid_form( $post_id ) {
-		try {
-			if ( empty( $_POST ) ) {
-				throw new \Exception();
-			}
+		if ( empty( $_POST ) ) {
+			throw new \Exception( 'Something is wrong with the form data' );
+		}
 
-			if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-				throw new \Exception();
-			}
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			throw new \Exception( 'Something is wrong with the form data' );
+		}
 
-			if ( ! current_user_can( 'edit_post', $post_id ) ) {
-				throw new \Exception();
-			}
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			throw new \Exception( 'Something is wrong with the form data' );
+		}
 
-			if ( ! isset( $_POST['post_type'] ) || Document::TYPE_NAME !== $_POST['post_type'] ) {
-				throw new \Exception();
-			}
+		if ( ! isset( $_POST['post_type'] ) || Document::TYPE_NAME !== $_POST['post_type'] ) {
+			throw new \Exception( 'Something is wrong with the form data' );
+		}
 
-			if ( ! isset( $_REQUEST['savedquery_grant_noncename'] ) ) {
-				throw new \Exception();
-			}
+		if ( ! isset( $_REQUEST['savedquery_grant_noncename'] ) ) {
+			throw new \Exception( 'Something is wrong with the form data' );
+		}
 
-			// phpcs:ignore
-			if ( ! wp_verify_nonce( $_REQUEST['savedquery_grant_noncename'], 'graphql_query_grant' ) ) {
-				throw new \Exception();
-			}
+		// phpcs:ignore
+		if ( ! wp_verify_nonce( $_REQUEST['savedquery_grant_noncename'], 'graphql_query_grant' ) ) {
+			throw new \Exception( 'Something is wrong with the form data' );
+		}
 
-			if ( ! isset( $_REQUEST['savedquery_maxage_noncename'] ) ) {
-				throw new \Exception();
-			}
+		if ( ! isset( $_REQUEST['savedquery_maxage_noncename'] ) ) {
+			throw new \Exception( 'Something is wrong with the form data' );
+		}
 
-			// phpcs:ignore
-			if ( ! wp_verify_nonce( $_REQUEST['savedquery_maxage_noncename'], 'graphql_query_maxage' ) ) {
-				throw new \Exception();
-			}
-		} catch ( \Exception $e ) {
-			AdminErrors::add_message( 'Something is wrong with the form data' );
-			return;
+		// phpcs:ignore
+		if ( ! wp_verify_nonce( $_REQUEST['savedquery_maxage_noncename'], 'graphql_query_maxage' ) ) {
+			throw new \Exception( 'Something is wrong with the form data' );
 		}
 
 		if ( ! isset( $_POST['graphql_query_grant'] ) ) {
-			AdminErrors::add_message( 'Must specify access grant' );
-			return;
+			throw new \Exception( 'Must specify access grant' );
 		}
 
 		if ( ! isset( $_POST['graphql_query_maxage'] ) ) {
-			AdminErrors::add_message( 'Must specify a max age' );
-			return;
+			throw new \Exception( 'Must specify a max age' );
 		}
 
 		return true;
@@ -111,21 +111,21 @@ class Editor {
 	 * @param bool    $update  Whether this is an existing post being updated.
 	*/
 	public function save_document_cb( $post_id, $post, $update ) {
-		// if new post in the admin editor, ie 'auto-draft', do not save
-		if ( false === $update && 'auto-draft' === $post->post_status ) {
-			return;
-		}
-
-		if ( ! $this->is_valid_form( $post_id ) ) {
-			return;
-		}
-
-		$grant = new Grant();
-		// phpcs:ignore
-		$data  = $grant->the_selection( sanitize_text_field( wp_unslash( $_POST['graphql_query_grant'] ) ) );
-		$grant->save( $post_id, $data );
-
 		try {
+			// if new post in the admin editor, ie 'auto-draft', do not save
+			if ( false === $update && 'auto-draft' === $post->post_status ) {
+				return;
+			}
+
+			if ( ! $this->is_valid_form( $post_id ) ) {
+				return;
+			}
+
+			$grant = new Grant();
+			// phpcs:ignore
+			$data  = $grant->the_selection( sanitize_text_field( wp_unslash( $_POST['graphql_query_grant'] ) ) );
+			$grant->save( $post_id, $data );
+
 			$document = new Document();
 			$document->save_document_cb( $post_id, $post );
 
@@ -136,6 +136,8 @@ class Editor {
 		} catch ( SyntaxError $e ) {
 			AdminErrors::add_message( 'Did not save invalid graphql query string. ' . $post->post_content );
 		} catch ( RequestError $e ) {
+			AdminErrors::add_message( $e->getMessage() );
+		} catch ( \Exception $e ) {
 			AdminErrors::add_message( $e->getMessage() );
 		}
 	}
