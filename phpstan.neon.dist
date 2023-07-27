@@ -9,6 +9,7 @@ parameters:
         - phpstan/class-wp-dependency.stub
     bootstrapFiles:
         - phpstan/constants.php
+        - vendor/wp-graphql/wp-graphql/wp-graphql.php
         - wp-graphql-smart-cache.php
         # - access-functions.php
         # - activation.php
