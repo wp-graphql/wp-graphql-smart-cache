@@ -142,8 +142,6 @@ add_action(
 /**
  * Show admin notice to admins if this plugin is active but WPGraphQL
  * is not active, or doesn't meet version requirements
- *
- * @return bool
  */
 function show_admin_notice() {
 
@@ -151,7 +149,7 @@ function show_admin_notice() {
 	 * For users with lower capabilities, don't show the notice
 	 */
 	if ( ! current_user_can( 'manage_options' ) ) {
-		return false;
+		return;
 	}
 
 	add_action(
@@ -264,11 +262,9 @@ function appsero_init_tracker_wpgraphql_smart_cache() {
 
 	// If the Appsero client has the add_plugin_data method, use it
 	if ( method_exists( $insights, 'add_plugin_data' ) ) {
-		// @phpstan-ignore-next-line
 		$insights->add_plugin_data();
 	}
 
-	// @phpstan-ignore-next-line
 	$insights->init();
 }
 
