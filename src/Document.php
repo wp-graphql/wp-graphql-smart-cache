@@ -373,7 +373,7 @@ class Document {
 			];
 
 			// The post ID on success. The value 0 or WP_Error on failure.
-			$post_id = wp_insert_post( $data );
+			$post_id = wp_insert_post( $data, true );
 			if ( is_wp_error( $post_id ) ) {
 				throw new RequestError( sprintf( __( 'Error save the document data "%s"', 'wp-graphql-smart-cache' ), $post->post_title ) );
 			}
