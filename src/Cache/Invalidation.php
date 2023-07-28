@@ -10,6 +10,7 @@ use WP_User;
 use WPGraphQL\Model\Menu;
 use WPGraphQL\SmartCache\Admin\Settings;
 
+
 /**
  * This class handles the invalidation of the WPGraphQL Caches
  */
@@ -165,13 +166,10 @@ class Invalidation {
 		/**
 		 * This filter allows plugins to opt-in or out of tracking for meta.
 		 *
-		 * @param bool $should_track Whether the meta key should be tracked.
-		 * @param string $meta_key Metadata key.
-		 * @param int $meta_id ID of updated metadata entry.
-		 * @param mixed $meta_value Metadata value. Serialized if non-scalar.
-		 * @param mixed $object The object the meta is being updated for.
-		 *
-		 * @param bool $tracked whether the meta key is tracked for purging caches
+		 * @param null|bool $should_track Whether the meta key should be tracked.
+		 * @param string    $meta_key Metadata key.
+		 * @param mixed     $meta_value Metadata value. Serialized if non-scalar.
+		 * @param mixed     $object The object the meta is being updated for.
 		 */
 		//phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 		$should_track = apply_filters( 'graphql_cache_should_track_meta_key', null, $meta_key, $meta_value, $object );
@@ -558,14 +556,17 @@ class Invalidation {
 		}
 
 		$post_type_object = get_post_type_object( $post->post_type );
-		$type_name        = strtolower( $post_type_object->graphql_single_name );
+		$type_name        = $post_type_object instanceof \WP_Post_Type ? strtolower( $post_type_object->graphql_single_name ) : $post_type_object;
 
 		// if we create a post
 		// we need to purge lists of the type
 		// as the created node might affect the list
 		if ( 'CREATE' === $action_type ) {
+
+			// Purge any documents tagged with list:$type_name
 			$this->purge( 'list:' . $type_name, 'post_' . $action_type );
 
+			// Purge the terms associated with the node
 			$terms = wp_get_object_terms( $post->ID, \WPGraphQL::get_allowed_taxonomies() );
 
 			if ( ! empty( $terms ) ) {

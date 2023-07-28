@@ -7,6 +7,7 @@
 
 namespace WPGraphQL\SmartCache;
 
+use GraphQL\Server\OperationParams;
 use WPGraphQL\SmartCache\Admin\Settings;
 use GraphQL\Error\SyntaxError;
 use GraphQL\Server\RequestError;
@@ -36,7 +37,7 @@ class Document {
 		add_action( 'before_delete_post', [ $this, 'delete_post_cb' ], 10, 1 );
 
 		register_post_type(
-			self::TYPE_NAME,
+			'graphql_document',
 			[
 				'description'         => __( 'Saved GraphQL Documents', 'wp-graphql-smart-cache' ),
 				'labels'              => [
@@ -196,19 +197,23 @@ class Document {
 	/**
 	 * During invoking 'graphql()', not as an http request, if queryId is present, look it up and return the query string
 	 *
-	 * @param string $query  The graphql query sring.
+	 * @param string $query  The graphql query string.
 	 * @param mixed|array|OperationParams| $params  The graphql request params, containing queryId
 	 */
 	public function graphql_execute_query_params_cb( $query, $params ) {
+		$query_id = null;
 		if ( empty( $query ) ) {
 			//phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
 			if ( isset( $params->queryId ) ) {
 				//phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
 				$query_id = $params->queryId;
-			} elseif ( isset( $params['queryId'] ) ) {
+			} elseif ( is_array( $params ) && isset( $params['queryId'] ) ) {
 				$query_id = $params['queryId'];
 			}
-			$query = $this->get( $query_id );
+
+			if ( ! empty( $query_id ) ) {
+				$query = $this->get( $query_id );
+			}
 		}
 		return $query;
 	}
@@ -368,10 +373,9 @@ class Document {
 			];
 
 			// The post ID on success. The value 0 or WP_Error on failure.
-			$post_id = wp_insert_post( $data );
-			if ( is_wp_error( $post ) ) {
-				// throw some error?
-				return;
+			$post_id = wp_insert_post( $data, true );
+			if ( is_wp_error( $post_id ) ) {
+				throw new RequestError( sprintf( __( 'Error save the document data "%s"', 'wp-graphql-smart-cache' ), $post->post_title ) );
 			}
 		} elseif ( $query !== $post->post_content ) {
 			// If the hash for the query string loads a post with a different query string,

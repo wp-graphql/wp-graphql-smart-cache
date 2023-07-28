@@ -32,6 +32,7 @@ class WpCache {
 			$key,
 			is_array( $data ) ? $data : $data->toArray(),
 			$this->group_name,
+			// phpcs:ignore WordPressVIPMinimum.Performance.LowExpiryCacheTime.CacheTimeUndetermined
 			$expire
 		);
 	}
