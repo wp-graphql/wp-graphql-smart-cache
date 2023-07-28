@@ -53,51 +53,33 @@ class Editor {
 	/**
 	 * When a post is saved, verify POST submitted data
 	 *
-	 * @throw string  Error message on validation failure
 	 * @return bool  True is passed validataion
 	*/
 
 	public function is_valid_form( $post_id ) {
 		if ( empty( $_POST ) ) {
-			throw new \Exception( 'Something is wrong with the form data' );
+			return false;
 		}
 
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-			throw new \Exception( 'Something is wrong with the form data' );
+			return false;
 		}
 
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
-			throw new \Exception( 'Something is wrong with the form data' );
+			return false;
 		}
 
 		if ( ! isset( $_POST['post_type'] ) || Document::TYPE_NAME !== $_POST['post_type'] ) {
-			throw new \Exception( 'Something is wrong with the form data' );
-		}
-
-		if ( ! isset( $_REQUEST['savedquery_grant_noncename'] ) ) {
-			throw new \Exception( 'Something is wrong with the form data' );
-		}
-
-		// phpcs:ignore
-		if ( ! wp_verify_nonce( $_REQUEST['savedquery_grant_noncename'], 'graphql_query_grant' ) ) {
-			throw new \Exception( 'Something is wrong with the form data' );
+			return false;
 		}
 
 		if ( ! isset( $_REQUEST['savedquery_maxage_noncename'] ) ) {
-			throw new \Exception( 'Something is wrong with the form data' );
+			return false;
 		}
 
 		// phpcs:ignore
 		if ( ! wp_verify_nonce( $_REQUEST['savedquery_maxage_noncename'], 'graphql_query_maxage' ) ) {
-			throw new \Exception( 'Something is wrong with the form data' );
-		}
-
-		if ( ! isset( $_POST['graphql_query_grant'] ) ) {
-			throw new \Exception( 'Must specify access grant' );
-		}
-
-		if ( ! isset( $_POST['graphql_query_maxage'] ) ) {
-			throw new \Exception( 'Must specify a max age' );
+			return false;
 		}
 
 		return true;
@@ -119,6 +101,23 @@ class Editor {
 
 			if ( ! $this->is_valid_form( $post_id ) ) {
 				return;
+			}
+
+			if ( ! isset( $_REQUEST['savedquery_grant_noncename'] ) ) {
+				return false;
+			}
+	
+			// phpcs:ignore
+			if ( ! wp_verify_nonce( $_REQUEST['savedquery_grant_noncename'], 'graphql_query_grant' ) ) {
+				return false;
+			}
+	
+			if ( ! isset( $_POST['graphql_query_grant'] ) ) {
+				throw new \Exception( 'Must specify access grant' );
+			}
+
+			if ( ! isset( $_POST['graphql_query_maxage'] ) ) {
+				throw new \Exception( 'Must specify a max age' );
 			}
 
 			$grant = new Grant();
