@@ -33,7 +33,14 @@
         "codeception/util-universalframework": "^1.0",
         "php-webdriver/webdriver": "^1.11",
         "codeception/module-rest": "^1.3",
-        "phpunit/php-timer": "^5.0"
+        "phpunit/php-timer": "^5.0",
+        "phpstan/phpstan": "^1.10",
+        "szepeviktor/phpstan-wordpress": "^1.3",
+        "automattic/vipwpcs": "^2.3",
+        "phpstan/extension-installer": "^1.3",
+        "axepress/wp-graphql-stubs": "^1.14",
+        "wp-graphql/wp-graphql": "^1.14",
+        "appsero/client": "^1.2"
     },
   "scripts": {
     "phpcs-i": [
@@ -44,6 +51,9 @@
     ],
     "fix-cs": [
       "php ./vendor/bin/phpcbf"
+    ],
+    "phpstan": [
+      "phpstan analyze --ansi --memory-limit=1G"
     ]
   },
 	"archive": {
@@ -65,8 +75,9 @@
 	},
   "config": {
         "allow-plugins": {
-            "dealerdirect/phpcodesniffer-composer-installer": true
-        }
+          "dealerdirect/phpcodesniffer-composer-installer": true,
+          "phpstan/extension-installer": true
+      }
     },
     "require": {
         "appsero/client": "^1.2"

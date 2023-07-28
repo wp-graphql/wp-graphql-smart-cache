@@ -14,12 +14,14 @@ class BatchQueryTest extends \Tests\WPGraphQL\TestCase\WPGraphQLTestCase {
 
 	public $created_post_ids = [];
 
+	public $query_alias;
+
 	public function _before() {
 		delete_option( 'graphql_cache_section' );
 
 		// Create/save persisted query for the query and query id
 		// The uniqid manes it's different between test runs, in case something fails and is stuck in database.
-		$this->query_alias = uniqid( "query_posts_" );
+		$this->query_alias = uniqid( "query_posts_", false );
 		$query_string = sprintf( "query %s { posts { nodes { id title } } }", $this->query_alias );
 
 		$saved_query = new Document();
@@ -89,7 +91,7 @@ class BatchQueryTest extends \Tests\WPGraphQL\TestCase\WPGraphQLTestCase {
 
 		// Create/save persisted query for the query and query id
 		// Set the max age for a saved query
-		$query_alias_1 = uniqid( "query_posts_" );
+		$query_alias_1 = uniqid( "query_posts_", false );
 		$query_string = sprintf( "query %s { posts { nodes { id title } } }", $query_alias_1 );
 		$query_post_id = $saved_query->save( $query_alias_1, $query_string );
 		$max_age = new MaxAge();
@@ -98,7 +100,7 @@ class BatchQueryTest extends \Tests\WPGraphQL\TestCase\WPGraphQLTestCase {
 
 		// Create/save persisted query for the query and query id
 		// Set the max age for a saved query
-		$query_alias_2 = uniqid( "query_posts_" );
+		$query_alias_2 = uniqid( "query_posts_", false );
 		$query_string_2 = sprintf( "query %s { posts { nodes { id title } } }", $query_alias_2 );
 		$query_post_id = $saved_query->save( $query_alias_2, $query_string_2 );
 		$max_age = new MaxAge();

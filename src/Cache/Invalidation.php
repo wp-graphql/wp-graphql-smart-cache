@@ -165,13 +165,10 @@ class Invalidation {
 		/**
 		 * This filter allows plugins to opt-in or out of tracking for meta.
 		 *
-		 * @param bool $should_track Whether the meta key should be tracked.
-		 * @param string $meta_key Metadata key.
-		 * @param int $meta_id ID of updated metadata entry.
-		 * @param mixed $meta_value Metadata value. Serialized if non-scalar.
-		 * @param mixed $object The object the meta is being updated for.
-		 *
-		 * @param bool $tracked whether the meta key is tracked for purging caches
+		 * @param null|bool $should_track Whether the meta key should be tracked.
+		 * @param string    $meta_key Metadata key.
+		 * @param mixed     $meta_value Metadata value. Serialized if non-scalar.
+		 * @param mixed     $object The object the meta is being updated for.
 		 */
 		//phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 		$should_track = apply_filters( 'graphql_cache_should_track_meta_key', null, $meta_key, $meta_value, $object );
