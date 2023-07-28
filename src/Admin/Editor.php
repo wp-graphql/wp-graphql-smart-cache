@@ -73,6 +73,15 @@ class Editor {
 			return false;
 		}
 
+		if ( ! isset( $_REQUEST['savedquery_grant_noncename'] ) ) {
+			return false;
+		}
+
+		// phpcs:ignore
+		if ( ! wp_verify_nonce( $_REQUEST['savedquery_grant_noncename'], 'graphql_query_grant' ) ) {
+			return false;
+		}
+
 		if ( ! isset( $_REQUEST['savedquery_maxage_noncename'] ) ) {
 			return false;
 		}
@@ -103,19 +112,12 @@ class Editor {
 				return;
 			}
 
-			if ( ! isset( $_REQUEST['savedquery_grant_noncename'] ) ) {
-				return false;
-			}
-	
 			// phpcs:ignore
-			if ( ! wp_verify_nonce( $_REQUEST['savedquery_grant_noncename'], 'graphql_query_grant' ) ) {
-				return false;
-			}
-	
 			if ( ! isset( $_POST['graphql_query_grant'] ) ) {
 				throw new \Exception( 'Must specify access grant' );
 			}
 
+			// phpcs:ignore
 			if ( ! isset( $_POST['graphql_query_maxage'] ) ) {
 				throw new \Exception( 'Must specify a max age' );
 			}
