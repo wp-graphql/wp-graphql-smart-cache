@@ -4,8 +4,55 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e00b77b3286ed506c3b440d451b3f878",
-    "packages": [],
+    "content-hash": "6cb756d7256efd8c05bebfa385dd5ec7",
+    "packages": [
+        {
+            "name": "appsero/client",
+            "version": "v1.2.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Appsero/client.git",
+                "reference": "d110c537f4ca92ac7f3398eee67cc6bdf506a4fb"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Appsero/client/zipball/d110c537f4ca92ac7f3398eee67cc6bdf506a4fb",
+                "reference": "d110c537f4ca92ac7f3398eee67cc6bdf506a4fb",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Appsero\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Tareq Hasan",
+                    "email": "tareq@appsero.com"
+                }
+            ],
+            "description": "Appsero Client",
+            "keywords": [
+                "analytics",
+                "plugin",
+                "theme",
+                "wordpress"
+            ],
+            "support": {
+                "issues": "https://github.com/Appsero/client/issues",
+                "source": "https://github.com/Appsero/client/tree/v1.2.1"
+            },
+            "time": "2022-06-30T12:01:38+00:00"
+        }
+    ],
     "packages-dev": [
         {
             "name": "antecedent/patchwork",
@@ -54,52 +101,6 @@
                 "source": "https://github.com/antecedent/patchwork/tree/2.1.25"
             },
             "time": "2023-02-19T12:51:24+00:00"
-        },
-        {
-            "name": "appsero/client",
-            "version": "v1.2.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/Appsero/client.git",
-                "reference": "d110c537f4ca92ac7f3398eee67cc6bdf506a4fb"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/Appsero/client/zipball/d110c537f4ca92ac7f3398eee67cc6bdf506a4fb",
-                "reference": "d110c537f4ca92ac7f3398eee67cc6bdf506a4fb",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=5.3"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "Appsero\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Tareq Hasan",
-                    "email": "tareq@appsero.com"
-                }
-            ],
-            "description": "Appsero Client",
-            "keywords": [
-                "analytics",
-                "plugin",
-                "theme",
-                "wordpress"
-            ],
-            "support": {
-                "issues": "https://github.com/Appsero/client/issues",
-                "source": "https://github.com/Appsero/client/tree/v1.2.1"
-            },
-            "time": "2022-06-30T12:01:38+00:00"
         },
         {
             "name": "automattic/vipwpcs",
@@ -155,16 +156,16 @@
         },
         {
             "name": "axepress/wp-graphql-stubs",
-            "version": "v1.14.8",
+            "version": "v1.14.9",
             "source": {
                 "type": "git",
                 "url": "https://github.com/AxeWP/wp-graphql-stubs.git",
-                "reference": "4776276381bd2b58598d61d53bb5f07afaa5fdfc"
+                "reference": "1e8509bf6b901e3ee799c87f44cb87b7a6dcfb34"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/AxeWP/wp-graphql-stubs/zipball/4776276381bd2b58598d61d53bb5f07afaa5fdfc",
-                "reference": "4776276381bd2b58598d61d53bb5f07afaa5fdfc",
+                "url": "https://api.github.com/repos/AxeWP/wp-graphql-stubs/zipball/1e8509bf6b901e3ee799c87f44cb87b7a6dcfb34",
+                "reference": "1e8509bf6b901e3ee799c87f44cb87b7a6dcfb34",
                 "shasum": ""
             },
             "require": {
@@ -195,7 +196,7 @@
             ],
             "support": {
                 "issues": "https://github.com/AxeWP/wp-graphql-stubs/issues",
-                "source": "https://github.com/AxeWP/wp-graphql-stubs/tree/v1.14.8"
+                "source": "https://github.com/AxeWP/wp-graphql-stubs/tree/v1.14.9"
             },
             "funding": [
                 {
@@ -203,7 +204,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2023-07-26T01:34:21+00:00"
+            "time": "2023-07-28T01:18:30+00:00"
         },
         {
             "name": "behat/gherkin",
