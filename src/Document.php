@@ -166,7 +166,7 @@ class Document {
 	 *
 	 * @param  array $parsed_body_params Request parameters.
 	 * @param  array $request_context An array containing the both body and query params
-	 * @return string Updated $parsed_body_params Request parameters.
+	 * @return array Updated $parsed_body_params Request parameters.
 	 */
 	public function graphql_query_contains_query_id_cb( $parsed_body_params, $request_context ) {
 

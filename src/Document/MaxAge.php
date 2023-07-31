@@ -123,7 +123,7 @@ class MaxAge {
 			return $item;
 		}
 
-		return isset( $item[0]->name ) ? $item[0]->name : null;
+		return property_exists( $item[0], 'name' ) ? $item[0]->name : null;
 	}
 
 	public function valid( $value ) {

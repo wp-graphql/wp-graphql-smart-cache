@@ -137,7 +137,7 @@ class Grant {
 	public static function getQueryGrantSetting( $post_id ) {
 		$item = get_the_terms( $post_id, self::TAXONOMY_NAME );
 
-		return ! is_wp_error( $item ) && isset( $item[0]->name ) ? $item[0]->name : self::NOT_SELECTED_DEFAULT;
+		return ! is_wp_error( $item ) && isset( $item[0] ) && property_exists( $item[0], 'name' ) ? $item[0]->name : self::NOT_SELECTED_DEFAULT;
 	}
 
 	/**
