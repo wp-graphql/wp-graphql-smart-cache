@@ -132,7 +132,7 @@ class Grant {
 	/**
 	 * Look up the allow/deny grant setting for a post
 	 *
-	 * @param int  The post id
+	 * @param int $post_id The post id
 	 */
 	public static function getQueryGrantSetting( $post_id ) {
 		$item = get_the_terms( $post_id, self::TAXONOMY_NAME );
@@ -144,7 +144,7 @@ class Grant {
 	 * Use during processing of submitted form if value of selected input field is selected.
 	 * And return value of the taxonomy.
 	 *
-	 * @param string The input form value
+	 * @param string $value The input form value
 	 *
 	 * @return string The string value used to save as the taxonomy value
 	 */

@@ -198,7 +198,7 @@ class Document {
 	 * During invoking 'graphql()', not as an http request, if queryId is present, look it up and return the query string
 	 *
 	 * @param string $query  The graphql query string.
-	 * @param mixed|array|OperationParams| $params  The graphql request params, containing queryId
+	 * @param mixed|array|\GraphQL\Server\OperationParams $params  The graphql request params, containing queryId
 	 */
 	public function graphql_execute_query_params_cb( $query, $params ) {
 		$query_id = null;
@@ -263,7 +263,7 @@ class Document {
 	 * When wp_insert_post saves the query, update the slug to match the content.
 	 *
 	 * @param int $post_ID
-	 * @param WP_Post $post
+	 * @param \WP_Post $post
 	 */
 	public function save_document_cb( $post_ID, $post ) {
 		if ( empty( $post->post_content ) ) {
@@ -284,8 +284,8 @@ class Document {
 	 * If existing post is edited in the wp admin editor, use previous content to remove query term ids
 	 *
 	 * @param int     $post_ID      Post ID.
-	 * @param WP_Post $post_after   Post object following the update.
-	 * @param WP_Post $post_before  Post object before the update.
+	 * @param \WP_Post $post_after   Post object following the update.
+	 * @param \WP_Post $post_before  Post object before the update.
 	 */
 	public function after_updated_cb( $post_ID, $post_after, $post_before ) {
 		if ( self::TYPE_NAME !== $post_before->post_type ) {
@@ -323,7 +323,7 @@ class Document {
 	 * Load a persisted query corresponding to a query ID (hash) or alias/alternate name
 	 *
 	 * @param  string $query_id Query ID
-	 * @return mixed Query|null
+	 * @return mixed string|null
 	 */
 	public function get( $query_id ) {
 		$post = Utils::getPostByTermName( $query_id, self::TYPE_NAME, self::ALIAS_TAXONOMY_NAME );
@@ -337,7 +337,8 @@ class Document {
 	/**
 	 * Save a query by query ID (hash) or alias/alternate name
 	 *
-	 * @param  string $query_id Query string str256 hash
+	 * @param string $query_id Query string str256 hash
+	 * @param string $query  The graphql query string.
 	 */
 	public function save( $query_id, $query ) {
 		// Get post using the normalized hash of the query string
@@ -375,7 +376,7 @@ class Document {
 			// The post ID on success. The value 0 or WP_Error on failure.
 			$post_id = wp_insert_post( $data, true );
 			if ( is_wp_error( $post_id ) ) {
-				throw new RequestError( sprintf( __( 'Error save the document data "%s"', 'wp-graphql-smart-cache' ), $post->post_title ) );
+				throw new RequestError( sprintf( __( 'Error save the document data for "%s"', 'wp-graphql-smart-cache' ), $normalized_hash ) );
 			}
 		} elseif ( $query !== $post->post_content ) {
 			// If the hash for the query string loads a post with a different query string,
@@ -403,9 +404,7 @@ class Document {
 	/**
 	 * When a saved query post type is deleted, also delete the data for the other information.
 	 *
-	 * @param  Post_Id $post_id the Post Object Id
-	 * @param  Array $tt_ids TaxTerm ids
-	 * @param  Taxonomy $taxonomy
+	 * @param int $post_id the Post Object Id
 	 */
 	public function delete_post_cb( $post_id ) {
 		if ( self::TYPE_NAME === get_post_type( $post_id ) ) {
@@ -413,6 +412,11 @@ class Document {
 		}
 	}
 
+	/**
+	 * When a saved query post type is deleted, also delete the taxonomies.
+	 *
+	 * @param int $post_id the Post Object Id
+	 */
 	public function delete_term( $post_id ) {
 		$terms = wp_get_object_terms( $post_id, self::ALIAS_TAXONOMY_NAME );
 		if ( $terms ) {
