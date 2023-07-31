@@ -12,7 +12,7 @@ class Utils {
 	/**
 	 * @param string $query_id Query ID
 	 *
-	 * @return WP_Post
+	 * @return WP_Post|bool   false when not exist
 	 */
 	public static function getPostByTermName( $query_id, $type, $taxonomy ) {
 		$wp_query = new \WP_Query(

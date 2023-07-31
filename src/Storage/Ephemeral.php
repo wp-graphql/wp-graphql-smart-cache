@@ -7,10 +7,12 @@ namespace WPGraphQL\SmartCache\Storage;
 
 class Ephemeral {
 
+	public $group_name;
 	public $data;
 
 	public function __construct( $group_name ) {
-		$this->data = [];
+		$this->group_name = $group_name;
+		$this->data       = [];
 	}
 
 	/**
