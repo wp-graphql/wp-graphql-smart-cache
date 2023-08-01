@@ -1,5 +1,5 @@
 parameters:
-    level: 0
+    level: 2
     inferPrivatePropertyTypeFromConstructor: true
     checkMissingIterableValueType: false
     stubFiles:
@@ -7,6 +7,7 @@ parameters:
         - phpstan/class-wp-post-type.stub
         - phpstan/class-wp-taxonomy.stub
         - phpstan/class-wp-dependency.stub
+        - phpstan/appsero.stub
     bootstrapFiles:
         - phpstan/constants.php
         - vendor/wp-graphql/wp-graphql/wp-graphql.php

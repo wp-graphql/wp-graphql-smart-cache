@@ -68,7 +68,7 @@ class Query {
 	/**
 	 * Get the data from cache/transient based on the provided key
 	 *
-	 * @param string unique id for this request
+	 * @param string $key unique id for this request
 	 * @return mixed|array|object|null  The graphql response or null if not found
 	 */
 	public function get( $key ) {
@@ -78,9 +78,9 @@ class Query {
 	/**
 	 * Converts GraphQL query result to spec-compliant serializable array using provided function
 	 *
-	 * @param string unique id for this request
-	 * @param mixed|array|object|null  The graphql response
-	 * @param int Time in seconds for the data to persist in cache. Zero means no expiration.
+	 * @param string $key unique id for this request
+	 * @param mixed|array|object|null $data The graphql response
+	 * @param int $expire Time in seconds for the data to persist in cache. Zero means no expiration.
 	 *
 	 * @return bool False if value was not set and true if value was set.
 	 */
@@ -91,7 +91,7 @@ class Query {
 	/**
 	 * Delete the data from cache/transient based on the provided key
 	 *
-	 * @param string unique id for this request
+	 * @param string $key unique id for this request
 	 * @return bool True on successful removal, false on failure.
 	 */
 	public function delete( $key ) {

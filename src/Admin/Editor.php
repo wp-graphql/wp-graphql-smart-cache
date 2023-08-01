@@ -193,7 +193,7 @@ class Editor {
 	/**
 	 * Change the text from Excerpt to Description where it is visible.
 	 *
-	 * @param String  The string for the __() or _e() translation
+	 * @param String $string The string for the __() or _e() translation
 	 * @return String  The translated or original string
 	 */
 	public function translate_excerpt_text_cb( $string ) {

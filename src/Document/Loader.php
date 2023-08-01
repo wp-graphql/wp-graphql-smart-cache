@@ -20,7 +20,7 @@ class Loader {
 	 *                                request
 	 * @param array $operation_params An array containing the method, body and query params
 	 *
-	 * @return string | GraphQL\Language\AST\DocumentNode
+	 * @return string|\GraphQL\Language\AST\DocumentNode
 	 */
 	public static function by_query_id( $query_id, $operation_params ) {
 		$content = new Document();

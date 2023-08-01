@@ -45,6 +45,11 @@ class Description {
 
 	/**
 	 * Run on mutation create/update.
+	 *
+	 * @param array        $insert_post_args The array of $input_post_args that will be passed to wp_insert_post
+	 * @param array        $input            The data that was entered as input for the mutation
+	 * @param \WP_Post_Type $post_type_object The post_type_object that the mutation is affecting
+	 * @param string       $mutation_name    The type of mutation being performed (create, edit, etc)
 	 */
 	public function mutation_filter_post_args( $insert_post_args, $input, $post_type_object, $mutation_name ) {
 		if ( in_array(
