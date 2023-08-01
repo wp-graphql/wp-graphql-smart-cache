@@ -143,6 +143,8 @@ add_action(
 /**
  * Show admin notice to admins if this plugin is active but WPGraphQL
  * is not active, or doesn't meet version requirements
+ *
+ * @return void
  */
 function show_admin_notice() {
 

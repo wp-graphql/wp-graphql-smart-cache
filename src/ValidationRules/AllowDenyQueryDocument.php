@@ -26,11 +26,21 @@ class AllowDenyQueryDocument extends ValidationRule {
 
 	/**
 	 * AllowDenyQueryDocument constructor.
+	 *
+	 * @param string $setting
+	 * @return void
 	 */
 	public function __construct( $setting ) {
 		$this->access_setting = $setting;
 	}
 
+	/**
+	 * Returns structure suitable for GraphQL\Language\Visitor
+	 *
+	 * @see \GraphQL\Language\Visitor
+	 *
+	 * @return mixed[]
+	 */
 	public function getVisitor( ValidationContext $context ) {
 		return [
 			NodeKind::DOCUMENT => function ( DocumentNode $node ) use ( $context ) {
@@ -57,7 +67,7 @@ class AllowDenyQueryDocument extends ValidationRule {
 						$context->reportError(
 							new Error(
 								self::deniedDocumentMessage(),
-								[ $node ]
+								$node
 							)
 						);
 					}
@@ -68,14 +78,14 @@ class AllowDenyQueryDocument extends ValidationRule {
 						$context->reportError(
 							new Error(
 								self::notFoundDocumentMessage(),
-								[ $node ]
+								$node
 							)
 						);
 					} elseif ( Grant::ALLOW !== Grant::getQueryGrantSetting( $post->ID ) ) {
 						$context->reportError(
 							new Error(
 								self::deniedDocumentMessage(),
-								[ $node ]
+								$node
 							)
 						);
 					}
@@ -84,10 +94,16 @@ class AllowDenyQueryDocument extends ValidationRule {
 		];
 	}
 
+	/**
+	 * @return string
+	 */
 	public static function deniedDocumentMessage() {
 		return __( 'This query document has been blocked.', 'wp-graphql-smart-cache' );
 	}
 
+	/**
+	 * @return string
+	 */
 	public static function notFoundDocumentMessage() {
 		return __( 'Not Found. Only pre-defined queries are allowed.', 'wp-graphql-smart-cache' );
 	}

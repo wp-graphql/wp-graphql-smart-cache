@@ -15,9 +15,16 @@ use GraphQL\Server\RequestError;
 class MaxAge {
 	const TAXONOMY_NAME = 'graphql_document_http_maxage';
 
-	// The in-progress query(s)
+	/**
+	 * The in-progress query(s)
+	 *
+	 * @var array
+	 */
 	public $query_ids = [];
 
+	/**
+	 * @return void
+	 */
 	public function init() {
 		register_taxonomy(
 			self::TAXONOMY_NAME,
@@ -72,8 +79,17 @@ class MaxAge {
 		add_action( 'graphql_mutation_response', [ $this, 'graphql_mutation_insert' ], 10, 6 );
 	}
 
-	// This runs on post create/update
-	// Check the max age value is within limits
+	/**
+	 * This runs on post create/update
+	 * Check the max age value is within limits
+	 *
+	 * @param array $input The mutation input args.
+	 * @param \WPGraphQL\AppContext $context The AppContext object.
+	 * @param \GraphQL\Type\Definition\ResolveInfo $info The ResolveInfo object.
+	 * @param string $mutation_name The name of the mutation field.
+	 *
+	 * @return array
+	 */
 	public function graphql_mutation_filter( $input, $context, $info, $mutation_name ) {
 		if ( ! in_array(
 			$mutation_name,
@@ -93,8 +109,19 @@ class MaxAge {
 		return $input;
 	}
 
-	// This runs on post create/update
-	// Check the grant allow/deny value is within limits
+	/**
+	 * This runs on post create/update
+	 * Check the max age value is within limits
+	 *
+	 * @param array $post_object The Payload returned from the mutation.
+	 * @param array $filtered_input The mutation input args, after being filtered by 'graphql_mutation_input'.
+	 * @param array $input The unfiltered input args of the mutation
+	 * @param \WPGraphQL\AppContext $context The AppContext object.
+	 * @param \GraphQL\Type\Definition\ResolveInfo $info The ResolveInfo object.
+	 * @param string $mutation_name The name of the mutation field.
+	 *
+	 * @return void
+	 **/
 	public function graphql_mutation_insert( $post_object, $filtered_input, $input, $context, $info, $mutation_name ) {
 		if ( ! in_array(
 			$mutation_name,
@@ -116,6 +143,9 @@ class MaxAge {
 
 	/**
 	 * Get the max age if it exists for a saved persisted query
+	 *
+	 * @param int $post_id
+	 * @return \WP_Error|string|null
 	 */
 	public function get( $post_id ) {
 		$item = get_the_terms( $post_id, self::TAXONOMY_NAME );
@@ -126,6 +156,12 @@ class MaxAge {
 		return property_exists( $item[0], 'name' ) ? $item[0]->name : null;
 	}
 
+	/**
+	 * Verify the max age value is acceptable
+	 *
+	 * @param string $value
+	 * @return bool
+	 */
 	public function valid( $value ) {
 		// TODO: terms won't save 0, as considers that empty and removes the term. Consider 'zero' or 'stale' or greater than zero.
 		return ( is_numeric( $value ) && $value >= 0 );
@@ -133,6 +169,10 @@ class MaxAge {
 
 	/**
 	 * Save the data
+	 *
+	 * @param int $post_id
+	 * @param string $value
+	 * @return array|false|\WP_Error Array of term taxonomy IDs of affected terms. WP_Error or false on failure.
 	 */
 	public function save( $post_id, $value ) {
 		if ( ! $this->valid( $value ) ) {
@@ -143,6 +183,12 @@ class MaxAge {
 		return wp_set_post_terms( $post_id, $value, self::TAXONOMY_NAME );
 	}
 
+	/**
+	 * @param mixed|array|object $result The response from execution. Array for batch requests,
+	 *                                     single object for individual requests
+	 * @param \WPGraphQL\Request $request
+	 * @return mixed|array|object
+	 */
 	public function peek_at_executing_query_cb( $result, $request ) {
 		// For batch request, params are an array for each query/queryId in the batch
 		$params = [];
@@ -167,6 +213,7 @@ class MaxAge {
 
 	/**
 	 * @param array $headers
+	 * @return array
 	 */
 	public function http_headers_cb( $headers ) {
 		$age = null;

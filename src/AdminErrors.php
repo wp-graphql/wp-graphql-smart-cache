@@ -14,14 +14,24 @@ class AdminErrors {
 	const TRANSIENT_NAME      = 'graphql_save_graphql_query_validation_error_messages';
 	const MESSAGE_TTL_SECONDS = 60;
 
+	/**
+	 * @return void
+	 */
 	public function init() {
 		add_action( 'admin_notices', [ $this, 'display_validation_messages' ] );
 	}
 
+	/**
+	 * @param string $message
+	 * @return void
+	 */
 	public static function add_message( $message ) {
 		set_transient( self::TRANSIENT_NAME, [ $message ], self::MESSAGE_TTL_SECONDS );
 	}
 
+	/**
+	 * @return void
+	 */
 	public function display_validation_messages() {
 		$screen = get_current_screen();
 		if ( $screen && Document::TYPE_NAME !== $screen->post_type ) {

@@ -15,9 +15,9 @@ class Results extends Query {
 	const GLOBAL_DEFAULT_TTL = 600;
 
 	/**
-	 * Indicator of the GraphQL Query execution cached or not.
+	 * Indicator of the GraphQL Query keys cached or not.
 	 *
-	 * @array bool
+	 * @var array
 	 */
 	protected $is_cached = [];
 
@@ -26,6 +26,9 @@ class Results extends Query {
 	 */
 	protected $request;
 
+	/**
+	 * @return void
+	 */
 	public function init() {
 		add_filter( 'pre_graphql_execute_request', [ $this, 'get_query_results_from_cache_cb' ], 10, 2 );
 		add_action( 'graphql_return_response', [ $this, 'save_query_results_to_cache_cb' ], 10, 8 );
@@ -256,9 +259,11 @@ class Results extends Query {
 	/**
 	 * When an item changed and this callback is triggered to delete results we have cached for that list of nodes
 	 * Related to the data type that changed.
-	 * 
+	 *
 	 * @param string $id An identifier for data stored in memory.
 	 * @param mixed|array|object|null $nodes The graphql response or false
+	 *
+	 * @return void
 	 */
 	public function purge_nodes_cb( $id, $nodes ) {
 		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
@@ -273,6 +278,8 @@ class Results extends Query {
 
 	/**
 	 * Purge the local cache results if enabled
+	 *
+	 * @return void
 	 */
 	public function purge_all_cb() {
 		$this->purge_all();
