@@ -90,7 +90,7 @@ class Results extends Query {
 
 			if ( is_array( $response ) ) {
 				$response['extensions']['graphqlSmartCache']['graphqlObjectCache'] = $message;
-			} if ( is_object( $response ) ) {
+			} if ( is_object( $response ) && property_exists( $response, 'extensions' ) ) {
 				$response->extensions['graphqlSmartCache']['graphqlObjectCache'] = $message;
 			}
 		}

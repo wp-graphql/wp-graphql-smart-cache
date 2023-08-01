@@ -183,7 +183,7 @@ class Document {
 
 		// Remove the existing/old alias terms before update
 		$terms = wp_get_post_terms( $post_object['postObjectId'], self::ALIAS_TAXONOMY_NAME );
-		if ( $terms ) {
+		if ( $terms && ! is_wp_error( $terms ) ) {
 			foreach ( $terms as $term ) {
 				wp_remove_object_terms( $post_object['postObjectId'], $term->term_id, self::ALIAS_TAXONOMY_NAME );
 				wp_delete_term( $term->term_id, self::ALIAS_TAXONOMY_NAME );
@@ -353,7 +353,7 @@ class Document {
 
 		// If the old query string hash is assigned to this post, delete it
 		$terms = wp_get_post_terms( $post_ID, self::ALIAS_TAXONOMY_NAME );
-		if ( $terms ) {
+		if ( $terms && ! is_wp_error( $terms ) ) {
 			foreach ( $terms as $term ) {
 				if ( $old_query_id === $term->name ) {
 					wp_remove_object_terms( $post_ID, $term->term_id, self::ALIAS_TAXONOMY_NAME );
@@ -469,7 +469,7 @@ class Document {
 	 */
 	public function delete_term( $post_id ) {
 		$terms = wp_get_object_terms( $post_id, self::ALIAS_TAXONOMY_NAME );
-		if ( $terms ) {
+		if ( $terms && ! is_wp_error( $terms ) ) {
 			foreach ( $terms as $term ) {
 				wp_delete_term( $term->term_id, self::ALIAS_TAXONOMY_NAME );
 			}

@@ -14,7 +14,7 @@ class Utils {
 	 * @param string|array $type
 	 * @param string $taxonomy
 	 *
-	 * @return \WP_Post|bool   false when not exist
+	 * @return \WP_Post|false   false when not exist
 	 */
 	public static function getPostByTermName( $query_id, $type, $taxonomy ) {
 		$wp_query = new \WP_Query(
@@ -32,13 +32,14 @@ class Utils {
 				],
 			]
 		);
-		$posts    = $wp_query->get_posts();
+		// returns an array of post objects.
+		$posts = $wp_query->get_posts();
 		if ( empty( $posts ) ) {
 			return false;
 		}
 
 		$post = array_pop( $posts );
-		if ( ! $post->ID ) {
+		if ( ! ( $post instanceof \WP_Post ) || ! $post->ID ) {
 			return false;
 		}
 
