@@ -122,8 +122,10 @@ class MaxAge {
 		if ( is_wp_error( $item ) ) {
 			return $item;
 		}
-
-		return isset( $item[0]->name ) ? $item[0]->name : null;
+		if ( ! $item || ! property_exists( $item[0], 'name' ) ) {
+			return null;
+		}
+		return $item[0]->name;
 	}
 
 	public function valid( $value ) {

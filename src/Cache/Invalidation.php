@@ -19,7 +19,7 @@ class Invalidation {
 	/**
 	 * @var Collection
 	 */
-	public $collection = [];
+	public $collection;
 
 	/**
 	 * @var array | null
@@ -955,7 +955,7 @@ class Invalidation {
 	 * @param WP_Comment $comment    Comment object.
 	 */
 	public function on_insert_comment_cb( $comment_id, $comment ) {
-		if ( isset( $comment->comment_approved ) && '1' === $comment->comment_approved ) {
+		if ( property_exists( $comment, 'comment_approved' ) && '1' === $comment->comment_approved ) {
 			$this->purge_nodes( 'comment', $comment_id, 'comment_approved' );
 			$this->purge( 'list:comment', 'comment_approved' );
 		}

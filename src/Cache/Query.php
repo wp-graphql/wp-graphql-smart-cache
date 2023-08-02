@@ -29,7 +29,7 @@ class Query {
 	/**
 	 * Unique identifier for this request is normalized query string, operation and variables
 	 *
-	 * @param string $query_id queryId from the graphql query request
+	 * @param string|null $query_id queryId from the graphql query request
 	 * @param string $query query string
 	 * @param array $variables Variables sent with request or null
 	 * @param string $operation Name of operation if specified on the request or null
@@ -56,7 +56,7 @@ class Query {
 		$user = wp_get_current_user();
 
 		$parts = [
-			'query'     => $query ?: null,
+			'query'     => $query,
 			'variables' => $variables ?: null,
 			'operation' => $operation ?: null,
 			'user'      => $user->ID,
