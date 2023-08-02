@@ -128,7 +128,7 @@ class Invalidation {
 	/**
 	 * Return a list of ignored meta keys
 	 *
-	 * @return array|null
+	 * @return array
 	 */
 	public static function get_ignored_meta_keys() {
 		if ( null !== self::$ignored_meta_keys ) {
@@ -542,6 +542,10 @@ class Invalidation {
 
 		$post_type_object = get_post_type_object( $post->post_type );
 
+		if ( ! $post_type_object instanceof \WP_Post_Type ) {
+			return;
+		}
+
 		// If the post type is not public and not publicly queryable
 		// don't track it
 		if ( false === $post_type_object->public && false === $post_type_object->publicly_queryable ) {
@@ -578,8 +582,7 @@ class Invalidation {
 			$action_type = 'CREATE';
 		}
 
-		$post_type_object = get_post_type_object( $post->post_type );
-		$type_name        = $post_type_object instanceof \WP_Post_Type ? strtolower( $post_type_object->graphql_single_name ) : $post_type_object;
+		$type_name = strtolower( $post_type_object->graphql_single_name );
 
 		// if we create a post
 		// we need to purge lists of the type
@@ -730,6 +733,10 @@ class Invalidation {
 		}
 
 		$post_type_object = get_post_type_object( $post->post_type );
+
+		if ( ! $post_type_object instanceof \WP_Post_Type ) {
+			return;
+		}
 
 		// If the post type is not public and not publicly queryable
 		// don't track it

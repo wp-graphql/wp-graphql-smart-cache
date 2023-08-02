@@ -50,7 +50,9 @@ class Editor {
 			$existing_post = get_post( $post['ID'] );
 
 			// Overwrite new/invalid query with previous working query, or empty
-			$data['post_content'] = $existing_post->post_content;
+			if ( $existing_post ) {
+				$data['post_content'] = $existing_post->post_content;
+			}
 
 			AdminErrors::add_message( $e->getMessage() );
 		}
@@ -286,7 +288,9 @@ class Editor {
 	 * @return array
 	 */
 	public function wp_editor_settings( $settings, $editor_id ) {
-		if ( 'content' === $editor_id && Document::TYPE_NAME === get_current_screen()->post_type ) {
+		$screen = get_current_screen();
+
+		if ( $screen && 'content' === $editor_id && Document::TYPE_NAME === $screen->post_type ) {
 			$settings['tinymce']       = false;
 			$settings['quicktags']     = false;
 			$settings['media_buttons'] = false;
