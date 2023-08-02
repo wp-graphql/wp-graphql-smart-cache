@@ -75,7 +75,8 @@ function can_load_plugin() {
 	}
 
 	// Have we met the minimum version requirement?
-	if ( true === version_compare( WPGRAPHQL_VERSION, WPGRAPHQL_SMART_CACHE_WPGRAPHQL_REQUIRED_MIN_VERSION, 'lt' ) ) {
+	// @phpstan-ignore-next-line
+	if ( version_compare( WPGRAPHQL_VERSION, WPGRAPHQL_SMART_CACHE_WPGRAPHQL_REQUIRED_MIN_VERSION, 'lt' ) ) {
 		return false;
 	}
 
@@ -142,6 +143,8 @@ add_action(
 /**
  * Show admin notice to admins if this plugin is active but WPGraphQL
  * is not active, or doesn't meet version requirements
+ *
+ * @return void
  */
 function show_admin_notice() {
 
@@ -209,7 +212,7 @@ add_action(
 add_action(
 	'graphql_purge',
 	function ( $purge_keys ) {
-		if ( ! function_exists( 'graphql_get_endpoint_url' ) || ! class_exists( 'WpeCommon' ) || ! method_exists( 'WpeCommon', 'http_to_varnish' ) ) {
+		if ( ! function_exists( 'graphql_get_endpoint_url' ) || ! class_exists( 'WpeCommon', false ) || ! method_exists( \WpeCommon::class, 'http_to_varnish' ) ) {
 			return;
 		}
 		\WpeCommon::http_to_varnish(
@@ -228,7 +231,7 @@ add_action(
 add_action(
 	'wpgraphql_cache_purge_all',
 	function ( $purge_keys ) {
-		if ( ! function_exists( 'graphql_get_endpoint_url' ) || ! class_exists( 'WpeCommon' ) || ! method_exists( 'WpeCommon', 'http_to_varnish' ) ) {
+		if ( ! function_exists( 'graphql_get_endpoint_url' ) || ! class_exists( 'WpeCommon', false ) || ! method_exists( \WpeCommon::class, 'http_to_varnish' ) ) {
 			return;
 		}
 		\WpeCommon::http_to_varnish(

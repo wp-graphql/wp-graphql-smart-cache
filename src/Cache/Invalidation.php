@@ -19,7 +19,7 @@ class Invalidation {
 	/**
 	 * @var Collection
 	 */
-	public $collection = [];
+	public $collection;
 
 	/**
 	 * @var array | null
@@ -30,6 +30,7 @@ class Invalidation {
 	 * Instantiate the Cache Invalidation class
 	 *
 	 * @param Collection $collection
+	 * @return void
 	 */
 	public function __construct( Collection $collection ) {
 		$this->collection = $collection;
@@ -37,6 +38,8 @@ class Invalidation {
 
 	/**
 	 * Initialize the actions to listen for
+	 *
+	 * @return void
 	 */
 	public function init() {
 		// @phpcs:ignore
@@ -200,6 +203,8 @@ class Invalidation {
 	 *
 	 * @param string $key An identifiers for data stored in memory.
 	 * @param string $event The event that caused the purge
+	 *
+	 * @return void
 	 */
 	public function purge( $key, $event = 'undefined event' ) {
 
@@ -223,6 +228,8 @@ class Invalidation {
 	 * @param string $id_prefix The type name specific to the id to form the "global ID" that is unique among all types
 	 * @param mixed|string|int $id The node entity identifier
 	 * @param string $event The event that caused the purge
+	 *
+	 * @return void
 	 */
 	public function purge_nodes( $id_prefix, $id, $event = 'unknown event' ) {
 		if ( ! method_exists( Relay::class, 'toGlobalId' ) ) {
@@ -328,6 +335,8 @@ class Invalidation {
 	 * @param int    $term_id  Term ID.
 	 * @param int    $tt_id    Taxonomy term ID.
 	 * @param string $taxonomy Taxonomy name.
+	 *
+	 * @return void
 	 */
 	public function on_created_term_cb( $term_id, $tt_id, $taxonomy ) {
 		$tax_object = get_taxonomy( $taxonomy );
@@ -364,6 +373,8 @@ class Invalidation {
 	 * @param int    $tt_id        Taxonomy term ID.
 	 * @param string $taxonomy     Taxonomy name.
 	 * @param mixed  $deleted_term Deleted term object.
+	 *
+	 * @return void
 	 */
 	public function on_deleted_term_cb( $term_id, $tt_id, $taxonomy, $deleted_term ) {
 		$tax_object = get_taxonomy( $taxonomy );
@@ -387,6 +398,8 @@ class Invalidation {
 	 * @param int $object_id ID of the object metadata is for.
 	 * @param string $meta_key Metadata key.
 	 * @param mixed $meta_value Metadata value. Serialized if non-scalar.
+	 *
+	 * @return void
 	 */
 	public function on_updated_term_meta_cb( $meta_id, $object_id, $meta_key, $meta_value ) {
 		if ( empty( $term = get_term( $object_id ) ) || ! $term instanceof WP_Term ) {
@@ -503,6 +516,8 @@ class Invalidation {
 	 * @param string  $new_status The new status of the post
 	 * @param string  $old_status The old status of the post
 	 * @param WP_Post $post       The post being updated
+	 *
+	 * @return void
 	 */
 	public function on_transition_post_status_cb( $new_status, $old_status, WP_Post $post ) {
 
@@ -612,6 +627,8 @@ class Invalidation {
 	 *
 	 * @param int     $user_id       User ID.
 	 * @param WP_User $old_user_data Object containing user's data prior to update.
+	 *
+	 * @return void
 	 */
 	public function on_user_profile_update_cb( $user_id, $old_user_data ) {
 		// Delete the cached results associated with this key
@@ -625,6 +642,8 @@ class Invalidation {
 	 * @param int    $object_id   ID of the object metadata is for.
 	 * @param string $meta_key    Metadata key.
 	 * @param mixed  $_meta_value Metadata value. Serialized if non-scalar.
+	 *
+	 * @return void
 	 */
 	public function on_user_meta_change_cb( $meta_id, $object_id, $meta_key, $_meta_value ) {
 		$user = get_user_by( 'id', $object_id );
@@ -642,10 +661,10 @@ class Invalidation {
 	}
 
 	/**
-	 *
 	 * @param int      $deleted_id       ID of the deleted user.
 	 * @param int|null $reassign_id ID of the user to reassign posts and links to.
 	 *                           Default null, for no reassignment.
+	 * @return void
 	 */
 	public function on_user_deleted_cb( $deleted_id, $reassign_id ) {
 		global $wpdb;
@@ -679,6 +698,8 @@ class Invalidation {
 	 * @param mixed  $meta_value Metadata value. This will be a PHP-serialized string
 	 *                           representation of the value if the value is an array, an object,
 	 *                           or itself a PHP-serialized string.
+	 *
+	 * @return void
 	 */
 	public function on_postmeta_change_cb( $meta_id, $post_id, $meta_key, $meta_value ) {
 
@@ -856,6 +877,8 @@ class Invalidation {
 	 * @param mixed  $meta_value Metadata value. This will be a PHP-serialized string
 	 *                           representation of the value if the value is an array, an object,
 	 *                           or itself a PHP-serialized string.
+	 *
+	 * @return void
 	 */
 	public function on_menu_item_change_cb( $meta_id, $post_id, $meta_key, $meta_value ) {
 
@@ -901,11 +924,18 @@ class Invalidation {
 	 * @param string $image      Unused.
 	 * @param string $mime_type  Unused.
 	 * @param int    $post_id    Post ID.
+	 *
+	 * @return void
 	 */
 	public function on_save_image_file_cb( $dummy, $filename, $image, $mime_type, $post_id ) {
 		$this->on_edit_attachment_cb( $post_id );
 	}
 
+	/**
+	 * @param int $attachment_id Attachment ID.
+	 *
+	 * @return void
+	 */
 	public function on_edit_attachment_cb( $attachment_id ) {
 		$attachment = get_post( $attachment_id );
 
@@ -919,7 +949,7 @@ class Invalidation {
 	/**
 	 * Handle purging when attachment is deleted
 	 *
-	 * @param $attachment_id
+	 * @param int $attachment_id Attachment ID.
 	 *
 	 * @return void
 	 */
@@ -939,6 +969,8 @@ class Invalidation {
 	 * @param int|string $new_status The new comment status.
 	 * @param int|string $old_status The old comment status.
 	 * @param WP_Comment $comment    Comment object.
+	 *
+	 * @return void
 	 */
 	public function on_comment_transition_cb( $new_status, $old_status, $comment ) {
 		// Only evict cache if transitioning to or from 'approved'
@@ -953,9 +985,11 @@ class Invalidation {
 	 *
 	 * @param int        $comment_id The comment ID.
 	 * @param WP_Comment $comment    Comment object.
+	 *
+	 * @return void
 	 */
 	public function on_insert_comment_cb( $comment_id, $comment ) {
-		if ( isset( $comment->comment_approved ) && '1' === $comment->comment_approved ) {
+		if ( property_exists( $comment, 'comment_approved' ) && '1' === $comment->comment_approved ) {
 			$this->purge_nodes( 'comment', $comment_id, 'comment_approved' );
 			$this->purge( 'list:comment', 'comment_approved' );
 		}

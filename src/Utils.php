@@ -11,8 +11,10 @@ class Utils {
 
 	/**
 	 * @param string $query_id Query ID
+	 * @param string|array $type
+	 * @param string $taxonomy
 	 *
-	 * @return WP_Post
+	 * @return \WP_Post|bool   false when not exist
 	 */
 	public static function getPostByTermName( $query_id, $type, $taxonomy ) {
 		$wp_query = new \WP_Query(
@@ -46,7 +48,7 @@ class Utils {
 	/**
 	 * Generate query hash for graphql query string
 	 *
-	 * @param string | \GraphQL\Language\AST\DocumentNode query string or document node
+	 * @param string|\GraphQL\Language\AST\DocumentNode $query string or document node
 	 *
 	 * @return string $query_id Query string str256 hash
 	 *
@@ -64,7 +66,7 @@ class Utils {
 	/**
 	 * Generate query hash for graphql query string
 	 *
-	 * @param string Formatted, normalized query string
+	 * @param string $query Formatted, normalized query string
 	 *
 	 * @return string $query_id Query string str256 hash
 	 *
