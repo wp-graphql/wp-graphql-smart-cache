@@ -449,6 +449,10 @@ class Invalidation {
 
 		$tax_object = get_taxonomy( $taxonomy );
 
+		if ( false === $tax_object ) {
+			return;
+		}
+
 		// Delete the cached results associated with this post/key
 		$this->purge_nodes( 'term', $term->term_id, 'term_saved' );
 
@@ -478,6 +482,10 @@ class Invalidation {
 		}
 
 		$tax_object = get_taxonomy( $taxonomy );
+
+		if ( false === $tax_object ) {
+			return;
+		}
 
 		// Delete the cached results associated with this post/key
 		$this->purge_nodes( 'term', $term->term_id, 'term_relationship_deleted' );
@@ -584,7 +592,7 @@ class Invalidation {
 			// Purge the terms associated with the node
 			$terms = wp_get_object_terms( $post->ID, \WPGraphQL::get_allowed_taxonomies() );
 
-			if ( ! empty( $terms ) ) {
+			if ( ! empty( $terms ) && ! is_wp_error( $terms ) ) {
 				array_map(
 					function ( $term ) use ( $post ) {
 						if ( ! $term instanceof WP_Term ) {
@@ -608,7 +616,7 @@ class Invalidation {
 		if ( 'DELETE' === $action_type ) {
 			$terms = wp_get_object_terms( $post->ID, \WPGraphQL::get_allowed_taxonomies() );
 
-			if ( ! empty( $terms ) ) {
+			if ( ! empty( $terms ) && ! is_wp_error( $terms ) ) {
 				array_map(
 					function ( $term ) use ( $post ) {
 						if ( ! $term instanceof WP_Term ) {
@@ -813,7 +821,9 @@ class Invalidation {
 		$menu = get_term_by( 'id', absint( $menu_id ), 'nav_menu' );
 
 		// menus have a term:id relay global ID, as they use the term loader
-		$this->purge_nodes( 'term', $menu->term_id, 'updated_nav_menu' );
+		if ( $menu instanceof WP_Term ) {
+			$this->purge_nodes( 'term', $menu->term_id, 'updated_nav_menu' );
+		}
 	}
 
 	/**

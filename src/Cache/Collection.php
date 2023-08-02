@@ -75,6 +75,10 @@ class Collection extends Query {
 
 		$request_key = $this->build_key( $query_id, $query, $variables, $operation );
 
+		if ( false === $request_key ) {
+			return;
+		}
+
 		// get the runtime nodes from the query analyzer
 		$runtime_nodes = $request->get_query_analyzer()->get_runtime_nodes() ?: [];
 		$list_types    = $request->get_query_analyzer()->get_list_types() ?: [];
