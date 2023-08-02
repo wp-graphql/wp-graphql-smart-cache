@@ -45,15 +45,19 @@ class AdminErrors {
 
 		foreach ( $error_messages as $message ) {
 			$html = sprintf( '<div id="plugin-message" class="error below-h2"><p>%s</p></div>', $message );
+
+			/** @var array[] */
+			$allowed_html = [
+				'div' => [
+					'id'    => true,
+					'class' => true,
+				],
+				'p'   => true,
+			];
+
 			echo wp_kses(
 				$html,
-				[
-					'div' => [
-						'id'    => true,
-						'class' => true,
-					],
-					'p'   => true,
-				]
+				$allowed_html
 			);
 		}
 
