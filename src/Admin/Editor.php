@@ -58,7 +58,7 @@ class Editor {
 	}
 
 	/**
-	 * Initialize Admin functionality for WPGraphQL
+	 * On save, validate the form data.
 	 *
 	 * @param int $post_id  post id
 	 * @return void|bool
