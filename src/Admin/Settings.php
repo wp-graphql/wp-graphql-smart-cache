@@ -7,7 +7,11 @@ use WPGraphQL\SmartCache\Document\Grant;
 
 class Settings {
 
-	// set this to true to see these in wp-admin
+	/**
+	 * Set this to true to see these in wp-admin
+	 *
+	 * @return bool
+	 */
 	public static function show_in_admin() {
 		$display_admin = function_exists( 'get_graphql_setting' ) ? \get_graphql_setting( 'editor_display', false, 'graphql_persisted_queries_section' ) : false;
 		return ( 'on' === $display_admin );
@@ -60,16 +64,28 @@ class Settings {
 		return ( 'on' === $option );
 	}
 
-	// Date/Time of the last time purge all happened through admin.
+	/**
+	 * Date/Time of the last time purge all happened through admin.
+	 *
+	 * @return string|false
+	 */
 	public static function caching_purge_timestamp() {
 		return function_exists( 'get_graphql_setting' ) ? \get_graphql_setting( 'purge_all_timestamp', false, 'graphql_cache_section' ) : false;
 	}
 
+	/**
+	 * The graphql url endpoint with leading slash.
+	 *
+	 * @return string
+	 */
 	public static function graphql_endpoint() {
 		$path = function_exists( 'get_graphql_setting' ) ? \get_graphql_setting( 'graphql_endpoint', 'graphql', 'graphql_general_settings' ) : 'graphql';
 		return '/' . $path;
 	}
 
+	/**
+	 * @return void
+	 */
 	public function init() {
 		// Add to the wp-graphql admin settings page
 		add_action(

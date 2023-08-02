@@ -11,6 +11,8 @@ class Utils {
 
 	/**
 	 * @param string $query_id Query ID
+	 * @param string|array $type
+	 * @param string $taxonomy
 	 *
 	 * @return \WP_Post|bool   false when not exist
 	 */

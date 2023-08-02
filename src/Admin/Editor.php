@@ -16,6 +16,9 @@ use GraphQL\Server\RequestError;
 
 class Editor {
 
+	/**
+	 * @return void
+	 */
 	public function admin_init() {
 		add_filter( 'wp_insert_post_data', [ $this, 'validate_before_save_cb' ], 10, 2 );
 		add_action( sprintf( 'save_post_%s', Document::TYPE_NAME ), [ $this, 'save_document_cb' ], 10, 2 );
@@ -34,6 +37,10 @@ class Editor {
 
 	/**
 	 * If existing post is edited, verify query string in content is valid graphql
+	 *
+	 * @param array $data   An array of slashed, sanitized, and processed post data.
+	 * @param array $post   An array of sanitized (and slashed) but otherwise unmodified post data.
+	 * @return array
 	 */
 	public function validate_before_save_cb( $data, $post ) {
 		try {
@@ -50,6 +57,12 @@ class Editor {
 		return $data;
 	}
 
+	/**
+	 * On save, validate the form data.
+	 *
+	 * @param int $post_id  post id
+	 * @return void|bool
+	 */
 	public function is_valid_form( $post_id ) {
 		if ( empty( $_POST ) ) {
 			return;
@@ -97,8 +110,12 @@ class Editor {
 	}
 
 	/**
-	* When a post is saved, sanitize and store the data.
-	*/
+	 * When a post is saved, sanitize and store the data.
+	 *
+	 * @param int     $post_id Post ID.
+	 * @param \WP_Post $post    Post object.
+	 * @return void
+	 */
 	public function save_document_cb( $post_id, $post ) {
 		if ( ! $this->is_valid_form( $post_id ) ) {
 			AdminErrors::add_message( 'Something is wrong with the form data' );
@@ -119,7 +136,7 @@ class Editor {
 			$data    = sanitize_text_field( wp_unslash( $_POST['graphql_query_maxage'] ) );
 			$max_age->save( $post_id, $data );
 		} catch ( SyntaxError $e ) {
-			AdminErrors::add_message( 'Did not save invalid graphql query string. ' . $post['post_content'] );
+			AdminErrors::add_message( 'Did not save invalid graphql query string. ' . $post->post_content );
 		} catch ( RequestError $e ) {
 			AdminErrors::add_message( $e->getMessage() );
 		}
@@ -127,6 +144,9 @@ class Editor {
 
 	/**
 	 * Draw the input field for the post edit
+	 *
+	 * @param \WP_Post $post    Post object.
+	 * @return void
 	 */
 	public static function grant_input_box_cb( $post ) {
 		wp_nonce_field( 'graphql_query_grant', 'savedquery_grant_noncename' );
@@ -167,6 +187,9 @@ class Editor {
 
 	/**
 	 * Draw the input field for the post edit
+	 *
+	 * @param \WP_Post $post    Post object.
+	 * @return void
 	 */
 	public static function maxage_input_box_cb( $post ) {
 		wp_nonce_field( 'graphql_query_maxage', 'savedquery_maxage_noncename' );
@@ -211,6 +234,9 @@ class Editor {
 
 	/**
 	 * Enable excerpt as the description.
+	 *
+	 * @param string[] $columns An associative array of column headings.
+	 * @return array
 	 */
 	public function add_description_column_to_admin_cb( $columns ) {
 		// Use 'description' as the text the user sees
@@ -218,17 +244,32 @@ class Editor {
 		return $columns;
 	}
 
+	/**
+	 * @param string $column The name of the column to display.
+	 * @param int    $post_id     The current post ID.
+	 * @return void
+	 */
 	public function fill_excerpt_content_cb( $column, $post_id ) {
 		if ( 'excerpt' === $column ) {
 			echo esc_html( get_the_excerpt( $post_id ) );
 		}
 	}
 
+	/**
+	 * @param array $columns An array of sortable columns.
+	 * @return array
+	 */
 	public function make_excerpt_column_sortable_in_admin_cb( $columns ) {
 		$columns['excerpt'] = true;
 		return $columns;
 	}
 
+	/**
+	 * @param array  $settings  Array of editor arguments.
+	 * @param string $editor_id Unique editor identifier, e.g. 'content'. Accepts 'classic-block'
+	 *                          when called from block editor's Classic block.
+	 * @return array
+	 */
 	public function wp_editor_settings( $settings, $editor_id ) {
 		if ( 'content' === $editor_id && Document::TYPE_NAME === get_current_screen()->post_type ) {
 			$settings['tinymce']       = false;

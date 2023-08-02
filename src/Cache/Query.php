@@ -14,11 +14,18 @@ class Query {
 
 	const GROUP_NAME = 'gql_cache';
 
-	// The storage object for the actual system of choice transient, database, object, memory, etc
+	/**
+	 * The storage object for the actual system of choice transient, database, object, memory, etc
+	 *
+	 * @var object
+	 **/
 	public static $storage = null;
 
+	/**
+	 * @return void
+	 */
 	public function init() {
-		if ( ! self::$storage ) {
+		if ( null === self::$storage ) {
 			self::$storage = apply_filters(
 				'graphql_cache_storage_object', //phpcs:ignore
 				wp_using_ext_object_cache() ? new WpCache( self::GROUP_NAME ) : new Transient( self::GROUP_NAME )

@@ -4,8 +4,15 @@ namespace WPGraphQL\SmartCache\Storage;
 
 class WpCache {
 
+	/**
+	 * @var string
+	 */
 	public $group_name;
 
+	/**
+	 * @param string $group_name
+	 * @return void
+	 */
 	public function __construct( $group_name ) {
 		$this->group_name = $group_name;
 	}
