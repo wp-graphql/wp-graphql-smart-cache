@@ -20,7 +20,7 @@ class Editor {
 	 * @return void
 	 */
 	public function admin_init() {
-		add_filter( 'wp_insert_post_data', [ $this, 'validate_before_save_cb' ], 10, 2 );
+		add_filter( 'wp_insert_post_data', [ $this, 'validate_and_pre_save_cb' ], 10, 2 );
 		add_action( sprintf( 'save_post_%s', Document::TYPE_NAME ), [ $this, 'save_document_cb' ], 10, 3 );
 
 		// Enable excerpts for the persisted query post type for the wp admin editor
@@ -42,26 +42,38 @@ class Editor {
 	 * @param array $post   An array of sanitized (and slashed) but otherwise unmodified post data.
 	 * @return array
 	 */
-	public function validate_before_save_cb( $data, $post ) {
+	public function validate_and_pre_save_cb( $data, $post ) {
+		if ( Document::TYPE_NAME !== $post['post_type'] ) {
+			return $data;
+		}
+
+		$document = new Document();
+
 		try {
-			$document = new Document();
-			$data     = $document->validate_before_save_cb( $data, $post );
+			if ( array_key_exists( 'post_content', $post ) && 'publish' === $post['post_status'] ) {
+				$data['post_content'] = $document->valid_or_throw( $post['post_content'], $post['ID'] );
+			}
 		} catch ( RequestError $e ) {
-			$existing_post = get_post( $post['ID'] );
+			AdminErrors::add_message( $e->getMessage() );
 
 			// Overwrite new/invalid query with previous working query, or empty
-			if ( $existing_post ) {
-				$data['post_content'] = $existing_post->post_content;
+			$existing_post = get_post( $post['ID'] );
+			if ( $existing_post && property_exists( $existing_post, 'post_content' ) ) {
+				try {
+					$data['post_content'] = $document->valid_or_throw( $existing_post->post_content, $post['ID'] );
+				} catch ( RequestError $e ) {
+					$data['post_content'] = '';
+				}
 			}
-
-			AdminErrors::add_message( $e->getMessage() );
 		}
+
 		return $data;
 	}
 
 	/**
 	 * When a post is saved, verify POST submitted data
 	 *
+	 * @param int $post_id  The Post_ID
 	 * @return void|bool  True is passed validataion
 	*/
 	public function is_valid_form( $post_id ) {
@@ -136,15 +148,14 @@ class Editor {
 			$data  = $grant->the_selection( sanitize_text_field( wp_unslash( $_POST['graphql_query_grant'] ) ) );
 			$grant->save( $post_id, $data );
 
-			$document = new Document();
-			$document->save_document_cb( $post_id, $post );
-
 			$max_age = new MaxAge();
 			// phpcs:ignore
 			$data    = sanitize_text_field( wp_unslash( $_POST['graphql_query_maxage'] ) );
 			$max_age->save( $post_id, $data );
-		} catch ( SyntaxError $e ) {
-			AdminErrors::add_message( 'Did not save invalid graphql query string. ' . $post->post_content );
+
+			$document           = new Document();
+			$post->post_content = $document->valid_or_throw( $post->post_content, $post_id );
+			$document->save_document_cb( $post_id, $post );
 		} catch ( RequestError $e ) {
 			AdminErrors::add_message( $e->getMessage() );
 		} catch ( \Exception $e ) {
