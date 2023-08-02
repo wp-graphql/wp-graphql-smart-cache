@@ -9,6 +9,7 @@ namespace WPGraphQL\SmartCache\Cache;
 use WPGraphQL\SmartCache\Document;
 use WPGraphQL\SmartCache\Storage\Transient;
 use WPGraphQL\SmartCache\Storage\WpCache;
+use WPGraphQL\SmartCache\Storage\Ephemeral;
 
 class Query {
 
@@ -17,7 +18,7 @@ class Query {
 	/**
 	 * The storage object for the actual system of choice transient, database, object, memory, etc
 	 *
-	 * @var object
+	 * @var WpCache|Transient|Ephemeral
 	 **/
 	public static $storage = null;
 
@@ -69,7 +70,13 @@ class Query {
 			'user'      => $user->ID,
 		];
 
-		return hash( 'sha256', wp_json_encode( $parts ) );
+		$parts_string = wp_json_encode( $parts );
+
+		if ( false === $parts_string ) {
+			return false;
+		}
+
+		return hash( 'sha256', $parts_string );
 	}
 
 	/**

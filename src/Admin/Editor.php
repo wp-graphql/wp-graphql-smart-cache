@@ -50,7 +50,9 @@ class Editor {
 			$existing_post = get_post( $post['ID'] );
 
 			// Overwrite new/invalid query with previous working query, or empty
-			$data['post_content'] = $existing_post->post_content;
+			if ( $existing_post ) {
+				$data['post_content'] = $existing_post->post_content;
+			}
 
 			AdminErrors::add_message( $e->getMessage() );
 		}
@@ -178,18 +180,21 @@ class Editor {
 			checked( $value, Grant::USE_DEFAULT, false )
 		);
 		$html .= '<label for="graphql_query_grant_default">Use global default</label><br >';
+
+		/** @var array[] */
+		$allowed_html = [
+			'input' => [
+				'type'    => true,
+				'id'      => true,
+				'name'    => true,
+				'value'   => true,
+				'checked' => true,
+			],
+			'br'    => true,
+		];
 		echo wp_kses(
 			$html,
-			[
-				'input' => [
-					'type'    => true,
-					'id'      => true,
-					'name'    => true,
-					'value'   => true,
-					'checked' => true,
-				],
-				'br'    => true,
-			]
+			$allowed_html
 		);
 	}
 
@@ -204,9 +209,21 @@ class Editor {
 
 		$max_age = new MaxAge();
 		$value   = $max_age->get( $post->ID );
-		$value   = absint( $value ) ? $value : 0;
-		$html    = sprintf( '<input type="text" id="graphql_query_maxage" name="graphql_query_maxage" value="%s" />', $value );
-		$html   .= '<br><label for="graphql_query_maxage">Max-Age HTTP header. Integer value.</label>';
+
+		if ( is_wp_error( $value ) ) {
+			AdminErrors::add_message(
+				sprintf(
+					__( 'Invalid max age %s.', 'wp-graphql-smart-cache' ),
+					$value->get_error_message()
+				)
+			);
+			$value = 0;
+		} else {
+			$value = absint( $value ) ? $value : 0;
+		}
+
+		$html  = sprintf( '<input type="text" id="graphql_query_maxage" name="graphql_query_maxage" value="%s" />', $value );
+		$html .= '<br><label for="graphql_query_maxage">Max-Age HTTP header. Integer value.</label>';
 		echo wp_kses(
 			$html,
 			[
@@ -279,7 +296,9 @@ class Editor {
 	 * @return array
 	 */
 	public function wp_editor_settings( $settings, $editor_id ) {
-		if ( 'content' === $editor_id && Document::TYPE_NAME === get_current_screen()->post_type ) {
+		$screen = get_current_screen();
+
+		if ( $screen && 'content' === $editor_id && Document::TYPE_NAME === $screen->post_type ) {
 			$settings['tinymce']       = false;
 			$settings['quicktags']     = false;
 			$settings['media_buttons'] = false;

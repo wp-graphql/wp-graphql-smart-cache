@@ -128,7 +128,7 @@ class Invalidation {
 	/**
 	 * Return a list of ignored meta keys
 	 *
-	 * @return array|null
+	 * @return array
 	 */
 	public static function get_ignored_meta_keys() {
 		if ( null !== self::$ignored_meta_keys ) {
@@ -449,6 +449,10 @@ class Invalidation {
 
 		$tax_object = get_taxonomy( $taxonomy );
 
+		if ( false === $tax_object ) {
+			return;
+		}
+
 		// Delete the cached results associated with this post/key
 		$this->purge_nodes( 'term', $term->term_id, 'term_saved' );
 
@@ -478,6 +482,10 @@ class Invalidation {
 		}
 
 		$tax_object = get_taxonomy( $taxonomy );
+
+		if ( false === $tax_object ) {
+			return;
+		}
 
 		// Delete the cached results associated with this post/key
 		$this->purge_nodes( 'term', $term->term_id, 'term_relationship_deleted' );
@@ -534,6 +542,10 @@ class Invalidation {
 
 		$post_type_object = get_post_type_object( $post->post_type );
 
+		if ( ! $post_type_object instanceof \WP_Post_Type ) {
+			return;
+		}
+
 		// If the post type is not public and not publicly queryable
 		// don't track it
 		if ( false === $post_type_object->public && false === $post_type_object->publicly_queryable ) {
@@ -570,8 +582,7 @@ class Invalidation {
 			$action_type = 'CREATE';
 		}
 
-		$post_type_object = get_post_type_object( $post->post_type );
-		$type_name        = $post_type_object instanceof \WP_Post_Type ? strtolower( $post_type_object->graphql_single_name ) : $post_type_object;
+		$type_name = strtolower( $post_type_object->graphql_single_name );
 
 		// if we create a post
 		// we need to purge lists of the type
@@ -584,7 +595,7 @@ class Invalidation {
 			// Purge the terms associated with the node
 			$terms = wp_get_object_terms( $post->ID, \WPGraphQL::get_allowed_taxonomies() );
 
-			if ( ! empty( $terms ) ) {
+			if ( ! empty( $terms ) && ! is_wp_error( $terms ) ) {
 				array_map(
 					function ( $term ) use ( $post ) {
 						if ( ! $term instanceof WP_Term ) {
@@ -608,7 +619,7 @@ class Invalidation {
 		if ( 'DELETE' === $action_type ) {
 			$terms = wp_get_object_terms( $post->ID, \WPGraphQL::get_allowed_taxonomies() );
 
-			if ( ! empty( $terms ) ) {
+			if ( ! empty( $terms ) && ! is_wp_error( $terms ) ) {
 				array_map(
 					function ( $term ) use ( $post ) {
 						if ( ! $term instanceof WP_Term ) {
@@ -723,6 +734,10 @@ class Invalidation {
 
 		$post_type_object = get_post_type_object( $post->post_type );
 
+		if ( ! $post_type_object instanceof \WP_Post_Type ) {
+			return;
+		}
+
 		// If the post type is not public and not publicly queryable
 		// don't track it
 		if ( false === $post_type_object->public && false === $post_type_object->publicly_queryable ) {
@@ -813,7 +828,9 @@ class Invalidation {
 		$menu = get_term_by( 'id', absint( $menu_id ), 'nav_menu' );
 
 		// menus have a term:id relay global ID, as they use the term loader
-		$this->purge_nodes( 'term', $menu->term_id, 'updated_nav_menu' );
+		if ( $menu instanceof WP_Term ) {
+			$this->purge_nodes( 'term', $menu->term_id, 'updated_nav_menu' );
+		}
 	}
 
 	/**
