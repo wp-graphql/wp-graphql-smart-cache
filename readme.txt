@@ -4,7 +4,7 @@ Tags: WPGraphQL, Cache, API, Invalidation, Persisted Queries, GraphQL, Performan
 Requires at least: 5.6
 Tested up to: 6.1
 Requires PHP: 7.4
-Stable tag: 1.1.3
+Stable tag: 1.1.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -72,6 +72,19 @@ This release removes a lot of code that has since been released as part of WPGra
 In order to use v0.2.0+ of WPGraphQL Smart Cache, you will need WPGraphQL v1.12.0 or newer.
 
 == Changelog ==
+
+= 1.1.4 =
+
+**Chores / Bugfixes**
+
+- [#237](https://github.com/wp-graphql/wp-graphql-smart-cache/pull/237) fix: when creating a new query, do not show "something is wrong with form data" error
+- [#242](https://github.com/wp-graphql/wp-graphql-smart-cache/pull/242) ci: increase phpstan to level 7
+- [#241](https://github.com/wp-graphql/wp-graphql-smart-cache/pull/241) ci: increase phpstan to level 5,6
+- [#240](https://github.com/wp-graphql/wp-graphql-smart-cache/pull/240) ci: increase phpstan to level 3,4
+- [#239](https://github.com/wp-graphql/wp-graphql-smart-cache/pull/239) ci: increase phpstan to level 2
+- [#236](https://github.com/wp-graphql/wp-graphql-smart-cache/pull/236) ci: add phpstan workflow to check code quality
+- [#234](https://github.com/wp-graphql/wp-graphql-smart-cache/pull/234) fix: do not cache mutations to object cache results
+- [#235](https://github.com/wp-graphql/wp-graphql-smart-cache/pull/235) ci: tests failing after wpgraphql v1.14.5 release
 
 = 1.1.3 =
 
