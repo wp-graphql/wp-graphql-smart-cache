@@ -20,8 +20,8 @@ class Editor {
 	 * @return void
 	 */
 	public function admin_init() {
-		add_filter( 'wp_insert_post_data', [ $this, 'validate_before_save_cb' ], 10, 2 );
-		add_action( sprintf( 'save_post_%s', Document::TYPE_NAME ), [ $this, 'save_document_cb' ], 10, 2 );
+		add_filter( 'wp_insert_post_data', [ $this, 'validate_and_pre_save_cb' ], 10, 2 );
+		add_action( sprintf( 'save_post_%s', Document::TYPE_NAME ), [ $this, 'save_document_cb' ], 10, 3 );
 
 		// Enable excerpts for the persisted query post type for the wp admin editor
 		add_post_type_support( Document::TYPE_NAME, 'excerpt' );
@@ -42,70 +42,73 @@ class Editor {
 	 * @param array $post   An array of sanitized (and slashed) but otherwise unmodified post data.
 	 * @return array
 	 */
-	public function validate_before_save_cb( $data, $post ) {
+	public function validate_and_pre_save_cb( $data, $post ) {
+		if ( Document::TYPE_NAME !== $post['post_type'] ) {
+			return $data;
+		}
+
+		$document = new Document();
+
 		try {
-			$document = new Document();
-			$data     = $document->validate_before_save_cb( $data, $post );
+			if ( array_key_exists( 'post_content', $post ) && 'publish' === $post['post_status'] ) {
+				$data['post_content'] = $document->valid_or_throw( $post['post_content'], $post['ID'] );
+			}
 		} catch ( RequestError $e ) {
-			$existing_post = get_post( $post['ID'] );
+			AdminErrors::add_message( $e->getMessage() );
 
 			// Overwrite new/invalid query with previous working query, or empty
-			if ( $existing_post ) {
-				$data['post_content'] = $existing_post->post_content;
+			$existing_post = get_post( $post['ID'] );
+			if ( $existing_post && property_exists( $existing_post, 'post_content' ) ) {
+				try {
+					$data['post_content'] = $document->valid_or_throw( $existing_post->post_content, $post['ID'] );
+				} catch ( RequestError $e ) {
+					$data['post_content'] = '';
+				}
 			}
-
-			AdminErrors::add_message( $e->getMessage() );
 		}
+
 		return $data;
 	}
 
 	/**
-	 * On save, validate the form data.
+	 * When a post is saved, verify POST submitted data
 	 *
-	 * @param int $post_id  post id
-	 * @return void|bool
-	 */
+	 * @param int $post_id  The Post_ID
+	 * @return void|bool  True is passed validataion
+	*/
 	public function is_valid_form( $post_id ) {
 		if ( empty( $_POST ) ) {
-			return;
+			return false;
 		}
 
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-			return;
+			return false;
 		}
 
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
-			return;
+			return false;
 		}
 
 		if ( ! isset( $_POST['post_type'] ) || Document::TYPE_NAME !== $_POST['post_type'] ) {
-			return;
+			return false;
 		}
 
 		if ( ! isset( $_REQUEST['savedquery_grant_noncename'] ) ) {
-			return;
+			return false;
 		}
 
 		// phpcs:ignore
 		if ( ! wp_verify_nonce( $_REQUEST['savedquery_grant_noncename'], 'graphql_query_grant' ) ) {
-			return;
-		}
-
-		if ( ! isset( $_POST['graphql_query_grant'] ) ) {
-			return;
+			return false;
 		}
 
 		if ( ! isset( $_REQUEST['savedquery_maxage_noncename'] ) ) {
-			return;
+			return false;
 		}
 
 		// phpcs:ignore
 		if ( ! wp_verify_nonce( $_REQUEST['savedquery_maxage_noncename'], 'graphql_query_maxage' ) ) {
-			return;
-		}
-
-		if ( ! isset( $_POST['graphql_query_maxage'] ) ) {
-			return;
+			return false;
 		}
 
 		return true;
@@ -114,32 +117,48 @@ class Editor {
 	/**
 	 * When a post is saved, sanitize and store the data.
 	 *
-	 * @param int     $post_id Post ID.
+	 * @param int      $post_id Post ID.
 	 * @param \WP_Post $post    Post object.
+	 * @param bool     $update  Whether this is an existing post being updated.
 	 * @return void
-	 */
-	public function save_document_cb( $post_id, $post ) {
-		if ( ! $this->is_valid_form( $post_id ) ) {
-			AdminErrors::add_message( 'Something is wrong with the form data' );
-			return;
-		}
-
-		$grant = new Grant();
-		// phpcs:ignore
-		$data  = $grant->the_selection( sanitize_text_field( wp_unslash( $_POST['graphql_query_grant'] ) ) );
-		$grant->save( $post_id, $data );
-
+	*/
+	public function save_document_cb( $post_id, $post, $update ) {
 		try {
-			$document = new Document();
-			$document->save_document_cb( $post_id, $post );
+			// if new post in the admin editor, ie 'auto-draft', do not save
+			if ( false === $update && 'auto-draft' === $post->post_status ) {
+				return;
+			}
+
+			if ( ! $this->is_valid_form( $post_id ) ) {
+				return;
+			}
+
+			// phpcs:ignore
+			if ( ! isset( $_POST['graphql_query_grant'] ) ) {
+				throw new \Exception( 'Must specify access grant' );
+			}
+
+			// phpcs:ignore
+			if ( ! isset( $_POST['graphql_query_maxage'] ) ) {
+				throw new \Exception( 'Must specify a max age' );
+			}
+
+			$grant = new Grant();
+			// phpcs:ignore
+			$data  = $grant->the_selection( sanitize_text_field( wp_unslash( $_POST['graphql_query_grant'] ) ) );
+			$grant->save( $post_id, $data );
 
 			$max_age = new MaxAge();
 			// phpcs:ignore
 			$data    = sanitize_text_field( wp_unslash( $_POST['graphql_query_maxage'] ) );
 			$max_age->save( $post_id, $data );
-		} catch ( SyntaxError $e ) {
-			AdminErrors::add_message( 'Did not save invalid graphql query string. ' . $post->post_content );
+
+			$document           = new Document();
+			$post->post_content = $document->valid_or_throw( $post->post_content, $post_id );
+			$document->save_document_cb( $post_id, $post );
 		} catch ( RequestError $e ) {
+			AdminErrors::add_message( $e->getMessage() );
+		} catch ( \Exception $e ) {
 			AdminErrors::add_message( $e->getMessage() );
 		}
 	}

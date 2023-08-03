@@ -28,7 +28,7 @@ class Document {
 		add_action( 'post_updated', [ $this, 'after_updated_cb' ], 10, 3 );
 
 		if ( ! is_admin() ) {
-			add_filter( 'wp_insert_post_data', [ $this, 'validate_before_save_cb' ], 10, 2 );
+			add_filter( 'wp_insert_post_data', [ $this, 'validate_and_pre_save_cb' ], 10, 2 );
 			add_action( sprintf( 'save_post_%s', self::TYPE_NAME ), [ $this, 'save_document_cb' ], 10, 2 );
 		}
 
@@ -264,39 +264,54 @@ class Document {
 	 * @return array $data
 	 * @throws RequestError
 	 */
-	public function validate_before_save_cb( $data, $post ) {
+	public function validate_and_pre_save_cb( $data, $post ) {
 		if ( self::TYPE_NAME !== $post['post_type'] ) {
 			return $data;
+		}
+
+		if ( array_key_exists( 'post_content', $post ) ) {
+			// Change the shape of the data
+			$data['post_content'] = $this->valid_or_throw( $post['post_content'], $post['ID'] );
+		}
+
+		return $data;
+	}
+
+	/**
+	 * @param string $post_content
+	 * @param int    $post_id
+	 * @return string post content
+	 * @throws RequestError
+	 */
+	public function valid_or_throw( $post_content, $post_id ) {
+		if ( empty( $post_content ) ) {
+			return $post_content;
 		}
 
 		/**
 		 * Before post is saved, check content for valid graphql.
 		 */
-		if ( array_key_exists( 'post_content', $data ) &&
-			! empty( $data['post_content'] ) ) {
-			try {
-				// Use graphql parser to check query string validity.
-				// Because the data comes from form submission, comes with PHP characters escaped/slashed.
-				$ast = \GraphQL\Language\Parser::parse( wp_unslash( $post['post_content'] ) );
+		try {
+			// Use graphql parser to check query string validity.
+			// Because the data comes from form submission, comes with PHP characters escaped/slashed.
+			$ast = \GraphQL\Language\Parser::parse( wp_unslash( $post_content ) );
 
-				// Get post using the normalized hash of the query string. If not valid graphql, throws syntax error
-				$normalized_hash = Utils::generateHash( $ast );
+			// Get post using the normalized hash of the query string. If not valid graphql, throws syntax error
+			$normalized_hash = Utils::generateHash( $ast );
 
-				// If queryId alias name is already in the system and doesn't match the query hash
-				$existing_post = Utils::getPostByTermName( $normalized_hash, self::TYPE_NAME, self::ALIAS_TAXONOMY_NAME );
-				if ( $existing_post && $existing_post->ID !== $post['ID'] ) {
-					// Translators: The placeholder is the existing saved query with matching hash/query-id
-					throw new RequestError( sprintf( __( 'This query has already been associated with another query "%s"', 'wp-graphql-smart-cache' ), $existing_post->post_title ) );
-				}
-
-				// Format the query string and save that
-				$data['post_content'] = \GraphQL\Language\Printer::doPrint( $ast );
-			} catch ( SyntaxError $e ) {
-				// Translators: The placeholder is the query string content
-				throw new RequestError( sprintf( __( 'Did not save invalid graphql query string "%s"', 'wp-graphql-smart-cache' ), $post['post_content'] ) );
+			// If queryId alias name is already in the system and doesn't match the query hash
+			$existing_post = Utils::getPostByTermName( $normalized_hash, self::TYPE_NAME, self::ALIAS_TAXONOMY_NAME );
+			if ( $existing_post && $existing_post->ID !== $post_id ) {
+				// Translators: The placeholder is the existing saved query with matching hash/query-id
+				throw new RequestError( sprintf( __( 'This query has already been associated with another query "%s"', 'wp-graphql-smart-cache' ), $existing_post->post_title ) );
 			}
+
+			// Format the query string and save that
+			return \GraphQL\Language\Printer::doPrint( $ast );
+		} catch ( SyntaxError $e ) {
+			// Translators: The placeholder is the query string content
+			throw new RequestError( sprintf( __( 'Invalid graphql query string "%s"', 'wp-graphql-smart-cache' ), $post_content ) );
 		}
-		return $data;
 	}
 
 	/**
@@ -311,6 +326,8 @@ class Document {
 		if ( empty( $post->post_content ) ) {
 			return;
 		}
+
+		$post->post_content = $this->valid_or_throw( $post->post_content, $post->ID );
 
 		// Get the query id for the new query and save as a term
 		// Verify the post content is valid graphql query document
