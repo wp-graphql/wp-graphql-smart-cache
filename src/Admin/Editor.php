@@ -50,19 +50,24 @@ class Editor {
 		$document = new Document();
 
 		try {
-			if ( array_key_exists( 'post_content', $post ) && 'publish' === $post['post_status'] ) {
-				$data['post_content'] = $document->valid_or_throw( $post['post_content'], $post['ID'] );
+			// Check for empty post_content when publishing the query and throw
+			if ( 'publish' === $post['post_status'] && empty( $post['post_content'] ) ) {
+				throw new RequestError( __( 'Query string is empty', 'wp-graphql-smart-cache' ) );
 			}
+
+			$data['post_content'] = $document->valid_or_throw( $post['post_content'], $post['ID'] );
+
 		} catch ( RequestError $e ) {
 			AdminErrors::add_message( $e->getMessage() );
 
-			// Overwrite new/invalid query with previous working query, or empty
-			$existing_post = get_post( $post['ID'] );
-			if ( $existing_post && property_exists( $existing_post, 'post_content' ) ) {
-				try {
-					$data['post_content'] = $document->valid_or_throw( $existing_post->post_content, $post['ID'] );
-				} catch ( RequestError $e ) {
-					$data['post_content'] = '';
+			// If encountered invalid data when publishing query, revert some data. If draft, allow invalid query.
+			if ( 'publish' === $post['post_status'] ) {
+				// If has an existing post and is published, revert post content to that previous value.
+				$existing_post = get_post( $post['ID'], ARRAY_A );
+				if ( $existing_post && 'publish' === $existing_post['post_status'] ) {
+					$data['post_content'] = $existing_post['post_content'];
+				} else {
+					$data['post_status'] = 'draft';
 				}
 			}
 		}
