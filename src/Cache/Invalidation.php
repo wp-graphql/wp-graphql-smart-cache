@@ -10,7 +10,6 @@ use WP_User;
 use WPGraphQL\Model\Menu;
 use WPGraphQL\SmartCache\Admin\Settings;
 
-
 /**
  * This class handles the invalidation of the WPGraphQL Caches
  */

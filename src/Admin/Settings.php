@@ -139,6 +139,50 @@ class Settings {
 					]
 				);
 
+				register_graphql_settings_field(
+					'graphql_persisted_queries_section',
+					[
+						'name'              => 'query_garbage_collect',
+						'label'             => __( 'Delete Old Queries', 'wp-graphql-smart-cache' ),
+						'desc'              => __( 'Toggle on to enable garbage collection (delete) of saved queries older than number of days specified below. Queries that are tagged in a "Group" will be excluded from garbage collection.', 'wp-graphql-smart-cache' ),
+						'type'              => 'checkbox',
+						'default'           => 'off',
+						'sanitize_callback' => function ( $value ) {
+							/**
+							 * When enable garbage collection,
+							 * schedule the garbage collection action/event to run once daily.
+							 * Otherwise remove it.
+							 */
+							if ( 'on' === $value ) {
+								if ( ! wp_next_scheduled( 'wpgraphql_smart_cache_query_garbage_collect' ) ) {
+									// Add scheduled job to run
+									$event_recurrence = apply_filters( 'wpgraphql_smart_cache_query_garbage_collect_recurrence', 'daily' );
+									wp_schedule_event( time() + 60, $event_recurrence, 'wpgraphql_smart_cache_query_garbage_collect' );
+								}
+							} else {
+								wp_clear_scheduled_hook( 'wpgraphql_smart_cache_query_garbage_collect' );
+							}
+							return $value;
+						},
+					]
+				);
+
+				register_graphql_settings_field(
+					'graphql_persisted_queries_section',
+					[
+						'name'              => 'query_garbage_collect_age',
+						'desc'              => __( 'Age, in number of days, of saved query when it will be removed', 'wp-graphql-smart-cache' ),
+						'type'              => 'number',
+						'default'           => '30',
+						'sanitize_callback' => function ( $value ) {
+							if ( 1 > $value || ! is_numeric( $value ) ) {
+								return function_exists( 'get_graphql_setting' ) ? \get_graphql_setting( 'query_garbage_collect_age', false, 'graphql_persisted_queries_section' ) : null;
+							}
+							return (int) $value;
+						},
+					]
+				);
+
 				// Add a tab section to the graphql admin settings page
 				register_graphql_settings_section(
 					'graphql_cache_section',
