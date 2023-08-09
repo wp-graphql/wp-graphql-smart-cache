@@ -14,6 +14,9 @@ class Group {
 
 	const TAXONOMY_NAME = 'graphql_document_group';
 
+	/**
+	* @return void
+	*/
 	public function init() {
 		register_taxonomy(
 			self::TAXONOMY_NAME,
@@ -41,10 +44,11 @@ class Group {
 	/**
 	 * Look up the first group for a post
 	 *
-	 * @param int  The post id
+	 * @param int  $post_id The post id
+	 * @return string
 	 */
 	public static function get( $post_id ) {
 		$item = get_the_terms( $post_id, self::TAXONOMY_NAME );
-		return ! is_wp_error( $item ) && isset( $item[0]->name ) ? $item[0]->name : '';
+		return ! is_wp_error( $item ) && isset( $item[0] ) && property_exists( $item[0], 'name' ) ? $item[0]->name : '';
 	}
 }

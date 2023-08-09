@@ -17,7 +17,7 @@ class GarbageCollection {
 	/**
 	 * @param integer $number_of_posts  Number of post ids matching criteria.
 	 *
-	 * @return [int]  Array of post ids
+	 * @return int[]  Array of post ids
 	 */
 	public static function get_documents_by_age( $number_of_posts = 100 ) {
 		// $days_ago  Posts older than this many days ago
@@ -51,6 +51,11 @@ class GarbageCollection {
 			]
 		);
 
+		/**
+		 * Because 'fields' returns 'ids', this returns array of post ints. Satisfy phpstan.
+		 *
+		 * @var int[]
+		 */
 		return $wp_query->get_posts();
 	}
 }
