@@ -52,7 +52,7 @@ class MutationCreateDocumentTest extends \Codeception\TestCase\WPTestCase {
 
         codecept_debug( $actual );
 
-        $this->assertEquals( $actual['errors'][0]['message'], "Did not save invalid graphql query string \"$query_string\"" );
+        $this->assertEquals( $actual['errors'][0]['message'], "Invalid graphql query string \"$query_string\"" );
     }
 
     public function testCreateDocumentMutationWorks() {

@@ -14,7 +14,11 @@ use WPGraphQL\SmartCache\Admin\Settings;
 
 class Collection extends Query {
 
-	// initialize the cache collection
+	/**
+	 * Initialize the cache collection
+	 *
+	 * @return void
+	 */
 	public function init() {
 		add_action( 'graphql_return_response', [ $this, 'save_query_mapping_cb' ], 10, 8 );
 		parent::init();
@@ -70,6 +74,10 @@ class Collection extends Query {
 		}
 
 		$request_key = $this->build_key( $query_id, $query, $variables, $operation );
+
+		if ( false === $request_key ) {
+			return;
+		}
 
 		// get the runtime nodes from the query analyzer
 		$runtime_nodes = $request->get_query_analyzer()->get_runtime_nodes() ?: [];

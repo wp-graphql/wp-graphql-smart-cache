@@ -15,17 +15,20 @@ class Results extends Query {
 	const GLOBAL_DEFAULT_TTL = 600;
 
 	/**
-	 * Indicator of the GraphQL Query execution cached or not.
+	 * Indicator of the GraphQL Query keys cached or not.
 	 *
-	 * @array bool
+	 * @var array
 	 */
 	protected $is_cached = [];
 
 	/**
-	 * @var
+	 * @var \WPGraphQL\Request
 	 */
 	protected $request;
 
+	/**
+	 * @return void
+	 */
 	public function init() {
 		add_filter( 'pre_graphql_execute_request', [ $this, 'get_query_results_from_cache_cb' ], 10, 2 );
 		add_action( 'graphql_return_response', [ $this, 'save_query_results_to_cache_cb' ], 10, 8 );
@@ -42,7 +45,7 @@ class Results extends Query {
 	 * @param string $query_id queryId from the graphql query request
 	 * @param string $query query string
 	 * @param array $variables Variables sent with request or null
-	 * @param string $operation Name of operation if specified on the request or null
+	 * @param string $operation_name Name of operation if specified on the request or null
 	 *
 	 * @return string|false unique id for this request or false if query not provided
 	 */
@@ -55,11 +58,11 @@ class Results extends Query {
 	 * Add a message to the extensions when a GraphQL request is returned from the GraphQL Object Cache
 	 *
 	 * @param mixed|array|object $response The response of the GraphQL Request
-	 * @param WPSchema   $schema    The schema object for the root query
-	 * @param string     $operation The name of the operation
-	 * @param string     $query     The query that GraphQL executed
+	 * @param \WPGraphQL\WPSchema   $schema    The schema object for the root query
+	 * @param string     $operation_name The name of the operation
+	 * @param string     $query_string     The query that GraphQL executed
 	 * @param array|null $variables Variables to passed to your GraphQL request
-	 * @param Request    $request   Instance of the Request
+	 * @param \WPGraphQL\Request    $request   Instance of the Request
 	 * @param string|null $query_id The query id that GraphQL executed
 	 *
 	 * @return array|mixed
@@ -87,7 +90,7 @@ class Results extends Query {
 
 			if ( is_array( $response ) ) {
 				$response['extensions']['graphqlSmartCache']['graphqlObjectCache'] = $message;
-			} if ( is_object( $response ) ) {
+			} if ( is_object( $response ) && property_exists( $response, 'extensions' ) ) {
 				$response->extensions['graphqlSmartCache']['graphqlObjectCache'] = $message;
 			}
 		}
@@ -101,7 +104,7 @@ class Results extends Query {
 	 *
 	 * @param mixed|array|object $result   The response from execution. Array for batch requests,
 	 *                                     single object for individual requests
-	 * @param Request            $request
+	 * @param \WPGraphQL\Request            $request
 	 *
 	 * @return mixed|array|object|null  The response or null if not found in cache
 	 */
@@ -145,9 +148,9 @@ class Results extends Query {
 	 * Unique identifier for this request is normalized query string, operation and variables
 	 *
 	 * @param string $query_id queryId from the graphql query request
-	 * @param string $query query string
-	 * @param array $variables Variables sent with request or null
-	 * @param string $operation Name of operation if specified on the request or null
+	 * @param string $query_string query string
+	 * @param array  $variables Variables sent with request or null
+	 * @param string $operation_name Name of operation if specified on the request or null
 	 *
 	 * @return string|null The response or null if not found in cache
 	 */
@@ -195,12 +198,12 @@ class Results extends Query {
 	 * When a query response is being returned to the client, build map for each item and this query/queryId
 	 * That way we will know what to invalidate on data change.
 	 *
-	 * @param ExecutionResult $filtered_response The response after GraphQL Execution has been
+	 * @param \GraphQL\Executor\ExecutionResult $filtered_response The response after GraphQL Execution has been
 	 *                                           completed and passed through filters
-	 * @param ExecutionResult $response          The raw, unfiltered response of the GraphQL
+	 * @param \GraphQL\Executor\ExecutionResult $response          The raw, unfiltered response of the GraphQL
 	 *                                           Execution
-	 * @param Schema          $schema            The WPGraphQL Schema
-	 * @param string          $operation         The name of the Operation
+	 * @param \WPGraphQL\WPSchema $schema            The WPGraphQL Schema
+	 * @param string          $operation_name         The name of the Operation
 	 * @param string          $query             The query string
 	 * @param array           $variables         The variables for the query
 	 * @param Request         $request           The WPGraphQL Request object
@@ -256,6 +259,11 @@ class Results extends Query {
 	/**
 	 * When an item changed and this callback is triggered to delete results we have cached for that list of nodes
 	 * Related to the data type that changed.
+	 *
+	 * @param string $id An identifier for data stored in memory.
+	 * @param mixed|array|object|null $nodes The graphql response or false
+	 *
+	 * @return void
 	 */
 	public function purge_nodes_cb( $id, $nodes ) {
 		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
@@ -270,6 +278,8 @@ class Results extends Query {
 
 	/**
 	 * Purge the local cache results if enabled
+	 *
+	 * @return void
 	 */
 	public function purge_all_cb() {
 		$this->purge_all();

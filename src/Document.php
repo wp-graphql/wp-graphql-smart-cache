@@ -18,6 +18,9 @@ class Document {
 	const ALIAS_TAXONOMY_NAME = 'graphql_query_alias';
 	const GRAPHQL_NAME        = 'graphqlDocument';
 
+	/**
+	 * @return void
+	 */
 	public function init() {
 		add_filter( 'graphql_request_data', [ $this, 'graphql_query_contains_query_id_cb' ], 10, 2 );
 		add_filter( 'graphql_execute_query_params', [ $this, 'graphql_execute_query_params_cb' ], 10, 2 );
@@ -25,7 +28,7 @@ class Document {
 		add_action( 'post_updated', [ $this, 'after_updated_cb' ], 10, 3 );
 
 		if ( ! is_admin() ) {
-			add_filter( 'wp_insert_post_data', [ $this, 'validate_before_save_cb' ], 10, 2 );
+			add_filter( 'wp_insert_post_data', [ $this, 'validate_and_pre_save_cb' ], 10, 2 );
 			add_action( sprintf( 'save_post_%s', self::TYPE_NAME ), [ $this, 'save_document_cb' ], 10, 2 );
 		}
 
@@ -107,6 +110,13 @@ class Document {
 
 	/**
 	 * Run on mutation create/update.
+	 *
+	 * @param array        $insert_post_args The array of $input_post_args that will be passed to wp_insert_post
+	 * @param array        $input            The data that was entered as input for the mutation
+	 * @param \WP_Post_Type $post_type_object The post_type_object that the mutation is affecting
+	 * @param string       $mutation_name    The type of mutation being performed (create, edit, etc)
+	 *
+	 * @return array
 	 */
 	public function mutation_filter_post_args( $insert_post_args, $input, $post_type_object, $mutation_name ) {
 		if ( in_array( $mutation_name, [ 'createGraphqlDocument', 'updateGraphqlDocument' ], true ) ) {
@@ -115,8 +125,19 @@ class Document {
 		return $insert_post_args;
 	}
 
-	// This runs on post create/update
-	// Insert/Update the alias name. Make sure it is unique
+	/**
+	 * This runs on post create/update
+	 * Insert/Update the alias name. Make sure it is unique
+	 * Filters the mutation input before it's passed to the `mutateAndGetPayload` callback.
+	 *
+	 * @param array                 $input The mutation input args.
+	 * @param \WPGraphQL\AppContext $context The AppContext object.
+	 * @param \GraphQL\Type\Definition\ResolveInfo $info The ResolveInfo object.
+	 * @param string                $mutation_name The name of the mutation field.
+	 *
+	 * @return array
+	 * @throws RequestError
+	 */
 	public function graphql_mutation_filter( $input, $context, $info, $mutation_name ) {
 		if ( ! in_array( $mutation_name, [ 'createGraphqlDocument', 'updateGraphqlDocument' ], true ) ) {
 			return $input;
@@ -139,6 +160,18 @@ class Document {
 		return $input;
 	}
 
+	/**
+	 * Fires after the mutation payload has been returned from the `mutateAndGetPayload` callback.
+	 *
+	 * @param array $post_object The Payload returned from the mutation.
+	 * @param array $filtered_input The mutation input args, after being filtered by 'graphql_mutation_input'.
+	 * @param array $input The unfiltered input args of the mutation
+	 * @param \WPGraphQL\AppContext $context The AppContext object.
+	 * @param \GraphQL\Type\Definition\ResolveInfo $info The ResolveInfo object.
+	 * @param string $mutation_name The name of the mutation field.
+	 *
+	 * @return void
+	 */
 	public function graphql_mutation_insert( $post_object, $filtered_input, $input, $context, $info, $mutation_name ) {
 		if ( ! in_array( $mutation_name, [ 'createGraphqlDocument', 'updateGraphqlDocument' ], true ) ) {
 			return;
@@ -150,7 +183,7 @@ class Document {
 
 		// Remove the existing/old alias terms before update
 		$terms = wp_get_post_terms( $post_object['postObjectId'], self::ALIAS_TAXONOMY_NAME );
-		if ( $terms ) {
+		if ( $terms && ! is_wp_error( $terms ) ) {
 			foreach ( $terms as $term ) {
 				wp_remove_object_terms( $post_object['postObjectId'], $term->term_id, self::ALIAS_TAXONOMY_NAME );
 				wp_delete_term( $term->term_id, self::ALIAS_TAXONOMY_NAME );
@@ -166,7 +199,9 @@ class Document {
 	 *
 	 * @param  array $parsed_body_params Request parameters.
 	 * @param  array $request_context An array containing the both body and query params
-	 * @return string Updated $parsed_body_params Request parameters.
+	 *
+	 * @return array Updated $parsed_body_params Request parameters.
+	 * @throws RequestError
 	 */
 	public function graphql_query_contains_query_id_cb( $parsed_body_params, $request_context ) {
 
@@ -198,7 +233,9 @@ class Document {
 	 * During invoking 'graphql()', not as an http request, if queryId is present, look it up and return the query string
 	 *
 	 * @param string $query  The graphql query string.
-	 * @param mixed|array|OperationParams| $params  The graphql request params, containing queryId
+	 * @param mixed|array|\GraphQL\Server\OperationParams $params  The graphql request params, containing queryId
+	 *
+	 * @return string|null
 	 */
 	public function graphql_execute_query_params_cb( $query, $params ) {
 		$query_id = null;
@@ -223,52 +260,74 @@ class Document {
 	 *
 	 * @param array $data             An array of slashed, sanitized, and processed post data.
 	 * @param array $post             An array of sanitized (and slashed) but otherwise unmodified post data.
+	 *
+	 * @return array $data
+	 * @throws RequestError
 	 */
-	public function validate_before_save_cb( $data, $post ) {
+	public function validate_and_pre_save_cb( $data, $post ) {
 		if ( self::TYPE_NAME !== $post['post_type'] ) {
 			return $data;
+		}
+
+		if ( array_key_exists( 'post_content', $post ) ) {
+			// Change the shape of the data
+			$data['post_content'] = $this->valid_or_throw( $post['post_content'], $post['ID'] );
+		}
+
+		return $data;
+	}
+
+	/**
+	 * @param string $post_content
+	 * @param int    $post_id
+	 * @return string post content
+	 * @throws RequestError
+	 */
+	public function valid_or_throw( $post_content, $post_id ) {
+		if ( empty( $post_content ) ) {
+			return $post_content;
 		}
 
 		/**
 		 * Before post is saved, check content for valid graphql.
 		 */
-		if ( array_key_exists( 'post_content', $data ) &&
-			! empty( $data['post_content'] ) ) {
-			try {
-				// Use graphql parser to check query string validity.
-				// Because the data comes from form submission, comes with PHP characters escaped/slashed.
-				$ast = \GraphQL\Language\Parser::parse( wp_unslash( $post['post_content'] ) );
+		try {
+			// Use graphql parser to check query string validity.
+			// Because the data comes from form submission, comes with PHP characters escaped/slashed.
+			$ast = \GraphQL\Language\Parser::parse( wp_unslash( $post_content ) );
 
-				// Get post using the normalized hash of the query string. If not valid graphql, throws syntax error
-				$normalized_hash = Utils::generateHash( $ast );
+			// Get post using the normalized hash of the query string. If not valid graphql, throws syntax error
+			$normalized_hash = Utils::generateHash( $ast );
 
-				// If queryId alias name is already in the system and doesn't match the query hash
-				$existing_post = Utils::getPostByTermName( $normalized_hash, self::TYPE_NAME, self::ALIAS_TAXONOMY_NAME );
-				if ( $existing_post && $existing_post->ID !== $post['ID'] ) {
-					// Translators: The placeholder is the existing saved query with matching hash/query-id
-					throw new RequestError( sprintf( __( 'This query has already been associated with another query "%s"', 'wp-graphql-smart-cache' ), $existing_post->post_title ) );
-				}
-
-				// Format the query string and save that
-				$data['post_content'] = \GraphQL\Language\Printer::doPrint( $ast );
-			} catch ( SyntaxError $e ) {
-				// Translators: The placeholder is the query string content
-				throw new RequestError( sprintf( __( 'Did not save invalid graphql query string "%s"', 'wp-graphql-smart-cache' ), $post['post_content'] ) );
+			// If queryId alias name is already in the system and doesn't match the query hash
+			$existing_post = Utils::getPostByTermName( $normalized_hash, self::TYPE_NAME, self::ALIAS_TAXONOMY_NAME );
+			if ( $existing_post && $existing_post->ID !== $post_id ) {
+				// Translators: The placeholder is the existing saved query with matching hash/query-id
+				throw new RequestError( sprintf( __( 'This query has already been associated with another query "%s"', 'wp-graphql-smart-cache' ), $existing_post->post_title ) );
 			}
+
+			// Format the query string and save that
+			return \GraphQL\Language\Printer::doPrint( $ast );
+		} catch ( SyntaxError $e ) {
+			// Translators: The placeholder is the query string content
+			throw new RequestError( sprintf( __( 'Invalid graphql query string "%s"', 'wp-graphql-smart-cache' ), $post_content ) );
 		}
-		return $data;
 	}
 
 	/**
 	 * When wp_insert_post saves the query, update the slug to match the content.
 	 *
 	 * @param int $post_ID
-	 * @param WP_Post $post
+	 * @param \WP_Post $post
+	 *
+	 * @return void
 	 */
 	public function save_document_cb( $post_ID, $post ) {
 		if ( empty( $post->post_content ) ) {
 			return;
 		}
+
+		$post->post_content = $this->valid_or_throw( $post->post_content, $post->ID );
 
 		// Get the query id for the new query and save as a term
 		// Verify the post content is valid graphql query document
@@ -284,8 +343,10 @@ class Document {
 	 * If existing post is edited in the wp admin editor, use previous content to remove query term ids
 	 *
 	 * @param int     $post_ID      Post ID.
-	 * @param WP_Post $post_after   Post object following the update.
-	 * @param WP_Post $post_before  Post object before the update.
+	 * @param \WP_Post $post_after   Post object following the update.
+	 * @param \WP_Post $post_before  Post object before the update.
+	 *
+	 * @return void
 	 */
 	public function after_updated_cb( $post_ID, $post_after, $post_before ) {
 		if ( self::TYPE_NAME !== $post_before->post_type ) {
@@ -309,7 +370,7 @@ class Document {
 
 		// If the old query string hash is assigned to this post, delete it
 		$terms = wp_get_post_terms( $post_ID, self::ALIAS_TAXONOMY_NAME );
-		if ( $terms ) {
+		if ( $terms && ! is_wp_error( $terms ) ) {
 			foreach ( $terms as $term ) {
 				if ( $old_query_id === $term->name ) {
 					wp_remove_object_terms( $post_ID, $term->term_id, self::ALIAS_TAXONOMY_NAME );
@@ -323,7 +384,7 @@ class Document {
 	 * Load a persisted query corresponding to a query ID (hash) or alias/alternate name
 	 *
 	 * @param  string $query_id Query ID
-	 * @return mixed Query|null
+	 * @return string|null
 	 */
 	public function get( $query_id ) {
 		$post = Utils::getPostByTermName( $query_id, self::TYPE_NAME, self::ALIAS_TAXONOMY_NAME );
@@ -337,7 +398,12 @@ class Document {
 	/**
 	 * Save a query by query ID (hash) or alias/alternate name
 	 *
-	 * @param  string $query_id Query string str256 hash
+	 * @param string $query_id Query string str256 hash
+	 * @param string $query  The graphql query string.
+	 *
+	 * @throws RequestError
+	 *
+	 * @return int post id
 	 */
 	public function save( $query_id, $query ) {
 		// Get post using the normalized hash of the query string
@@ -375,7 +441,7 @@ class Document {
 			// The post ID on success. The value 0 or WP_Error on failure.
 			$post_id = wp_insert_post( $data, true );
 			if ( is_wp_error( $post_id ) ) {
-				throw new RequestError( sprintf( __( 'Error save the document data "%s"', 'wp-graphql-smart-cache' ), $post->post_title ) );
+				throw new RequestError( sprintf( __( 'Error save the document data for "%s"', 'wp-graphql-smart-cache' ), $normalized_hash ) );
 			}
 		} elseif ( $query !== $post->post_content ) {
 			// If the hash for the query string loads a post with a different query string,
@@ -403,9 +469,8 @@ class Document {
 	/**
 	 * When a saved query post type is deleted, also delete the data for the other information.
 	 *
-	 * @param  Post_Id $post_id the Post Object Id
-	 * @param  Array $tt_ids TaxTerm ids
-	 * @param  Taxonomy $taxonomy
+	 * @param int $post_id the Post Object Id
+	 * @return void
 	 */
 	public function delete_post_cb( $post_id ) {
 		if ( self::TYPE_NAME === get_post_type( $post_id ) ) {
@@ -413,9 +478,15 @@ class Document {
 		}
 	}
 
+	/**
+	 * When a saved query post type is deleted, also delete the taxonomies.
+	 *
+	 * @param int $post_id the Post Object Id
+	 * @return void
+	 */
 	public function delete_term( $post_id ) {
 		$terms = wp_get_object_terms( $post_id, self::ALIAS_TAXONOMY_NAME );
-		if ( $terms ) {
+		if ( $terms && ! is_wp_error( $terms ) ) {
 			foreach ( $terms as $term ) {
 				wp_delete_term( $term->term_id, self::ALIAS_TAXONOMY_NAME );
 			}

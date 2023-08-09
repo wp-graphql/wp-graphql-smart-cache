@@ -11,7 +11,7 @@
  * Requires PHP: 7.4
  * Text Domain: wp-graphql-smart-cache
  * Domain Path: /languages
- * Version: 1.1.3
+ * Version: 1.1.4
  * License: GPL-3
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  *
@@ -46,7 +46,7 @@ if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
 }
 
 if ( ! defined( 'WPGRAPHQL_SMART_CACHE_VERSION' ) ) {
-	define( 'WPGRAPHQL_SMART_CACHE_VERSION', '1.1.3' );
+	define( 'WPGRAPHQL_SMART_CACHE_VERSION', '1.1.4' );
 }
 
 if ( ! defined( 'WPGRAPHQL_SMART_CACHE_WPGRAPHQL_REQUIRED_MIN_VERSION' ) ) {
@@ -77,7 +77,8 @@ function can_load_plugin() {
 	}
 
 	// Have we met the minimum version requirement?
-	if ( true === version_compare( WPGRAPHQL_VERSION, WPGRAPHQL_SMART_CACHE_WPGRAPHQL_REQUIRED_MIN_VERSION, 'lt' ) ) {
+	// @phpstan-ignore-next-line
+	if ( version_compare( WPGRAPHQL_VERSION, WPGRAPHQL_SMART_CACHE_WPGRAPHQL_REQUIRED_MIN_VERSION, 'lt' ) ) {
 		return false;
 	}
 
@@ -147,6 +148,8 @@ add_action(
 /**
  * Show admin notice to admins if this plugin is active but WPGraphQL
  * is not active, or doesn't meet version requirements
+ *
+ * @return void
  */
 function show_admin_notice() {
 
@@ -214,7 +217,7 @@ add_action(
 add_action(
 	'graphql_purge',
 	function ( $purge_keys ) {
-		if ( ! function_exists( 'graphql_get_endpoint_url' ) || ! class_exists( 'WpeCommon' ) || ! method_exists( 'WpeCommon', 'http_to_varnish' ) ) {
+		if ( ! function_exists( 'graphql_get_endpoint_url' ) || ! class_exists( 'WpeCommon', false ) || ! method_exists( \WpeCommon::class, 'http_to_varnish' ) ) {
 			return;
 		}
 		\WpeCommon::http_to_varnish(
@@ -233,7 +236,7 @@ add_action(
 add_action(
 	'wpgraphql_cache_purge_all',
 	function ( $purge_keys ) {
-		if ( ! function_exists( 'graphql_get_endpoint_url' ) || ! class_exists( 'WpeCommon' ) || ! method_exists( 'WpeCommon', 'http_to_varnish' ) ) {
+		if ( ! function_exists( 'graphql_get_endpoint_url' ) || ! class_exists( 'WpeCommon', false ) || ! method_exists( \WpeCommon::class, 'http_to_varnish' ) ) {
 			return;
 		}
 		\WpeCommon::http_to_varnish(

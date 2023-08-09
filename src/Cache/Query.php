@@ -9,16 +9,24 @@ namespace WPGraphQL\SmartCache\Cache;
 use WPGraphQL\SmartCache\Document;
 use WPGraphQL\SmartCache\Storage\Transient;
 use WPGraphQL\SmartCache\Storage\WpCache;
+use WPGraphQL\SmartCache\Storage\Ephemeral;
 
 class Query {
 
 	const GROUP_NAME = 'gql_cache';
 
-	// The storage object for the actual system of choice transient, database, object, memory, etc
+	/**
+	 * The storage object for the actual system of choice transient, database, object, memory, etc
+	 *
+	 * @var WpCache|Transient|Ephemeral
+	 **/
 	public static $storage = null;
 
+	/**
+	 * @return void
+	 */
 	public function init() {
-		if ( ! self::$storage ) {
+		if ( null === self::$storage ) {
 			self::$storage = apply_filters(
 				'graphql_cache_storage_object', //phpcs:ignore
 				wp_using_ext_object_cache() ? new WpCache( self::GROUP_NAME ) : new Transient( self::GROUP_NAME )
@@ -29,7 +37,7 @@ class Query {
 	/**
 	 * Unique identifier for this request is normalized query string, operation and variables
 	 *
-	 * @param string $query_id queryId from the graphql query request
+	 * @param string|null $query_id queryId from the graphql query request
 	 * @param string $query query string
 	 * @param array $variables Variables sent with request or null
 	 * @param string $operation Name of operation if specified on the request or null
@@ -56,19 +64,25 @@ class Query {
 		$user = wp_get_current_user();
 
 		$parts = [
-			'query'     => $query ?: null,
+			'query'     => $query,
 			'variables' => $variables ?: null,
 			'operation' => $operation ?: null,
 			'user'      => $user->ID,
 		];
 
-		return hash( 'sha256', wp_json_encode( $parts ) );
+		$parts_string = wp_json_encode( $parts );
+
+		if ( false === $parts_string ) {
+			return false;
+		}
+
+		return hash( 'sha256', $parts_string );
 	}
 
 	/**
 	 * Get the data from cache/transient based on the provided key
 	 *
-	 * @param string unique id for this request
+	 * @param string $key unique id for this request
 	 * @return mixed|array|object|null  The graphql response or null if not found
 	 */
 	public function get( $key ) {
@@ -78,9 +92,9 @@ class Query {
 	/**
 	 * Converts GraphQL query result to spec-compliant serializable array using provided function
 	 *
-	 * @param string unique id for this request
-	 * @param mixed|array|object|null  The graphql response
-	 * @param int Time in seconds for the data to persist in cache. Zero means no expiration.
+	 * @param string $key unique id for this request
+	 * @param mixed|array|object|null $data The graphql response
+	 * @param int $expire Time in seconds for the data to persist in cache. Zero means no expiration.
 	 *
 	 * @return bool False if value was not set and true if value was set.
 	 */
@@ -91,7 +105,7 @@ class Query {
 	/**
 	 * Delete the data from cache/transient based on the provided key
 	 *
-	 * @param string unique id for this request
+	 * @param string $key unique id for this request
 	 * @return bool True on successful removal, false on failure.
 	 */
 	public function delete( $key ) {
