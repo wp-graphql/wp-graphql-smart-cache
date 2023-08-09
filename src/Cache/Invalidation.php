@@ -44,6 +44,9 @@ class Invalidation {
 		// @phpcs:ignore
 		do_action( 'graphql_cache_invalidation_init', $this );
 
+		// Listen for purge all, purge now request
+		add_action( 'wpgraphql_cache_purge_all', [ $this, 'on_purge_all_cb' ], 10, 0 );
+
 		## Log Purge Events
 		add_action( 'graphql_purge', [ $this, 'log_purge_events' ], 10, 2 );
 
@@ -1009,5 +1012,15 @@ class Invalidation {
 			$this->purge_nodes( 'comment', $comment_id, 'comment_approved' );
 			$this->purge( 'list:comment', 'comment_approved' );
 		}
+	}
+
+	/**
+	 * When admin user clicks 'Purge Cache Now'.
+	 * Trigger cache invalidation hooks/actions listening for 'graphql_purge'.
+	 *
+	 * @return void
+	 */
+	public function on_purge_all_cb() {
+		$this->purge( 'graphql:Query', 'purge all' );
 	}
 }

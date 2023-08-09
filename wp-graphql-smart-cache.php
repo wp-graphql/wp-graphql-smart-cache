@@ -214,44 +214,6 @@ add_action(
 	}
 );
 
-add_action(
-	'graphql_purge',
-	function ( $purge_keys ) {
-		if ( ! function_exists( 'graphql_get_endpoint_url' ) || ! class_exists( 'WpeCommon', false ) || ! method_exists( \WpeCommon::class, 'http_to_varnish' ) ) {
-			return;
-		}
-		\WpeCommon::http_to_varnish(
-			'PURGE_GRAPHQL',
-			null,
-			[
-				'GraphQL-Purge-Keys' => $purge_keys,
-				'GraphQL-URL'        => graphql_get_endpoint_url(),
-			]
-		);
-	},
-	0,
-	1
-);
-
-add_action(
-	'wpgraphql_cache_purge_all',
-	function ( $purge_keys ) {
-		if ( ! function_exists( 'graphql_get_endpoint_url' ) || ! class_exists( 'WpeCommon', false ) || ! method_exists( \WpeCommon::class, 'http_to_varnish' ) ) {
-			return;
-		}
-		\WpeCommon::http_to_varnish(
-			'PURGE_GRAPHQL',
-			null,
-			[
-				'GraphQL-Purge-Keys' => 'graphql:Query',
-				'GraphQL-URL'        => graphql_get_endpoint_url(),
-			]
-		);
-	},
-	0,
-	1
-);
-
 /**
  * Initialize the plugin tracker
  *
