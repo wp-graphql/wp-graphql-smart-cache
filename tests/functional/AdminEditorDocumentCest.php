@@ -427,4 +427,55 @@ class AdminEditorDocumentCest {
 		$I->dontSee('Post updated.');
 		$I->dontSee('Post saved.');
 	}
+
+	public function createNewQueryWithInvalidContentThenTrashItTest( FunctionalTester $I ) {
+		$post_title = 'test-post';
+
+		// Create a new query in the admin editor
+		$I->loginAsAdmin();
+		$I->amOnPage( '/wp-admin/post-new.php?post_type=graphql_document');
+
+		// Add title should trigger auto-draft, but not save document
+		$I->fillField( "//input[@name='post_title']", $post_title );
+		$I->fillField( 'content', '{ __typename broken');
+
+		// Save draft button.
+		$I->click('Save Draft');
+
+		$I->seePostInDatabase( [
+			'post_title'  => $post_title,
+			'post_status' => 'draft',
+			'post_content' => '{ __typename broken',
+		]);
+
+		// should see our admin error
+		$I->seeElement('//*[@id="plugin-message"]');
+		$I->see('Invalid graphql query string "{ __typename broken"', '//*[@id="plugin-message"]');
+
+		$I->click('Move to Trash');
+
+		$I->seePostInDatabase( [
+			'post_title'  => $post_title,
+			'post_status' => 'trash',
+			'post_content' => '{ __typename broken',
+		]);
+
+		// should not see our admin error
+		$I->dontSeeElement('//*[@id="plugin-message"]');
+		$I->dontSee('Invalid graphql query string "{ __typename broken"', '//*[@id="plugin-message"]');
+
+		// Go to list of saved documents in trash. Restore to 'untrash' it.
+		$I->amOnPage('/wp-admin/edit.php?post_status=trash&post_type=graphql_document');
+		$I->click('Restore');
+
+		$I->seePostInDatabase( [
+			'post_title'  => $post_title,
+			'post_status' => 'draft',
+			'post_content' => '{ __typename broken',
+		]);
+
+		// should not see our admin error
+		$I->dontSeeElement('//*[@id="plugin-message"]');
+		$I->dontSee('Invalid graphql query string "{ __typename broken"', '//*[@id="plugin-message"]');
+	}
 }

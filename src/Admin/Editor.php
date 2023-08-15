@@ -22,6 +22,7 @@ class Editor {
 	public function admin_init() {
 		add_filter( 'wp_insert_post_data', [ $this, 'validate_and_pre_save_cb' ], 10, 2 );
 		add_action( sprintf( 'save_post_%s', Document::TYPE_NAME ), [ $this, 'save_document_cb' ], 10, 3 );
+		add_action( 'untrashed_post', [ $this, 'untrashed_post_cb' ], 10, 2 );
 
 		// Enable excerpts for the persisted query post type for the wp admin editor
 		add_post_type_support( Document::TYPE_NAME, 'excerpt' );
@@ -36,6 +37,19 @@ class Editor {
 	}
 
 	/**
+	 * Fires after a post is restored from the Trash.
+	 *
+	 * @param int    $post_id         Post ID.
+	 * @param string $previous_status The status of the post at the point where it was trashed.
+	 * @return void
+	 */
+	public function untrashed_post_cb( $post_id, $previous_status ) {
+		// If have errors when validating the post content/data, do not show those in the admin when untrash.
+		delete_transient( AdminErrors::TRANSIENT_NAME );
+
+	}
+
+	/**
 	 * If existing post is edited, verify query string in content is valid graphql
 	 *
 	 * @param array $data   An array of slashed, sanitized, and processed post data.
@@ -44,6 +58,10 @@ class Editor {
 	 */
 	public function validate_and_pre_save_cb( $data, $post ) {
 		if ( Document::TYPE_NAME !== $post['post_type'] ) {
+			return $data;
+		}
+
+		if ( 'trash' === $post['post_status'] ) {
 			return $data;
 		}
 
@@ -144,6 +162,10 @@ class Editor {
 		try {
 			// if new post in the admin editor, ie 'auto-draft', do not save
 			if ( false === $update && 'auto-draft' === $post->post_status ) {
+				return;
+			}
+
+			if ( 'trash' === $post->post_status ) {
 				return;
 			}
 
