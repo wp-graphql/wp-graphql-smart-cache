@@ -72,6 +72,9 @@ class Editor {
 
 				} else {
 					$data['post_status'] = 'draft';
+					
+					// This prevents the Admin UI from showing that the post has previously been published (because it actually hasn't been)
+					$data['post_date_gmt'] = '0000-00-00 00:00:00';
 				}
 			}
 		}
