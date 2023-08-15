@@ -62,10 +62,14 @@ class Editor {
 
 			// If encountered invalid data when publishing query, revert some data. If draft, allow invalid query.
 			if ( 'publish' === $post['post_status'] ) {
-				// If has an existing post and is published, revert post content to that previous value.
+
+				// If has an existing published post and trying to publish with errors, bail before save_post
 				$existing_post = get_post( $post['ID'], ARRAY_A );
 				if ( $existing_post && 'publish' === $existing_post['post_status'] ) {
-					$data['post_content'] = $existing_post['post_content'];
+
+					wp_safe_redirect( admin_url( sprintf( '/post.php?post=%d&action=edit', $post['ID'] ) ) );
+					exit;
+
 				} else {
 					$data['post_status'] = 'draft';
 				}
