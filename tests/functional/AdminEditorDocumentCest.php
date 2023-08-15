@@ -115,9 +115,9 @@ class AdminEditorDocumentCest {
 			'post_content' => $normalized_query_string,
 		]);
 
-
 		$I->seeElement('//*[@id="message"]');
 		$I->see('Post draft updated.', '//*[@id="message"]');
+		$I->see('Publish immediately'); // does not have a publish date
 	}
 
 	public function createNewQueryWithEmptyContentWhenSaveDraftSavesAsDraftTest( FunctionalTester $I ) {
@@ -143,6 +143,7 @@ class AdminEditorDocumentCest {
 
 		$I->seeElement('//*[@id="message"]');
 		$I->see('Post draft updated.', '//*[@id="message"]');
+		$I->see('Publish immediately'); // does not have a publish date
 	}
 
 	public function createNewQueryWithEmptyContentWhenPublishSavesAsDraftTest( FunctionalTester $I ) {
@@ -171,6 +172,7 @@ class AdminEditorDocumentCest {
 		$I->dontSeeElement('//*[@id="message"]');
 		$I->dontSee('Post draft updated.');
 		$I->dontSee('Post published.');
+		$I->see('Publish immediately'); // does not have a publish date
 	}
 
 	public function createNewQueryWithInvalidContentWhenPublishSavesAsDraftTest( FunctionalTester $I ) {
@@ -199,6 +201,7 @@ class AdminEditorDocumentCest {
 		$I->dontSeeElement('//*[@id="message"]');
 		$I->dontSee('Post draft updated.');
 		$I->dontSee('Post published.');
+		$I->see('Publish immediately'); // does not have publish date
 	}
 
 	public function createNewQueryWithoutErrorWhenPublishSavesAsPublishedTest( FunctionalTester $I ) {
@@ -227,6 +230,7 @@ class AdminEditorDocumentCest {
 
 		$I->seeElement('//*[@id="message"]');
 		$I->see('Post published.', '//*[@id="message"]');
+		$I->dontSee('Publish immediately'); // has publish date
 	}
 
 	public function haveDraftQueryWithInvalidQueryWhenPublishSavesAsDraftTest( FunctionalTester $I ) {
@@ -265,6 +269,7 @@ class AdminEditorDocumentCest {
 		$I->dontSeeElement('//*[@id="message"]');
 		$I->dontSee('Post draft updated.');
 		$I->dontSee('Post published.');
+		$I->see('Publish immediately'); // does not have publish date
 	}
 
 	public function haveDraftQueryWithValidQueryWhenPublishSavesAsPublishedTest( FunctionalTester $I ) {
@@ -302,6 +307,7 @@ class AdminEditorDocumentCest {
 
 		$I->seeElement('//*[@id="message"]');
 		$I->see('Post published.', '//*[@id="message"]');
+		$I->dontSee('Publish immediately'); // has publish date
 	}
 
 	public function havePublishedQueryWhenSaveDraftWithInvalidQuerySavesAsDraftTest( FunctionalTester $I ) {
@@ -344,6 +350,7 @@ class AdminEditorDocumentCest {
 		$I->dontSee('Post published.');
 		$I->dontSee('Post updated.');
 		$I->dontSee('Post saved.');
+		$I->dontSee('Publish immediately'); // has date because already published
 	}
 
 	public function havePublishedQueryWhenSaveDraftWithValidQuerySavesAsDraftTest( FunctionalTester $I ) {
@@ -384,6 +391,7 @@ class AdminEditorDocumentCest {
 
 		$I->seeElement('//*[@id="message"]');
 		$I->see('Post draft updated.', '//*[@id="message"]');
+		$I->dontSee('Publish immediately'); // has date because already published
 	}
 
 	public function havePublishedQueryWithInvalidQueryWhenPublishItShowsPreviousQueryContentTest( FunctionalTester $I ) {
@@ -426,6 +434,7 @@ class AdminEditorDocumentCest {
 		$I->dontSee('Post published.');
 		$I->dontSee('Post updated.');
 		$I->dontSee('Post saved.');
+		$I->dontSee('Publish immediately'); // has date because already published
 	}
 
 	public function createNewQueryWithInvalidContentThenTrashItTest( FunctionalTester $I ) {

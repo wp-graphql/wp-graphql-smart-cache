@@ -90,13 +90,13 @@ class Editor {
 
 				} else {
 					$data['post_status'] = 'draft';
-					
+
 					// This prevents the Admin UI from showing that the post has previously been published (because it actually hasn't been)
-					if ( isset( $existing_post['post_date'] ) ) {
+					if ( isset( $existing_post['post_date'] ) && isset( $existing_post['post_date_gmt'] ) && '0000-00-00 00:00:00' !== $existing_post['post_date_gmt'] ) {
 						$data['post_date']     = $existing_post['post_date'];
 						$data['post_date_gmt'] = get_gmt_from_date( $existing_post['post_date'] );
 					} else {
-						$data['post_date']     = '0000-00-00 00:00:00';
+						// Clearing this is same as removing the publish date.
 						$data['post_date_gmt'] = '0000-00-00 00:00:00';
 					}
 				}
