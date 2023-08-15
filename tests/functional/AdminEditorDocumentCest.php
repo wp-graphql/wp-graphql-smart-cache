@@ -114,6 +114,10 @@ class AdminEditorDocumentCest {
 			'post_status' => 'draft',
 			'post_content' => $normalized_query_string,
 		]);
+
+
+		$I->seeElement('//*[@id="message"]');
+		$I->see('Post draft updated.', '//*[@id="message"]');
 	}
 
 	public function createNewQueryWithEmptyContentWhenSaveDraftSavesAsDraftTest( FunctionalTester $I ) {
@@ -136,6 +140,9 @@ class AdminEditorDocumentCest {
 			'post_status' => 'draft',
 			'post_content' => '',
 		]);
+
+		$I->seeElement('//*[@id="message"]');
+		$I->see('Post draft updated.', '//*[@id="message"]');
 	}
 
 	public function createNewQueryWithEmptyContentWhenPublishSavesAsDraftTest( FunctionalTester $I ) {
@@ -160,6 +167,10 @@ class AdminEditorDocumentCest {
 			'post_status' => 'draft',
 			'post_content' => '',
 		]);
+
+		$I->dontSeeElement('//*[@id="message"]');
+		$I->dontSee('Post draft updated.');
+		$I->dontSee('Post published.');
 	}
 
 	public function createNewQueryWithInvalidContentWhenPublishSavesAsDraftTest( FunctionalTester $I ) {
@@ -184,6 +195,10 @@ class AdminEditorDocumentCest {
 			'post_status' => 'draft',
 			'post_content' => '{ __typename broken',
 		]);
+
+		$I->dontSeeElement('//*[@id="message"]');
+		$I->dontSee('Post draft updated.');
+		$I->dontSee('Post published.');
 	}
 
 	public function createNewQueryWithoutErrorWhenPublishSavesAsPublishedTest( FunctionalTester $I ) {
@@ -209,6 +224,9 @@ class AdminEditorDocumentCest {
 			'post_status' => 'publish',
 			'post_content' => $normalized_query_string,
 		]);
+
+		$I->seeElement('//*[@id="message"]');
+		$I->see('Post published.', '//*[@id="message"]');
 	}
 
 	public function haveDraftQueryWithInvalidQueryWhenPublishSavesAsDraftTest( FunctionalTester $I ) {
@@ -243,6 +261,10 @@ class AdminEditorDocumentCest {
 			'post_status' => 'draft',
 			'post_content' => '{ __typename broken',
 		]);
+
+		$I->dontSeeElement('//*[@id="message"]');
+		$I->dontSee('Post draft updated.');
+		$I->dontSee('Post published.');
 	}
 
 	public function haveDraftQueryWithValidQueryWhenPublishSavesAsPublishedTest( FunctionalTester $I ) {
@@ -277,6 +299,9 @@ class AdminEditorDocumentCest {
 			'post_status' => 'publish',
 			'post_content' => "{\n  posts {\n    edges {\n      node {\n        id\n      }\n    }\n  }\n}\n",
 		]);
+
+		$I->seeElement('//*[@id="message"]');
+		$I->see('Post published.', '//*[@id="message"]');
 	}
 
 	public function havePublishedQueryWhenSaveDraftWithInvalidQuerySavesAsDraftTest( FunctionalTester $I ) {
@@ -314,6 +339,11 @@ class AdminEditorDocumentCest {
 			'post_status' => 'draft',
 			'post_content' => '{ __typename broken',
 		]);
+
+		$I->dontSeeElement('//*[@id="message"]');
+		$I->dontSee('Post published.');
+		$I->dontSee('Post updated.');
+		$I->dontSee('Post saved.');
 	}
 
 	public function havePublishedQueryWhenSaveDraftWithValidQuerySavesAsDraftTest( FunctionalTester $I ) {
@@ -351,6 +381,9 @@ class AdminEditorDocumentCest {
 			'post_status' => 'draft',
 			'post_content' => "{\n  posts {\n    edges {\n      node {\n        id\n      }\n    }\n  }\n}\n",
 		]);
+
+		$I->seeElement('//*[@id="message"]');
+		$I->see('Post draft updated.', '//*[@id="message"]');
 	}
 
 	public function havePublishedQueryWithInvalidQueryWhenPublishItShowsPreviousQueryContentTest( FunctionalTester $I ) {
@@ -388,5 +421,10 @@ class AdminEditorDocumentCest {
 			'post_status' => 'publish',
 			'post_content' => $normalized_query_string,
 		]);
+
+		$I->dontSeeElement('//*[@id="message"]');
+		$I->dontSee('Post published.');
+		$I->dontSee('Post updated.');
+		$I->dontSee('Post saved.');
 	}
 }
