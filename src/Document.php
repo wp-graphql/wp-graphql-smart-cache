@@ -11,6 +11,7 @@ use GraphQL\Server\OperationParams;
 use WPGraphQL\SmartCache\Admin\Settings;
 use GraphQL\Error\SyntaxError;
 use GraphQL\Server\RequestError;
+use GraphQL\Validator\DocumentValidator;
 
 class Document {
 
@@ -304,6 +305,15 @@ class Document {
 			if ( $existing_post && $existing_post->ID !== $post_id ) {
 				// Translators: The placeholder is the existing saved query with matching hash/query-id
 				throw new RequestError( sprintf( __( 'This query has already been associated with another query "%s"', 'wp-graphql-smart-cache' ), $existing_post->post_title ) );
+			}
+
+			// During save/parse of query string, check for variables of the query string.
+			// "To save this query, arguments should use variables instead of static values."
+			$rules                                = DocumentValidator::defaultRules();
+			$rules['argument_should_be_variable'] = new \WPGraphQL\SmartCache\ValidationRules\ArgShouldBeVariable();
+			$validationErrors                     = DocumentValidator::validate( \WPGraphQL::get_schema(), $ast, $rules );
+			if ( count( $validationErrors ) > 0 ) {
+				throw new RequestError( __( 'Validation Error: ', 'wp-graphql-smart-cache' ) . $validationErrors[0]->getMessage() );
 			}
 
 			// Format the query string and save that
