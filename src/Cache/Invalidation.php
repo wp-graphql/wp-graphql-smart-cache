@@ -257,6 +257,7 @@ class Invalidation {
 	 *
 	 * @param string $key The key to purge from teh cache
 	 * @param string $event The Event that triggered the purge
+	 * @param string $hostname   The url endpoint associated with the cache key. These match the Url and Key headers provided when the results were cached.
 	 *
 	 * @return void
 	 */
