@@ -48,7 +48,7 @@ class Invalidation {
 		add_action( 'wpgraphql_cache_purge_all', [ $this, 'on_purge_all_cb' ], 10, 0 );
 
 		## Log Purge Events
-		add_action( 'graphql_purge', [ $this, 'log_purge_events' ], 10, 2 );
+		add_action( 'graphql_purge', [ $this, 'log_purge_events' ], 10, 3 );
 
 		## POST ACTIONS
 
@@ -210,10 +210,12 @@ class Invalidation {
 	 */
 	public function purge( $key, $event = 'undefined event' ) {
 
+		$graphql_endpoint = preg_replace( '#^.*?://#', '', graphql_get_endpoint_url() );
+
 		// This action is emitted with the key to purge.
 		// Plugins can respond to this action to evict caches for that key
 		// phpcs:ignore
-		do_action( 'graphql_purge', $key, $event );
+		do_action( 'graphql_purge', $key, $event, $graphql_endpoint );
 
 		$nodes = $this->collection->get( $key );
 		if ( is_array( $nodes ) && ! empty( $nodes ) ) {
@@ -258,7 +260,7 @@ class Invalidation {
 	 *
 	 * @return void
 	 */
-	public function log_purge_events( $key, $event ) {
+	public function log_purge_events( $key, $event, $hostname ) {
 
 		// If purge logging is not enabled, bail
 		if ( ! Settings::purge_logging_enabled() ) {
@@ -270,7 +272,7 @@ class Invalidation {
 		// @phpcs:ignore
 		$uri          = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
 		$current_page = ! empty( $uri ) ? wp_parse_url( $uri, PHP_URL_PATH ) : 'unknown page';
-		$message      = sprintf( '(graphql_purge) key: %1$s, event: %2$s, user: %3$d, page: %4$s', $key, $event, $current_user_id, $current_page );
+		$message      = sprintf( '(graphql_purge) key: %1$s, event: %2$s, user: %3$d, page: %4$s url: %5$s', $key, $event, $current_user_id, $current_page, $hostname );
 
 		// @phpcs:ignore
 		error_log( $message, 0 );

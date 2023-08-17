@@ -275,14 +275,14 @@ When these purge actions are sent out, your host should listen for the action an
 For example:
 
 ```php
-add_action( 'graphql_purge', function ( $purge_keys ) {
+add_action( 'graphql_purge', function ( $purge_keys, $event, $hostname ) {
 
 		if ( ! function_exists( 'your_network_cache_purge_function' ) ) {
 			return;
 		}
 
 		// a function that communicates with Varnish, Fastly, etc to purge the tagged documents
-		your_network_cache_purge_function( $purge_keys );
+		your_network_cache_purge_function( $purge_keys, $hostname );
 
 }, 10, 1 );
 ```
