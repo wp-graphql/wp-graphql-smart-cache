@@ -55,7 +55,7 @@ class DocumentGarbageCollectionTest extends \Codeception\TestCase\WPTestCase {
 					[
 						'post_type' => 'graphql_document',
 						'post_date' => $date_string,
-						'post_content' => sprintf( "query Saved_%d { typename }", $counter ),
+						'post_content' => sprintf( "query Saved_%d { __typename }", $counter ),
 						'post_title' => sprintf( "query %d", $counter ),
 					]
 				);
@@ -69,7 +69,7 @@ class DocumentGarbageCollectionTest extends \Codeception\TestCase\WPTestCase {
 				[
 					'post_type' => 'graphql_document',
 					'post_date' => $date_string,
-					'post_content' => sprintf( "query Saved_%d { typename }", $counter ),
+					'post_content' => sprintf( "query Saved_%d { __typename }", $counter ),
 					'post_title' => sprintf( "query %d", $counter ),
 				]
 			);

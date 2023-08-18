@@ -77,7 +77,7 @@ class MutationCreateDocumentTest extends \Codeception\TestCase\WPTestCase {
         $query_title = "cest test mutation";
         $variables = [
             "input" => [
-                "content" => "query my_query_1 { __typename, uri, title }",
+                "content" => "query my_query_1 { themes { edges { node { id } } } }",
                 "alias" => [
                     "foo",
                     "bar"
@@ -101,7 +101,7 @@ class MutationCreateDocumentTest extends \Codeception\TestCase\WPTestCase {
         // Trying to create/save another document with same query string, should throw error
         $variables = [
             "input" => [
-                "content" => "query my_query_1 { __typename, uri, title }",
+                "content" => "query my_query_1 { themes { edges { node { id } } } }",
             ]
         ];
 
@@ -114,7 +114,7 @@ class MutationCreateDocumentTest extends \Codeception\TestCase\WPTestCase {
         // Trying to create/save another document with alias that is already in use, should throw error
         $variables = [
             "input" => [
-                "content" => "query my_query_2 { __typename, uri, title }",
+                "content" => "query my_query_2 { themes { edges { node { id } } } }",
                 "alias" => [
                     "foo",
                 ],
@@ -145,7 +145,7 @@ class MutationCreateDocumentTest extends \Codeception\TestCase\WPTestCase {
 
         $variables = [
             "input" => [
-                "content" => "query my_query_1 { __typename, uri, title }",
+                "content" => "query my_query_1 { themes { edges { node { id } } } }",
                 "status" => "PUBLISH",
                 "grant" => "allow"
             ]
@@ -222,7 +222,7 @@ class MutationCreateDocumentTest extends \Codeception\TestCase\WPTestCase {
 
         $variables = [
             "input" => [
-                "content" => "query my_query_1 { __typename, uri, title }",
+                "content" => "query my_query_1 { themes { edges { node { id } } } }",
                 "status" => "PUBLISH",
                 "maxAgeHeader" => 100
             ]
@@ -299,7 +299,7 @@ class MutationCreateDocumentTest extends \Codeception\TestCase\WPTestCase {
 
         $variables = [
             "input" => [
-                "content" => "query my_query_1 { __typename, uri, title }",
+                "content" => "query my_query_1 { __typename }",
                 "status" => "PUBLISH",
                 "description" => "foo bar description"
             ]
