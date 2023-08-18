@@ -46,12 +46,12 @@ class Editor {
 	public function untrashed_post_cb( $post_id, $previous_status ) {
 		// If have errors when validating the post content/data, do not show those in the admin when untrash.
 		$untrashed_post = get_post( $post_id );
-		
+
 		// Bail if the untrashed post is not a GraphQL Document
 		if ( ! isset( $untrashed_post->post_type ) || Document::TYPE_NAME !== $untrashed_post->post_type ) {
 			return;
 		}
-	
+
 		delete_transient( AdminErrors::TRANSIENT_NAME );
 	}
 
