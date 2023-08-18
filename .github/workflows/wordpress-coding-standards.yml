@@ -15,7 +15,7 @@ jobs:
     name: Check code
     strategy:
       matrix:
-        php: [ 8.0 ]
+        php: [ 8.2 ]
 
     steps:
       - name: Checkout
