@@ -11,17 +11,17 @@ class AdminSettingsCacheCest
 	}
 
 	public function selectCacheSettingsTest( FunctionalTester $I ) {
-			$I->loginAsAdmin();
-			$I->amOnPage('/wp-admin/admin.php?page=graphql-settings#graphql_cache_section');
+		$I->loginAsAdmin();
+		$I->amOnPage('/wp-admin/admin.php?page=graphql-settings#graphql_cache_section');
 
-			// Save and see the selection after form submit
-			$I->checkOption("//input[@type='checkbox' and @name='graphql_cache_section[cache_toggle]']");
-			$I->click('Save Changes');
-			$I->seeCheckboxIsChecked("//input[@type='checkbox' and @name='graphql_cache_section[cache_toggle]']");
+		// Save and see the selection after form submit
+		$I->checkOption("//input[@type='checkbox' and @name='graphql_cache_section[cache_toggle]']");
+		$I->click('Save Changes');
+		$I->seeCheckboxIsChecked("//input[@type='checkbox' and @name='graphql_cache_section[cache_toggle]']");
 
-			$I->uncheckOption("//input[@type='checkbox' and @name='graphql_cache_section[cache_toggle]']");
-			$I->click('Save Changes');
-			$I->dontSeeCheckboxIsChecked("//input[@type='checkbox' and @name='graphql_cache_section[cache_toggle]']");
+		$I->uncheckOption("//input[@type='checkbox' and @name='graphql_cache_section[cache_toggle]']");
+		$I->click('Save Changes');
+		$I->dontSeeCheckboxIsChecked("//input[@type='checkbox' and @name='graphql_cache_section[cache_toggle]']");
 	}
 
 	public function saveCacheTllExpirationTest( FunctionalTester $I ) {

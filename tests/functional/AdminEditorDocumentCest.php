@@ -7,6 +7,16 @@
 class AdminEditorDocumentCest {
 
 	public function _before( FunctionalTester $I ) {
+		// Enable the show-in-ui for these tests.  This allows testing of the admin editor page for our post type.
+		$I->haveOptionInDatabase( 'graphql_persisted_queries_section', [ 'editor_display' => 'on' ] );
+	}
+
+	public function _after( FunctionalTester $I ) {
+		$I->dontHaveOptionInDatabase( 'graphql_persisted_queries_section'  );
+
+		// Clean up any saved query documents
+		$I->dontHavePostInDatabase( [ 'post_type' => 'graphql_document' ] );
+		$I->dontHaveTermInDatabase( [ 'taxonomy' => 'graphql_query_alias'] );
 	}
 
 	/**
@@ -16,9 +26,6 @@ class AdminEditorDocumentCest {
 	 *   false - the hello world page
 	 */
 	public function postTypeShouldNotBePublicQueryableTest( FunctionalTester $I ) {
-
-		// Enable the show-in-ui for these tests.  This allows testing of the admin editor page for our post type.
-		$I->haveOptionInDatabase( 'graphql_persisted_queries_section', [ 'editor_display' => 'on' ] );
 
 		// Create a query in the admin editor
 		$I->loginAsAdmin();
@@ -37,7 +44,6 @@ class AdminEditorDocumentCest {
 
 		// saved document should not be visible
 		$I->amOnPage( "/graphql_document/test-query-foo/" );
-		codecept_debug( $I->grabPageSource() );
 		$I->dontSee('__typename');
 
 		// WordPress shows the homepage template for taxonomies that are public=>false
@@ -52,7 +58,6 @@ class AdminEditorDocumentCest {
 
 		// query alias should not be visible
 		$I->amOnPage( "/graphql_query_alias/test-document-foo-bar/" );
-		codecept_debug( $I->grabPageSource() );
 		$I->dontSee('Alias Name: test-query-foo');
 		$I->seeElement( "//body[contains(@class,'home')]" );
 
@@ -63,7 +68,6 @@ class AdminEditorDocumentCest {
 
 		// allow/deny grant should not be visible
 		$I->amOnPage( "/graphql_document_grant/allow/" );
-		codecept_debug( $I->grabPageSource() );
 		$I->dontSee('Allow/Deny: allow');
 		//  tax-graphql_document_grant
 		$I->dontSeeElement( "//body[contains(@class,'tax-graphql_document_grant')]" );
@@ -85,5 +89,402 @@ class AdminEditorDocumentCest {
 
 		$I->seeElement( "//body[contains(@class,'error404')]" );
 		$I->dontSee('XML Sitemap');
+	}
+
+	public function createNewQueryWithoutErrorWhenSaveDraftSavesAsDraftTest( FunctionalTester $I ) {
+		$post_title = 'test-post';
+		$normalized_query_string = "{\n  __typename\n}\n";
+
+		// Create a new query in the admin editor
+		$I->loginAsAdmin();
+		$I->amOnPage( '/wp-admin/post-new.php?post_type=graphql_document');
+
+		// Add title should trigger auto-draft, but not save document
+		$I->fillField( "//input[@name='post_title']", $post_title );
+		$I->fillField( 'content', '{ __typename }');
+
+		// This might cause auto-draft but not save
+		$I->dontSeePostInDatabase( ['post_title' => $post_title] );
+
+		// Save draft button.
+		$I->click('Save Draft');
+
+		$I->seePostInDatabase( [
+			'post_title'  => $post_title,
+			'post_status' => 'draft',
+			'post_content' => $normalized_query_string,
+		]);
+
+		$I->seeElement('//*[@id="message"]');
+		$I->see('Post draft updated.', '//*[@id="message"]');
+		$I->see('Publish immediately'); // does not have a publish date
+	}
+
+	public function createNewQueryWithEmptyContentWhenSaveDraftSavesAsDraftTest( FunctionalTester $I ) {
+		$post_title = 'test-post';
+
+		// Create a new query in the admin editor
+		$I->loginAsAdmin();
+		$I->amOnPage( '/wp-admin/post-new.php?post_type=graphql_document');
+
+		// Add title should trigger auto-draft, but not save document
+		$I->fillField( "//input[@name='post_title']", $post_title );
+
+		$I->dontSeePostInDatabase( ['post_title' => $post_title] );
+
+		// Save draft button. No content in form
+		$I->click('Save Draft');
+
+		$I->seePostInDatabase( [
+			'post_title'  => $post_title,
+			'post_status' => 'draft',
+			'post_content' => '',
+		]);
+
+		$I->seeElement('//*[@id="message"]');
+		$I->see('Post draft updated.', '//*[@id="message"]');
+		$I->see('Publish immediately'); // does not have a publish date
+	}
+
+	public function createNewQueryWithEmptyContentWhenPublishSavesAsDraftTest( FunctionalTester $I ) {
+		$post_title = 'test-post';
+
+		// Create a new query in the admin editor
+		$I->loginAsAdmin();
+		$I->amOnPage( '/wp-admin/post-new.php?post_type=graphql_document');
+
+		// Add title should trigger auto-draft, but not save document
+		$I->fillField( "//input[@name='post_title']", $post_title );
+		$I->fillField( 'content', '');
+
+		$I->dontSeePostInDatabase( ['post_title' => $post_title] );
+
+		// Publish post
+		$I->click('#publish');
+
+		// Because of error form (empty content), saves as draft
+		$I->seePostInDatabase( [
+			'post_title'  => $post_title,
+			'post_status' => 'draft',
+			'post_content' => '',
+		]);
+
+		$I->dontSeeElement('//*[@id="message"]');
+		$I->dontSee('Post draft updated.');
+		$I->dontSee('Post published.');
+		$I->see('Publish immediately'); // does not have a publish date
+	}
+
+	public function createNewQueryWithInvalidContentWhenPublishSavesAsDraftTest( FunctionalTester $I ) {
+		$post_title = 'test-post';
+
+		// Create a new query in the admin editor
+		$I->loginAsAdmin();
+		$I->amOnPage( '/wp-admin/post-new.php?post_type=graphql_document');
+
+		// Add title should trigger auto-draft, but not save document
+		$I->fillField( "//input[@name='post_title']", $post_title );
+		$I->fillField( 'content', '{ __typename broken');
+
+		// This should cause auto-draft but not save
+		$I->dontSeePostInDatabase( ['post_title' => $post_title] );
+
+		// Publish post
+		$I->click('#publish');
+
+		$I->seePostInDatabase( [
+			'post_title'  => $post_title,
+			'post_status' => 'draft',
+			'post_content' => '{ __typename broken',
+		]);
+
+		$I->dontSeeElement('//*[@id="message"]');
+		$I->dontSee('Post draft updated.');
+		$I->dontSee('Post published.');
+		$I->see('Publish immediately'); // does not have publish date
+	}
+
+	public function createNewQueryWithoutErrorWhenPublishSavesAsPublishedTest( FunctionalTester $I ) {
+		$post_title = 'test-post';
+		$normalized_query_string = "{\n  __typename\n}\n";
+
+		// Create a new query in the admin editor
+		$I->loginAsAdmin();
+		$I->amOnPage( '/wp-admin/post-new.php?post_type=graphql_document');
+
+		// // Add title should trigger auto-draft, but not save document
+		$I->fillField( "//input[@name='post_title']", $post_title );
+		$I->fillField( 'content', '{ __typename }');
+
+		// // This might cause auto-draft but not save
+		$I->dontSeePostInDatabase( ['post_title' => $post_title] );
+
+		// Publish post
+		$I->click('#publish');
+
+		$I->seePostInDatabase( [
+			'post_title'  => $post_title,
+			'post_status' => 'publish',
+			'post_content' => $normalized_query_string,
+		]);
+
+		$I->seeElement('//*[@id="message"]');
+		$I->see('Post published.', '//*[@id="message"]');
+		$I->dontSee('Publish immediately'); // has publish date
+	}
+
+	public function haveDraftQueryWithInvalidQueryWhenPublishSavesAsDraftTest( FunctionalTester $I ) {
+		$post_title = 'test-post';
+		$normalized_query_string = "{\n  __typename\n}\n";
+
+		// Create a new query in the admin editor
+		$I->loginAsAdmin();
+		$I->amOnPage( '/wp-admin/post-new.php?post_type=graphql_document');
+
+		// Add title should trigger auto-draft, but not save document
+		$I->fillField( "//input[@name='post_title']", $post_title );
+		$I->fillField( 'content', '{ __typename }');
+
+		// Save draft button.
+		$I->click('Save Draft');
+
+		$I->seePostInDatabase( [
+			'post_title'  => $post_title,
+			'post_status' => 'draft',
+			'post_content' => $normalized_query_string,
+		]);
+
+		// invalid query
+		$I->fillField( 'content', '{ __typename broken');
+
+		// // Publish post button
+		$I->click('#publish');
+
+		$I->seePostInDatabase( [
+			'post_title'  => $post_title,
+			'post_status' => 'draft',
+			'post_content' => '{ __typename broken',
+		]);
+
+		$I->dontSeeElement('//*[@id="message"]');
+		$I->dontSee('Post draft updated.');
+		$I->dontSee('Post published.');
+		$I->see('Publish immediately'); // does not have publish date
+	}
+
+	public function haveDraftQueryWithValidQueryWhenPublishSavesAsPublishedTest( FunctionalTester $I ) {
+		$post_title = 'test-post';
+		$normalized_query_string = "{\n  __typename\n}\n";
+
+		// Create a new query in the admin editor
+		$I->loginAsAdmin();
+		$I->amOnPage( '/wp-admin/post-new.php?post_type=graphql_document');
+
+		// Add title should trigger auto-draft, but not save document
+		$I->fillField( "//input[@name='post_title']", $post_title );
+		$I->fillField( 'content', '{ __typename }');
+
+		// Save draft button.
+		$I->click('Save Draft');
+
+		$I->seePostInDatabase( [
+			'post_title'  => $post_title,
+			'post_status' => 'draft',
+			'post_content' => $normalized_query_string,
+		]);
+
+		// invalid query
+		$I->fillField( 'content', '{ posts { edges { node { id } } } }');
+
+		// // Publish post button
+		$I->click('#publish');
+
+		$I->seePostInDatabase( [
+			'post_title'  => $post_title,
+			'post_status' => 'publish',
+			'post_content' => "{\n  posts {\n    edges {\n      node {\n        id\n      }\n    }\n  }\n}\n",
+		]);
+
+		$I->seeElement('//*[@id="message"]');
+		$I->see('Post published.', '//*[@id="message"]');
+		$I->dontSee('Publish immediately'); // has publish date
+	}
+
+	public function havePublishedQueryWhenSaveDraftWithInvalidQuerySavesAsDraftTest( FunctionalTester $I ) {
+		$post_title = 'test-post';
+		$normalized_query_string = "{\n  __typename\n}\n";
+
+		// Create a new query in the admin editor
+		$I->loginAsAdmin();
+		$I->amOnPage( '/wp-admin/post-new.php?post_type=graphql_document');
+
+		// Add title should trigger auto-draft, but not save document
+		$I->fillField( "//input[@name='post_title']", $post_title );
+		$I->fillField( 'content', '{ __typename }');
+
+		// Publish post
+		$I->click('#publish');
+
+		$I->seePostInDatabase( [
+			'post_title'  => $post_title,
+			'post_status' => 'publish',
+			'post_content' => $normalized_query_string,
+		]);
+
+		// invalid query
+		$I->fillField( 'content', '{ __typename broken');
+
+		// Change to draft status
+		$I->selectOption('#post_status', 'Draft');
+
+		// // Publish post button
+		$I->click('#publish');
+
+		$I->seePostInDatabase( [
+			'post_title'  => $post_title,
+			'post_status' => 'draft',
+			'post_content' => '{ __typename broken',
+		]);
+
+		$I->dontSeeElement('//*[@id="message"]');
+		$I->dontSee('Post published.');
+		$I->dontSee('Post updated.');
+		$I->dontSee('Post saved.');
+		$I->dontSee('Publish immediately'); // has date because already published
+	}
+
+	public function havePublishedQueryWhenSaveDraftWithValidQuerySavesAsDraftTest( FunctionalTester $I ) {
+		$post_title = 'test-post';
+		$normalized_query_string = "{\n  __typename\n}\n";
+
+		// Create a new query in the admin editor
+		$I->loginAsAdmin();
+		$I->amOnPage( '/wp-admin/post-new.php?post_type=graphql_document');
+
+		// Add title should trigger auto-draft, but not save document
+		$I->fillField( "//input[@name='post_title']", $post_title );
+		$I->fillField( 'content', '{ __typename }');
+
+		// Publish post
+		$I->click('#publish');
+
+		$I->seePostInDatabase( [
+			'post_title'  => $post_title,
+			'post_status' => 'publish',
+			'post_content' => $normalized_query_string,
+		]);
+
+		// invalid query
+		$I->fillField( 'content', '{ posts { edges { node { id } } } }');
+
+		// Change to draft status
+		$I->selectOption('#post_status', 'Draft');
+
+		// // Publish post button
+		$I->click('#publish');
+
+		$I->seePostInDatabase( [
+			'post_title'  => $post_title,
+			'post_status' => 'draft',
+			'post_content' => "{\n  posts {\n    edges {\n      node {\n        id\n      }\n    }\n  }\n}\n",
+		]);
+
+		$I->seeElement('//*[@id="message"]');
+		$I->see('Post draft updated.', '//*[@id="message"]');
+		$I->dontSee('Publish immediately'); // has date because already published
+	}
+
+	public function havePublishedQueryWithInvalidQueryWhenPublishItShowsPreviousQueryContentTest( FunctionalTester $I ) {
+		$post_title = 'test-post';
+		$original_query = '{ __typename }';
+		$normalized_query_string = "{\n  __typename\n}\n";
+
+		// Create a new query in the admin editor
+		$I->loginAsAdmin();
+		$I->amOnPage( '/wp-admin/post-new.php?post_type=graphql_document');
+
+		// Add title should trigger auto-draft, but not save document
+		$I->fillField( "//input[@name='post_title']", $post_title);
+		$I->fillField( 'content', $original_query);
+
+		// Publish post
+		$I->click('#publish');
+
+		$I->seePostInDatabase( [
+			'post_title'  => $post_title,
+			'post_status' => 'publish',
+			'post_content' => $normalized_query_string,
+		]);
+
+		// invalid query
+		$I->fillField( 'content', '{ __typename broken');
+
+		// // Publish post button
+		$I->click('#publish');
+
+		// Does not save/overwrite the working query string with broken one.
+		// Leaves as published
+		$I->seePostInDatabase( [
+			'post_title'  => $post_title,
+			'post_status' => 'publish',
+			'post_content' => $normalized_query_string,
+		]);
+
+		$I->dontSeeElement('//*[@id="message"]');
+		$I->dontSee('Post published.');
+		$I->dontSee('Post updated.');
+		$I->dontSee('Post saved.');
+		$I->dontSee('Publish immediately'); // has date because already published
+	}
+
+	public function createNewQueryWithInvalidContentThenTrashItTest( FunctionalTester $I ) {
+		$post_title = 'test-post';
+
+		// Create a new query in the admin editor
+		$I->loginAsAdmin();
+		$I->amOnPage( '/wp-admin/post-new.php?post_type=graphql_document');
+
+		// Add title should trigger auto-draft, but not save document
+		$I->fillField( "//input[@name='post_title']", $post_title );
+		$I->fillField( 'content', '{ __typename broken');
+
+		// Save draft button.
+		$I->click('Save Draft');
+
+		$I->seePostInDatabase( [
+			'post_title'  => $post_title,
+			'post_status' => 'draft',
+			'post_content' => '{ __typename broken',
+		]);
+
+		// should see our admin error
+		$I->seeElement('//*[@id="plugin-message"]');
+		$I->see('Invalid graphql query string "{ __typename broken"', '//*[@id="plugin-message"]');
+
+		$I->click('Move to Trash');
+
+		$I->seePostInDatabase( [
+			'post_title'  => $post_title,
+			'post_status' => 'trash',
+			'post_content' => '{ __typename broken',
+		]);
+
+		// should not see our admin error
+		$I->dontSeeElement('//*[@id="plugin-message"]');
+		$I->dontSee('Invalid graphql query string "{ __typename broken"', '//*[@id="plugin-message"]');
+
+		// Go to list of saved documents in trash. Restore to 'untrash' it.
+		$I->amOnPage('/wp-admin/edit.php?post_status=trash&post_type=graphql_document');
+		$I->click('Restore');
+
+		$I->seePostInDatabase( [
+			'post_title'  => $post_title,
+			'post_status' => 'draft',
+			'post_content' => '{ __typename broken',
+		]);
+
+		// should not see our admin error
+		$I->dontSeeElement('//*[@id="plugin-message"]');
+		$I->dontSee('Invalid graphql query string "{ __typename broken"', '//*[@id="plugin-message"]');
 	}
 }

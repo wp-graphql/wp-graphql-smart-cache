@@ -22,6 +22,7 @@ class Editor {
 	public function admin_init() {
 		add_filter( 'wp_insert_post_data', [ $this, 'validate_and_pre_save_cb' ], 10, 2 );
 		add_action( sprintf( 'save_post_%s', Document::TYPE_NAME ), [ $this, 'save_document_cb' ], 10, 3 );
+		add_action( 'untrashed_post', [ $this, 'untrashed_post_cb' ], 10, 2 );
 
 		// Enable excerpts for the persisted query post type for the wp admin editor
 		add_post_type_support( Document::TYPE_NAME, 'excerpt' );
@@ -36,6 +37,25 @@ class Editor {
 	}
 
 	/**
+	 * Fires after a post is restored from the Trash.
+	 *
+	 * @param int    $post_id         Post ID.
+	 * @param string $previous_status The status of the post at the point where it was trashed.
+	 * @return void
+	 */
+	public function untrashed_post_cb( $post_id, $previous_status ) {
+		// If have errors when validating the post content/data, do not show those in the admin when untrash.
+		$untrashed_post = get_post( $post_id );
+		
+		// Bail if the untrashed post is not a GraphQL Document
+		if ( ! isset( $untrashed_post->post_type ) || Document::TYPE_NAME !== $untrashed_post->post_type ) {
+			return;
+		}
+	
+		delete_transient( AdminErrors::TRANSIENT_NAME );
+	}
+
+	/**
 	 * If existing post is edited, verify query string in content is valid graphql
 	 *
 	 * @param array $data   An array of slashed, sanitized, and processed post data.
@@ -47,22 +67,44 @@ class Editor {
 			return $data;
 		}
 
+		if ( 'trash' === $post['post_status'] ) {
+			return $data;
+		}
+
 		$document = new Document();
 
 		try {
-			if ( array_key_exists( 'post_content', $post ) && 'publish' === $post['post_status'] ) {
-				$data['post_content'] = $document->valid_or_throw( $post['post_content'], $post['ID'] );
+			// Check for empty post_content when publishing the query and throw
+			if ( 'publish' === $post['post_status'] && empty( $post['post_content'] ) ) {
+				throw new RequestError( __( 'Query string is empty', 'wp-graphql-smart-cache' ) );
 			}
+
+			$data['post_content'] = $document->valid_or_throw( $post['post_content'], $post['ID'] );
+
 		} catch ( RequestError $e ) {
 			AdminErrors::add_message( $e->getMessage() );
 
-			// Overwrite new/invalid query with previous working query, or empty
-			$existing_post = get_post( $post['ID'] );
-			if ( $existing_post && property_exists( $existing_post, 'post_content' ) ) {
-				try {
-					$data['post_content'] = $document->valid_or_throw( $existing_post->post_content, $post['ID'] );
-				} catch ( RequestError $e ) {
-					$data['post_content'] = '';
+			// If encountered invalid data when publishing query, revert some data. If draft, allow invalid query.
+			if ( 'publish' === $post['post_status'] ) {
+
+				// If has an existing published post and trying to publish with errors, bail before save_post
+				$existing_post = get_post( $post['ID'], ARRAY_A );
+				if ( $existing_post && 'publish' === $existing_post['post_status'] ) {
+
+					wp_safe_redirect( admin_url( sprintf( '/post.php?post=%d&action=edit', $post['ID'] ) ) );
+					exit;
+
+				} else {
+					$data['post_status'] = 'draft';
+
+					// This prevents the Admin UI from showing that the post has previously been published (because it actually hasn't been)
+					if ( isset( $existing_post['post_date'] ) && isset( $existing_post['post_date_gmt'] ) && '0000-00-00 00:00:00' !== $existing_post['post_date_gmt'] ) {
+						$data['post_date']     = $existing_post['post_date'];
+						$data['post_date_gmt'] = get_gmt_from_date( $existing_post['post_date'] );
+					} else {
+						// Clearing this is same as removing the publish date.
+						$data['post_date_gmt'] = '0000-00-00 00:00:00';
+					}
 				}
 			}
 		}
@@ -126,6 +168,10 @@ class Editor {
 		try {
 			// if new post in the admin editor, ie 'auto-draft', do not save
 			if ( false === $update && 'auto-draft' === $post->post_status ) {
+				return;
+			}
+
+			if ( 'trash' === $post->post_status ) {
 				return;
 			}
 
