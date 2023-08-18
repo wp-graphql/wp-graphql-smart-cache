@@ -19,6 +19,7 @@ class AdminErrors {
 	 */
 	public function init() {
 		add_action( 'admin_notices', [ $this, 'display_validation_messages' ] );
+		add_filter( 'post_updated_messages', [ $this, 'post_updated_messages_cb' ] );
 	}
 
 	/**
@@ -62,5 +63,23 @@ class AdminErrors {
 		}
 
 		delete_transient( self::TRANSIENT_NAME );
+	}
+
+	/**
+	* Filters the post updated messages.
+	*
+	* @param array[] $messages Post updated messages.
+	* @return array[]
+	*/
+	public function post_updated_messages_cb( $messages ) {
+		// If have admin error message, don't display the 'Post Published' message for this post type
+		$error_messages = get_transient( self::TRANSIENT_NAME );
+		if ( ! empty( $error_messages ) ) {
+			// phpcs:ignore
+			$message_number                                     = isset( $_GET['message'] ) ? absint( $_GET['message'] ) : 0;
+			$messages[ Document::TYPE_NAME ][ $message_number ] = '';
+		}
+
+		return $messages;
 	}
 }
