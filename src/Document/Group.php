@@ -51,4 +51,16 @@ class Group {
 		$item = get_the_terms( $post_id, self::TAXONOMY_NAME );
 		return ! is_wp_error( $item ) && isset( $item[0] ) && property_exists( $item[0], 'name' ) ? $item[0]->name : '';
 	}
+
+	/**
+	 * Save the data
+	 *
+	 * @param int $post_id
+	 * @param string $value
+	 * @return array|false|\WP_Error Array of term taxonomy IDs of affected terms. WP_Error or false on failure.
+	 */
+	public function save( $post_id, $value ) {
+		return wp_set_post_terms( $post_id, $value, self::TAXONOMY_NAME );
+	}
+
 }

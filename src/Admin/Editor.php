@@ -10,6 +10,7 @@ namespace WPGraphQL\SmartCache\Admin;
 use WPGraphQL\SmartCache\AdminErrors;
 use WPGraphQL\SmartCache\Document;
 use WPGraphQL\SmartCache\Document\Grant;
+use WPGraphQL\SmartCache\Document\Group;
 use WPGraphQL\SmartCache\Document\MaxAge;
 use GraphQL\Error\SyntaxError;
 use GraphQL\Server\RequestError;
@@ -34,6 +35,7 @@ class Editor {
 		add_filter( sprintf( 'manage_edit-%s_sortable_columns', Document::TYPE_NAME ), [ $this, 'make_excerpt_column_sortable_in_admin_cb' ], 10, 1 );
 
 		add_filter( 'wp_editor_settings', [ $this, 'wp_editor_settings' ], 10, 2 );
+		add_action( 'post_submitbox_misc_actions', [ $this, 'draw_save_as_new_checkbox_cb' ] );
 	}
 
 	/**
@@ -71,7 +73,8 @@ class Editor {
 			return $data;
 		}
 
-		$document = new Document();
+		$document      = new Document();
+		$existing_post = get_post( $post['ID'], ARRAY_A );
 
 		try {
 			// Check for empty post_content when publishing the query and throw
@@ -81,6 +84,35 @@ class Editor {
 
 			$data['post_content'] = $document->valid_or_throw( $post['post_content'], $post['ID'] );
 
+			// If post is already published, and graphql query string is different on save, save as a new post/clone/copy.
+			if ( 'publish' === $existing_post['post_status'] && $data['post_content'] !== $existing_post['post_content'] ) {
+				
+				// phpcs:ignore
+				if ( isset( $_POST['graphql_query_save_new'] ) && 'save_as_new' === $_POST['graphql_query_save_new'] ) {
+					// phpcs:ignore
+					unset( $_POST['graphql_query_save_new'] );
+
+					// Reset some data in the post before save as new. $data doesn't have a post_id.
+					$data['post_status']   = 'draft';
+					$data['post_date_gmt'] = '0000-00-00 00:00:00';
+					$data['post_date']     = '';
+					if ( $data['post_title'] === $existing_post['post_title'] ) {
+						$data['post_title'] = $existing_post['post_title'] . ' (copy)';
+					}
+
+					$new_post_id = wp_insert_post( $data );
+
+					$group = new Group();
+					$group->save( $new_post_id, $group->get( $existing_post['ID'] ) );
+
+					// Redirect to the new post edit page after save
+					wp_safe_redirect( admin_url( sprintf( '/post.php?post=%d&action=edit', $new_post_id ) ) );
+					exit;
+
+				} else {
+					throw new RequestError( __( 'Changing query for published query is not allowed. Select the save as new and publish again.', 'wp-graphql-smart-cache' ) );
+				}
+			}
 		} catch ( RequestError $e ) {
 			AdminErrors::add_message( $e->getMessage() );
 
@@ -88,7 +120,6 @@ class Editor {
 			if ( 'publish' === $post['post_status'] ) {
 
 				// If has an existing published post and trying to publish with errors, bail before save_post
-				$existing_post = get_post( $post['ID'], ARRAY_A );
 				if ( $existing_post && 'publish' === $existing_post['post_status'] ) {
 
 					wp_safe_redirect( admin_url( sprintf( '/post.php?post=%d&action=edit', $post['ID'] ) ) );
@@ -362,5 +393,40 @@ class Editor {
 		}
 
 		return $settings;
+	}
+
+	public function draw_save_as_new_checkbox_cb( $post ) {
+		$post_id = get_the_ID();
+
+		if ( Document::TYPE_NAME !== $post->post_type ) {
+			return;
+		}
+
+		if ( 'publish' !== $post->post_status ) {
+			return;
+		}
+
+		$html  = '<div class="misc-pub-section misc-pub-section-last">';
+		$html .= '<input type="checkbox" id="graphql_query_save_new" name="graphql_query_save_new" value="save_as_new">';
+		$html .= '<label for="graphql_query_save_new">Save As New</label><br >';
+		$html .= '</div>';
+
+		$allowed_html = [
+			'div'   => [
+				'class' => true,
+			],
+			'input' => [
+				'type'    => true,
+				'id'      => true,
+				'name'    => true,
+				'value'   => true,
+				'checked' => true,
+			],
+			'br'    => true,
+		];
+		echo wp_kses(
+			$html,
+			$allowed_html
+		);
 	}
 }
