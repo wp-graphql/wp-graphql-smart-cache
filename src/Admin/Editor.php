@@ -84,9 +84,10 @@ class Editor {
 
 			$data['post_content'] = $document->valid_or_throw( $post['post_content'], $post['ID'] );
 
-			// If post is already published, and graphql query string is different on save, save as a new post/clone/copy.
-			if ( 'publish' === $existing_post['post_status'] && $data['post_content'] !== $existing_post['post_content'] ) {
+			// If post is already published and saving as published, and graphql query string is different on save
+			if ( 'publish' === $existing_post['post_status'] && 'publish' === $post['post_status'] && $data['post_content'] !== $existing_post['post_content'] ) {
 				
+				// If selected to save as new
 				// phpcs:ignore
 				if ( isset( $_POST['graphql_query_save_new'] ) && 'save_as_new' === $_POST['graphql_query_save_new'] ) {
 					// phpcs:ignore
