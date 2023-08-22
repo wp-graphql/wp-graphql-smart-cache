@@ -1,6 +1,16 @@
 version: '3.3'
 
 services:
+  varnish:
+    image: varnish:7.3
+    container_name: varnish
+    volumes:
+      - "./docker/varnish/default.vcl:/etc/varnish/default.vcl"
+    ports:
+      - "8081:80"
+    depends_on:
+      - "app"
+
   app:
     depends_on:
       - app_db
@@ -16,8 +26,6 @@ services:
       USING_XDEBUG: ${USING_XDEBUG:-}
     ports:
       - '8091:80'
-    networks:
-      local:
 
   app_db:
     image: mariadb:10.11
@@ -25,8 +33,6 @@ services:
       - .env.dist
     ports:
       - '3306'
-    networks:
-      local:
 
   testing:
     depends_on:
@@ -42,8 +48,6 @@ services:
     environment:
       WP_URL: http://localhost
       USING_XDEBUG: ${USING_XDEBUG:-}
-    networks:
-      local:
 
   testing_db:
     image: mariadb:10.11
@@ -51,9 +55,3 @@ services:
       - .env.testing
     ports:
       - '3306'
-    networks:
-      local:
-
-
-networks:
-  local:
