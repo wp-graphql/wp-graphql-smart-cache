@@ -395,6 +395,10 @@ class Editor {
 		return $settings;
 	}
 
+	/**
+	 * @param \WP_Post $post
+	 * @return void
+	 */
 	public function draw_save_as_new_checkbox_cb( $post ) {
 		$post_id = get_the_ID();
 
@@ -411,6 +415,7 @@ class Editor {
 		$html .= '<label for="graphql_query_save_new">Save As New</label><br >';
 		$html .= '</div>';
 
+		/** @var array[] */
 		$allowed_html = [
 			'div'   => [
 				'class' => true,
