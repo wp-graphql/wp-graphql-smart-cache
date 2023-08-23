@@ -22,6 +22,8 @@ As more hosts work with us to support this feature, some nuances (for example he
 
 To follow this quick start guide, we recommend having a WordPress install on WP Engine. You can [sign up for a FREE WP Engine Atlas sandbox account](https://wpengine.com/atlas) to follow this guide.
 
+See the [development](development.md) guide about running Varnish locally to test the behavior.
+
 ### 👩‍💻 Execute a GraphQL Query (as an HTTP GET request)
 
 Using a browser that is not authenticated to your WordPress site (or an incognito window), execute a GraphQL query as an HTTP GET request by visiting a url for a GraphQL query in the browser, like so (replacing the domain with your domain): `https://${yourdomain.com}/graphql?query={posts{nodes{id,title,uri}}}`
@@ -275,14 +277,14 @@ When these purge actions are sent out, your host should listen for the action an
 For example:
 
 ```php
-add_action( 'graphql_purge', function ( $purge_keys ) {
+add_action( 'graphql_purge', function ( $purge_keys, $event = '', $hostname = '' ) {
 
 		if ( ! function_exists( 'your_network_cache_purge_function' ) ) {
 			return;
 		}
 
 		// a function that communicates with Varnish, Fastly, etc to purge the tagged documents
-		your_network_cache_purge_function( $purge_keys );
+		your_network_cache_purge_function( $purge_keys, $hostname );
 
 }, 10, 1 );
 ```
