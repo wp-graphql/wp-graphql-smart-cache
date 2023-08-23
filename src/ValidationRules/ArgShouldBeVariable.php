@@ -30,7 +30,8 @@ class ArgShouldBeVariable extends ValidationRule {
 					// Arguments in operation are process here, ex.  post( id: "1", idType: DATABASE_ID )
 
 					// If this argument should map to a variable
-					if ( 'StringValue' === $node->value->kind ) {
+					// For a string or "idType" enum
+					if ( in_array( $node->value->kind, [ 'StringValue', 'EnumValue' ], true ) ) {
 						$context->reportError(new Error(
 							self::shouldBeVariableMessage( $node->name->value ),
 							$node

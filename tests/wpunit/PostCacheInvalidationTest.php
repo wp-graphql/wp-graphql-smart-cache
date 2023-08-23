@@ -725,7 +725,7 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLSmartCache\TestCase\W
 		]);
 
 		$query = $this->getQuery( 'userWithPostsConnection' );
-		$variables = [ 'id' => $new_user->ID ];
+		$variables = [ 'id' => $new_user->ID, 'id_type' => 'DATABASE_ID' ];
 
 		$cache_key = $this->collection->build_key( null, $query, $variables );
 

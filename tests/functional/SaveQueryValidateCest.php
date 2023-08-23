@@ -27,7 +27,7 @@ class SaveQueryValidateCest {
 	}
 
 	public function saveQueryWithArgumentMissingVariableTest( FunctionalTester $I ) {
-		$query = 'query { post( id: $num, idType: DATABASE_ID) { title } }';
+		$query = 'query { post( id: $num, idType: $id_type) { title } }';
 		$query_alias = 'test-save-query-alias';
 		$I->dontSeeTermInDatabase( [ 'name' => 'graphql_query_alias' ] );
 		$I->sendPost('graphql', [
@@ -64,8 +64,46 @@ class SaveQueryValidateCest {
 		]);
 	}
 
+	public function saveQueryWithIdTypeShouldBeVariableTest( FunctionalTester $I ) {
+		$query = 'query { post( id: $num, idType: DATABASE_ID) { title } }';
+		$query_alias = 'test-save-query-alias';
+		$I->dontSeeTermInDatabase( [ 'name' => 'graphql_query_alias' ] );
+		$I->sendPost('graphql', [
+			'query' => $query,
+			'queryId' => $query_alias
+		] );
+		$I->dontSeePostInDatabase( [
+			'post_type'    => 'graphql_document',
+			'post_status'  => 'publish',
+		] );
+		$I->seeResponseContainsJson([
+			'errors' => [
+				'message' => 'Validation Error: Argument "$idType" should be a variable.'
+			]
+		]);
+	}
+
+	public function saveQueryMissingArgumentIdTypeWithVariableTest( FunctionalTester $I ) {
+		$query = 'query ($num: ID!) { post( id: $num, idType: DATABASE_ID ) { title } }';
+		$query_alias = 'test-save-query-alias';
+		$I->dontSeeTermInDatabase( [ 'name' => 'graphql_query_alias' ] );
+		$I->sendPost('graphql', [
+			'query' => $query,
+			'queryId' => $query_alias
+		] );
+		$I->dontSeePostInDatabase( [
+			'post_type'    => 'graphql_document',
+			'post_status'  => 'publish',
+		] );
+		$I->seeResponseContainsJson([
+			'errors' => [
+				'message' => 'Validation Error: Argument "$idType" should be a variable.'
+			]
+		]);
+	}
+
 	public function saveQueryWithArgumentWithVariableTest( FunctionalTester $I ) {
-		$query = 'query ($num: ID!) { post( id: $num, idType: DATABASE_ID) { title } }';
+		$query = 'query ($num: ID! $id_type: PostIdType!) { post(id: $num, idType: $id_type) { title } }';
 		$query_alias = 'test-save-query-alias';
 
 		$post_id = $I->havePostInDatabase(['post_title' => 'Hello world!']);
@@ -74,7 +112,7 @@ class SaveQueryValidateCest {
 		$I->sendPost('graphql', [
 			'query' => $query,
 			'queryId' => $query_alias,
-			'variables' => [ "num" => $post_id ],
+			'variables' => [ "num" => $post_id, "id_type" => "DATABASE_ID" ],
 		] );
 		$I->seeResponseContainsJson([
 			'data' => [
@@ -87,7 +125,7 @@ class SaveQueryValidateCest {
 		$I->seePostInDatabase( [
 			'post_type'    => 'graphql_document',
 			'post_status'  => 'publish',
-			'post_content' => "query (\$num: ID!) {\n  post(id: \$num, idType: DATABASE_ID) {\n    title\n  }\n}\n",
+			'post_content' => "query (\$num: ID!, \$id_type: PostIdType!) {\n  post(id: \$num, idType: \$id_type) {\n    title\n  }\n}\n",
 		] );
 	}
 

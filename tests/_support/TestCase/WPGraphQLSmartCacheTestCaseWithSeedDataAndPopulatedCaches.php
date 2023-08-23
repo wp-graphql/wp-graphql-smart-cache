@@ -542,14 +542,14 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			'singlePost' => [
 				'name' => 'singlePost',
 				'query' => '
-					query GetPost($id:ID!) {
-					  post(id:$id idType: DATABASE_ID) {
+					query GetPost($id:ID!, $id_type:PostIdType!) {
+					  post(id:$id idType:$id_type) {
 					    __typename
 					    databaseId
 					  }
 					}
 				',
-				'variables' => [ 'id' => $this->published_post->ID ],
+				'variables' => [ 'id' => $this->published_post->ID, 'id_type' => 'DATABASE_ID', ],
 				'assertions' => [
 					$this->expectedField( 'post.__typename', 'Post' ),
 					$this->expectedField( 'post.databaseId', $this->published_post->ID )
@@ -561,14 +561,14 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			'singlePostByEditor' => [
 				'name' => 'singlePostByEditor',
 				'query' => '
-					query GetPost($id:ID!) {
-					  post(id:$id idType: DATABASE_ID) {
+					query GetPost($id:ID!, $id_type:PostIdType!) {
+					  post(id:$id idType:$id_type) {
 					    __typename
 					    databaseId
 					  }
 					}
 				',
-				'variables' => [ 'id' => $this->published_post_by_editor->ID ],
+				'variables' => [ 'id' => $this->published_post_by_editor->ID, 'id_type' => 'DATABASE_ID', ],
 				'assertions' => [
 					$this->expectedField( 'post.__typename', 'Post' ),
 					$this->expectedField( 'post.databaseId', $this->published_post_by_editor->ID )
@@ -603,14 +603,14 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			'singlePage' => [
 				'name' => 'singlePage',
 				'query' => '
-					query GetPage($id:ID!) {
-					  page(id:$id idType: DATABASE_ID) {
+					query GetPage($id:ID!, $id_type:PageIdType!) {
+					  page(id:$id idType:$id_type) {
 					    __typename
 					    databaseId
 					  }
 					}
 				',
-				'variables' => [ 'id' => $this->published_page->ID ],
+				'variables' => [ 'id' => $this->published_page->ID, 'id_type' => 'DATABASE_ID', ],
 				'assertions' => [
 					$this->expectedField( 'page.__typename', 'Page' ),
 					$this->expectedField( 'page.databaseId', $this->published_page->ID )
@@ -645,14 +645,14 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			'singleTestPostType' => [
 				'name' => 'singleTestPostType',
 				'query' => '
-					query GetTestPostType($id:ID!) {
-					  testPostType(id:$id idType: DATABASE_ID) {
+					query GetTestPostType($id:ID!, $id_type:TestPostTypeIdType!) {
+					  testPostType(id:$id idType:$id_type) {
 					    __typename
 					    databaseId
 					  }
 					}
 				',
-				'variables' => [ 'id' => $this->published_test_post_type->ID ],
+				'variables' => [ 'id' => $this->published_test_post_type->ID, 'id_type' => 'DATABASE_ID', ],
 				'assertions' => [
 					$this->expectedField( 'testPostType.__typename', 'TestPostType' ),
 					$this->expectedField( 'testPostType.databaseId', $this->published_test_post_type->ID )
@@ -687,14 +687,14 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			'singlePrivatePostType' => [
 				'name' => 'singlePrivatePostType',
 				'query' => '
-					query GetPrivatePostType($id:ID!) {
-					  privatePostType(id:$id idType: DATABASE_ID) {
+					query GetPrivatePostType($id:ID!, $id_type:PrivatePostTypeIdType!) {
+					  privatePostType(id:$id idType:$id_type) {
 					    __typename
 					    databaseId
 					  }
 					}
 				',
-				'variables' => [ 'id' => $this->published_private_post_type->ID ],
+				'variables' => [ 'id' => $this->published_private_post_type->ID, 'id_type' => 'DATABASE_ID', ],
 				'assertions' => [
 					// since it's a private post type, the data should be null
 					$this->expectedField( 'privatePostType', self::IS_NULL ),
@@ -704,8 +704,8 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			'singleContentNode' => [
 				'name' => 'singleContentNode',
 				'query' => '
-					query GetContentNode($id:ID!) {
-					  contentNode(id:$id idType: DATABASE_ID) {
+					query GetContentNode($id:ID!, $id_type:ContentNodeIdTypeEnum!) {
+					  contentNode(id:$id idType:$id_type) {
 					    __typename
 					    databaseId
 					  }
@@ -713,6 +713,7 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 				',
 				'variables' => [
 					'id' => $this->published_post->ID,
+					'id_type' => 'DATABASE_ID',
 				],
 				'assertions' => [
 					$this->expectedField( 'contentNode.__typename', 'Post' ),
@@ -821,14 +822,14 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			'singleTag' => [
 				'name' => 'singleTag',
 				'query' => '
-					query GetTag($id:ID!) {
-					  tag(id:$id idType: DATABASE_ID) {
+					query GetTag($id:ID!, $id_type:TagIdType!) {
+					  tag(id:$id idType:$id_type) {
 					    __typename
 					    databaseId
 					  }
 					}
 				',
-				'variables' => [ 'id' => $this->tag->term_id ],
+				'variables' => [ 'id' => $this->tag->term_id, 'id_type' => 'DATABASE_ID', ],
 				'assertions' => [
 					$this->expectedField( 'tag.__typename', 'Tag' ),
 					$this->expectedField( 'tag.databaseId', $this->tag->term_id )
@@ -865,14 +866,14 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			'singleCategory' => [
 				'name' => 'singleCategory',
 				'query' => '
-					query GetCategory($id:ID!) {
-					  category(id:$id idType: DATABASE_ID) {
+					query GetCategory($id:ID!, $id_type:CategoryIdType!) {
+					  category(id:$id idType:$id_type) {
 					    __typename
 					    databaseId
 					  }
 					}
 				',
-				'variables' => [ 'id' => $this->category->term_id ],
+				'variables' => [ 'id' => $this->category->term_id, 'id_type' => 'DATABASE_ID', ],
 				'assertions' => [
 					$this->expectedField( 'category.__typename', 'Category' ),
 					$this->expectedField( 'category.databaseId', $this->category->term_id )
@@ -884,14 +885,14 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			'singleTestTaxonomyTerm' => [
 				'name' => 'singleTestTaxonomyTerm',
 				'query' => '
-					query GetTestTaxonomyTerm($id:ID!) {
-					  testTaxonomyTerm(id:$id idType: DATABASE_ID) {
+					query GetTestTaxonomyTerm($id:ID!, $id_type:TestTaxonomyTermIdType!) {
+					  testTaxonomyTerm(id:$id idType:$id_type) {
 					    __typename
 					    databaseId
 					  }
 					}
 				',
-				'variables' => [ 'id' => $this->test_taxonomy_term->term_id ],
+				'variables' => [ 'id' => $this->test_taxonomy_term->term_id, 'id_type' => 'DATABASE_ID', ],
 				'assertions' => [
 					$this->expectedField( 'testTaxonomyTerm.__typename', 'TestTaxonomyTerm' ),
 					$this->expectedField( 'testTaxonomyTerm.databaseId', $this->test_taxonomy_term->term_id )
@@ -928,8 +929,8 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			'userWithPostsConnection' => [
 				'name' => 'userWithPostsConnection',
 				'query' => '
-					query GetUser($id:ID!) {
-					  user(id:$id idType:DATABASE_ID) {
+					query GetUser($id:ID!, $id_type:UserNodeIdTypeEnum!) {
+					  user(id:$id idType:$id_type) {
 				        __typename
 				        databaseId
 				        posts {
@@ -941,7 +942,7 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 					  }
 					}
 				',
-				'variables' => [ 'id' => $this->admin->ID ],
+				'variables' => [ 'id' => $this->admin->ID, 'id_type' => 'DATABASE_ID', ],
 				'assertions' => [
 					$this->expectedField( 'user.__typename', 'User' ),
 					$this->expectedField( 'user.databaseId', $this->admin->ID ),
@@ -957,8 +958,8 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			'editorUserWithPostsConnection' => [
 				'name' => 'editorUserWithPostsConnection',
 				'query' => '
-					query GetUser($id:ID!) {
-					  user(id:$id idType:DATABASE_ID) {
+					query GetUser($id:ID!, $id_type:UserNodeIdTypeEnum!) {
+					  user(id:$id idType:$id_type) {
 				        __typename
 				        databaseId
 				        posts {
@@ -970,7 +971,7 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 					  }
 					}
 				',
-				'variables' => [ 'id' => $this->editor->ID ],
+				'variables' => [ 'id' => $this->editor->ID, 'id_type' => 'DATABASE_ID', ],
 				'assertions' => [
 					$this->expectedField( 'user.__typename', 'User' ),
 					$this->expectedField( 'user.databaseId', $this->editor->ID ),
@@ -986,14 +987,14 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			'adminUserByDatabaseId' => [
 				'name' => 'adminUserByDatabaseId',
 				'query' => '
-					query GetUser($id:ID!) {
-					  user(id:$id idType:DATABASE_ID) {
+					query GetUser($id:ID!, $id_type:UserNodeIdTypeEnum!) {
+					  user(id:$id idType:$id_type) {
 				        __typename
 				        databaseId
 					  }
 					}
 				',
-				'variables' => [ 'id' => $this->admin->ID ],
+				'variables' => [ 'id' => $this->admin->ID, 'id_type' => 'DATABASE_ID', ],
 				'assertions' => [
 					$this->expectedField( 'user.__typename', 'User' ),
 					$this->expectedField( 'user.databaseId', $this->admin->ID ),
@@ -1090,15 +1091,16 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			'singleMenu' => [
 				'name' => 'singleMenu',
 				'query' => '
-					query GetMenu($id:ID!) {
-					  menu(id:$id idType: DATABASE_ID) {
+					query GetMenu($id:ID!, $id_type:MenuNodeIdTypeEnum!) {
+					  menu(id:$id idType:$id_type) {
 					    __typename
 					    databaseId
 					  }
 					}
 				',
 				'variables' => [
-					'id' => (int) $this->menu->term_id
+					'id' => (int) $this->menu->term_id,
+					'id_type' => 'DATABASE_ID',
 				]
 			],
 			'listMenu' => [
@@ -1131,8 +1133,8 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			'singleMenuItem' => [
 				'name' => 'singleMenuItem',
 				'query' => '
-					query GetMenuItem($id:ID!) {
-					  menuItem(id:$id idType: DATABASE_ID) {
+					query GetMenuItem($id:ID!, $id_type:MenuItemNodeIdTypeEnum!) {
+					  menuItem(id:$id idType:$id_type) {
 					    __typename
 					    databaseId
 					    parentDatabaseId
@@ -1141,13 +1143,14 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 				',
 				'variables' => [
 					'id' => $this->menu_item_1->ID,
+					'id_type' => 'DATABASE_ID',
 				]
 			],
 			'singleChildMenuItem' => [
 				'name' => 'singleChildMenuItem',
 				'query' => '
-					query GetMenuItem($id:ID!) {
-					  menuItem(id:$id idType: DATABASE_ID) {
+					query GetMenuItem($id:ID!, $id_type:MenuItemNodeIdTypeEnum!) {
+					  menuItem(id:$id idType:$id_type) {
 					    __typename
 					    databaseId
 					    parentDatabaseId
@@ -1155,21 +1158,23 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 					}
 				',
 				'variables' => [
-					'id' => $this->child_menu_item->ID
+					'id' => $this->child_menu_item->ID,
+					'id_type' => 'DATABASE_ID',
 				]
 			],
 			'singleMediaItem' => [
 				'name' => 'singleMediaItem',
 				'query' => '
-					query GetSingleMediaItem($id:ID!) {
-					  mediaItem(id:$id idType:DATABASE_ID) {
+					query GetSingleMediaItem($id:ID!, $id_type:MediaItemIdType!) {
+					  mediaItem(id:$id idType:$id_type) {
 					    __typename
 					    databaseId
 					  }
 					}
 				',
 				'variables' => [
-					'id' => $this->mediaItem->ID
+					'id' => $this->mediaItem->ID,
+					'id_type' => 'DATABASE_ID',
 				],
 			],
 			'listMediaItem' => [
@@ -1274,7 +1279,7 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 
 			// we only want to do this if there are errors to surface
 			if ( array_key_exists( 'errors', $actual ) ) {
-				codecept_debug( [ 'actual' => $actual ]);
+				codecept_debug( [ 'query' => $query, 'actual' => $actual ]);
 				$this->assertArrayNotHasKey( 'errors', $actual );
 			}
 
