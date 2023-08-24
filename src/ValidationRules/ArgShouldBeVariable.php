@@ -31,7 +31,7 @@ class ArgShouldBeVariable extends ValidationRule {
 
 					// If this argument should map to a variable
 					// For a string or "idType" enum
-					if ( in_array( $node->value->kind, [ 'StringValue', 'EnumValue' ], true ) ) {
+					if ( in_array( $node->value->kind, [ 'StringValue', 'EnumValue', 'IntValue' ], true ) ) {
 						$context->reportError(new Error(
 							self::shouldBeVariableMessage( $node->name->value ),
 							$node
@@ -47,6 +47,6 @@ class ArgShouldBeVariable extends ValidationRule {
 	 * @return string
 	 */
 	public static function shouldBeVariableMessage( $varName ) {
-		return sprintf( __( 'Argument "$%s" should be a variable.', 'wp-graphql-smart-cache' ), $varName );
+		return sprintf( __( 'Argument "%s" should be a variable.', 'wp-graphql-smart-cache' ), $varName );
 	}
 }

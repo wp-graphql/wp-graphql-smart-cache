@@ -59,7 +59,7 @@ class SaveQueryValidateCest {
 		] );
 		$I->seeResponseContainsJson([
 			'errors' => [
-				'message' => 'Validation Error: Argument "$id" should be a variable.'
+				'message' => 'Validation Error: Argument "id" should be a variable.'
 			]
 		]);
 	}
@@ -78,7 +78,7 @@ class SaveQueryValidateCest {
 		] );
 		$I->seeResponseContainsJson([
 			'errors' => [
-				'message' => 'Validation Error: Argument "$idType" should be a variable.'
+				'message' => 'Validation Error: Argument "idType" should be a variable.'
 			]
 		]);
 	}
@@ -97,7 +97,7 @@ class SaveQueryValidateCest {
 		] );
 		$I->seeResponseContainsJson([
 			'errors' => [
-				'message' => 'Validation Error: Argument "$idType" should be a variable.'
+				'message' => 'Validation Error: Argument "idType" should be a variable.'
 			]
 		]);
 	}
@@ -154,10 +154,29 @@ class SaveQueryValidateCest {
 			'post_status' => 'draft',
 		]);
 
-		$I->see('Validation Error: Argument "$id" should be a variable.', '//*[@id="plugin-message"]');
+		$I->see('Validation Error: Argument "id" should be a variable.', '//*[@id="plugin-message"]');
 		$I->dontSeeElement('//*[@id="message"]');
 		$I->dontSee('Post draft updated.');
 		$I->dontSee('Post published.');
 		$I->see('Publish immediately'); // does not have a publish date
+	}
+
+	public function saveQueryErrorsWhenIntValueShouldBeAVariableTest( FunctionalTester $I ) {
+		$query = '{ posts( first: 1 ) { nodes { title } } }';
+		$query_alias = 'test-save-query-alias';
+		$I->dontSeeTermInDatabase( [ 'name' => 'graphql_query_alias' ] );
+		$I->sendPost('graphql', [
+			'query' => $query,
+			'queryId' => $query_alias
+		] );
+		$I->dontSeePostInDatabase( [
+			'post_type'    => 'graphql_document',
+			'post_status'  => 'publish',
+		] );
+		$I->seeResponseContainsJson([
+			'errors' => [
+				'message' => 'Validation Error: Argument "first" should be a variable.'
+			]
+		]);
 	}
 }
