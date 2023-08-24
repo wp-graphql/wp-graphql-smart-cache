@@ -85,8 +85,7 @@ class Editor {
 			$data['post_content'] = $document->valid_or_throw( $post['post_content'], $post['ID'] );
 
 			// If post is already published and saving as published, and graphql query string is different on save
-			if ( 'publish' === $existing_post['post_status'] && 'publish' === $post['post_status'] && $data['post_content'] !== $existing_post['post_content'] ) {
-				
+			if ( 'publish' === $existing_post['post_status'] && 'publish' === $post['post_status'] ) {
 				// If selected to save as new
 				// phpcs:ignore
 				if ( isset( $_POST['graphql_query_save_new'] ) && 'save_as_new' === $_POST['graphql_query_save_new'] ) {
@@ -109,8 +108,9 @@ class Editor {
 					// Redirect to the new post edit page after save
 					wp_safe_redirect( admin_url( sprintf( '/post.php?post=%d&action=edit', $new_post_id ) ) );
 					exit;
+				}
 
-				} else {
+				if ( $data['post_content'] !== $existing_post['post_content'] ) {
 					throw new RequestError( __( 'Changing query for published query is not allowed. Select the save as new and publish again.', 'wp-graphql-smart-cache' ) );
 				}
 			}
@@ -413,7 +413,7 @@ class Editor {
 
 		$html  = '<div class="misc-pub-section misc-pub-section-last">';
 		$html .= '<input type="checkbox" id="graphql_query_save_new" name="graphql_query_save_new" value="save_as_new">';
-		$html .= '<label for="graphql_query_save_new">Save As New</label><br >';
+		$html .= '<label for="graphql_query_save_new">Save As Draft</label><br >';
 		$html .= '</div>';
 
 		/** @var array[] */

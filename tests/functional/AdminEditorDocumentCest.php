@@ -487,4 +487,92 @@ class AdminEditorDocumentCest {
 		$I->dontSeeElement('//*[@id="plugin-message"]');
 		$I->dontSee('Invalid graphql query string "{ __typename broken"', '//*[@id="plugin-message"]');
 	}
+
+	public function havePublishedQueryWhenChangeQueryStringThePublishShowsErrorTest( FunctionalTester $I ) {
+		$post_title = 'test-post';
+		$original_query = '{ __typename }';
+		$normalized_query_string = "{\n  __typename\n}\n";
+		$new_query = '{ __typename __typename }';
+		$the_new_normal = "{\n  __typename\n  __typename\n}\n";
+
+		// Create a new query in the admin editor
+		$I->loginAsAdmin();
+		$I->amOnPage( '/wp-admin/post-new.php?post_type=graphql_document');
+
+		// Add title should trigger auto-draft, but not save document
+		$I->fillField( "//input[@name='post_title']", $post_title);
+		$I->fillField( 'content', $original_query);
+		$I->fillField( 'graphql_query_maxage', '200');
+
+		// Publish post
+		$I->click('#publish');
+
+		$post_id_1 = $I->grabValueFrom(['name' => 'post_ID']);
+
+		$I->seePostInDatabase( [
+			'post_title'  => $post_title,
+			'post_status' => 'publish',
+			'post_content' => $normalized_query_string,
+		]);
+
+		// new query
+		$I->fillField( 'content', $new_query );
+
+		// Shows save-as-new check box
+		$I->seeElement('//*[@id="graphql_query_save_new"]');
+		$I->see('Save As Draft');
+		$I->dontSeeCheckboxIsChecked("//input[@type='checkbox' and @name='graphql_query_save_new']");
+
+		// // Publish post button
+		$I->click('#publish');
+
+		$post_id_2 = $I->grabValueFrom(['name' => 'post_ID']);
+		$I->assertEquals( $post_id_1, $post_id_2 );
+		$I->seeInCurrentUrl( "/wp-admin/post.php?post=$post_id_1&action=edit" );
+
+		// Should not see success of the publish.
+		$I->dontSeeElement('//*[@id="message"]');
+		$I->dontSee('Post published.');
+		$I->dontSee('Post updated.');
+		$I->dontSee('Post saved.');
+		$I->dontSee('Publish immediately'); // has date because already published
+
+		// Shows error message
+		$I->seeElement('//*[@id="plugin-message"]');
+		$I->see('Changing query for published query is not allowed. Select the save as new and publish again.', '//*[@id="plugin-message"]');
+
+		// Shows save-as-new check box
+		$I->seeElement('//*[@id="graphql_query_save_new"]');
+		$I->see('Save As Draft');
+		$I->dontSeeCheckboxIsChecked("//input[@type='checkbox' and @name='graphql_query_save_new']");
+
+		// new query
+		$I->fillField( 'content', $new_query );
+
+		// Select the save as new
+		$I->checkOption("//input[@type='checkbox' and @name='graphql_query_save_new']");
+
+		// // Publish post button
+		$I->click('#publish');
+
+		$post_id_3 = $I->grabValueFrom(['name' => 'post_ID']);
+		$I->assertNotEquals( $post_id_1, $post_id_3 );
+		$I->seeInCurrentUrl( "/wp-admin/post.php?post=$post_id_3&action=edit" );
+
+		// should not see our admin error
+		$I->dontSeeElement('//*[@id="plugin-message"]');
+
+		// Saves the different query as draft with new title
+		$I->seePostInDatabase( [
+			'post_title'  => "$post_title (copy)",
+			'post_status' => 'draft',
+			'post_content' => $the_new_normal,
+		]);
+
+		$post_id = $I->grabValueFrom(['name' => 'post_ID']);
+
+		// Should also save the other data for the new post
+		$I->seeInField(['name' => 'graphql_query_maxage'], '200');
+	}
+
 }
