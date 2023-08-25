@@ -59,7 +59,7 @@ class SaveQueryValidateCest {
 		] );
 		$I->seeResponseContainsJson([
 			'errors' => [
-				'message' => 'Validation Error: Argument "id" should be a variable.'
+				'message' => 'Validation Error: Argument "id" value should use a variable.'
 			]
 		]);
 	}
@@ -78,7 +78,7 @@ class SaveQueryValidateCest {
 		] );
 		$I->seeResponseContainsJson([
 			'errors' => [
-				'message' => 'Validation Error: Argument "idType" should be a variable.'
+				'message' => 'Validation Error: Argument "idType" value should use a variable.'
 			]
 		]);
 	}
@@ -97,7 +97,7 @@ class SaveQueryValidateCest {
 		] );
 		$I->seeResponseContainsJson([
 			'errors' => [
-				'message' => 'Validation Error: Argument "idType" should be a variable.'
+				'message' => 'Validation Error: Argument "idType" value should use a variable.'
 			]
 		]);
 	}
@@ -154,7 +154,7 @@ class SaveQueryValidateCest {
 			'post_status' => 'draft',
 		]);
 
-		$I->see('Validation Error: Argument "id" should be a variable.', '//*[@id="plugin-message"]');
+		$I->see('Validation Error: Argument "id" value should use a variable.', '//*[@id="plugin-message"]');
 		$I->dontSeeElement('//*[@id="message"]');
 		$I->dontSee('Post draft updated.');
 		$I->dontSee('Post published.');
@@ -175,7 +175,7 @@ class SaveQueryValidateCest {
 		] );
 		$I->seeResponseContainsJson([
 			'errors' => [
-				'message' => 'Validation Error: Argument "first" should be a variable.'
+				'message' => 'Validation Error: Argument "first" value should use a variable.'
 			]
 		]);
 	}

@@ -15,13 +15,14 @@ class DocumentCest {
 	public function saveQueryWithWhereClauseTest( FunctionalTester $I ) {
 		$I->wantTo( 'Save a graphql query containing a where clause and double quotes' );
 
-		$query = "{ posts(where: {tag: \"bees\"}) { nodes { id title uri content } } }";
+		$query = "query (\$tag: String!) { posts(where: {tag: \$tag}) { nodes { id title uri content } } }";
 		$query_alias = 'test-save-query-alias';
 
 		$I->dontSeeTermInDatabase( [ 'name' => 'graphql_query_alias' ] );
 		$I->sendPost('graphql', [
 			'query' => $query,
-			'queryId' => $query_alias
+			'queryId' => $query_alias,
+			'variables' => [ 'tag' => 'bees', ],
 		] );
 		$I->seeResponseContainsJson([
 			'data' => [

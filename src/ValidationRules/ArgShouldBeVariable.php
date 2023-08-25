@@ -3,8 +3,9 @@
 namespace WPGraphQL\SmartCache\ValidationRules;
 
 use GraphQL\Error\Error;
-use GraphQL\Language\AST\NodeKind;
 use GraphQL\Language\AST\ArgumentNode;
+use GraphQL\Language\AST\NodeKind;
+use GraphQL\Language\AST\ObjectFieldNode;
 use GraphQL\Validator\Rules\ValidationRule;
 use GraphQL\Validator\ValidationContext;
 
@@ -25,13 +26,25 @@ class ArgShouldBeVariable extends ValidationRule {
 	public function getVisitor( ValidationContext $context ) {
 
 		return [
-			NodeKind::ARGUMENT => [
+			NodeKind::OBJECT_FIELD => [
+				'enter' => function ( ObjectFieldNode $node ) use ( $context ) {
+					// if object field node->value->kind is 'Variable' that's good.
+					// where clause objects
+					if ( 'Variable' !== $node->value->kind ) {
+						$context->reportError(new Error(
+							self::shouldBeVariableMessage( $node->name->value ),
+							$node
+						));
+					}
+				},
+			],
+			NodeKind::ARGUMENT     => [
 				'enter' => function ( ArgumentNode $node ) use ( $context ) {
-					// Arguments in operation are process here, ex.  post( id: "1", idType: DATABASE_ID )
+					// Arguments in operation are processed here, ex.  post( id: "1", idType: DATABASE_ID )
+					// Look for inputs; ie scalars, enums or more complex Input Object Types
+					// where clause has object values 'ObjectValue' === $node->value->kind
 
-					// If this argument should map to a variable
-					// For a string or "idType" enum
-					if ( in_array( $node->value->kind, [ 'StringValue', 'EnumValue', 'IntValue' ], true ) ) {
+					if ( 'Variable' !== $node->value->kind ) {
 						$context->reportError(new Error(
 							self::shouldBeVariableMessage( $node->name->value ),
 							$node
@@ -47,6 +60,6 @@ class ArgShouldBeVariable extends ValidationRule {
 	 * @return string
 	 */
 	public static function shouldBeVariableMessage( $varName ) {
-		return sprintf( __( 'Argument "%s" should be a variable.', 'wp-graphql-smart-cache' ), $varName );
+		return sprintf( __( 'Argument "%s" value should use a variable.', 'wp-graphql-smart-cache' ), $varName );
 	}
 }

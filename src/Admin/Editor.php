@@ -12,6 +12,7 @@ use WPGraphQL\SmartCache\Document;
 use WPGraphQL\SmartCache\Document\Grant;
 use WPGraphQL\SmartCache\Document\MaxAge;
 use GraphQL\Error\SyntaxError;
+use GraphQL\Error\InvariantViolation;
 use GraphQL\Server\RequestError;
 
 class Editor {
@@ -81,7 +82,7 @@ class Editor {
 
 			$data['post_content'] = $document->valid_or_throw( $post['post_content'], $post['ID'] );
 
-		} catch ( RequestError $e ) {
+		} catch ( RequestError | InvariantViolation $e ) {
 			AdminErrors::add_message( $e->getMessage() );
 
 			// If encountered invalid data when publishing query, revert some data. If draft, allow invalid query.
