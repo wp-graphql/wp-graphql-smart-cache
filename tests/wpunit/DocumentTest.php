@@ -8,7 +8,7 @@ class DocumentTest extends \Codeception\TestCase\WPTestCase {
 
 	public function testThrowNeedsVariableUsingWhere() {
         $this->expectException( \GraphQL\Server\RequestError::class );
-        $this->expectExceptionMessage( 'Validation Error: Argument "title" value should use a variable.' );
+        $this->expectExceptionMessage( 'Validation Error: Argument "where" value should use a variable.' );
 		$document = new Document();
 
         $query = 'query one {
