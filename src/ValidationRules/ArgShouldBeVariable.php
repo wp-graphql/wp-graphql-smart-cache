@@ -29,7 +29,7 @@ class ArgShouldBeVariable extends ValidationRule {
 			NodeKind::OBJECT_FIELD => [
 				'enter' => function ( ObjectFieldNode $node ) use ( $context ) {
 					// if object field node->value->kind is 'Variable' that's good.
-					// where clause objects
+					// where clause objects.  posts(where: {title: "hello"}) { .... }
 					if ( 'Variable' !== $node->value->kind ) {
 						$context->reportError(new Error(
 							self::shouldBeVariableMessage( $node->name->value ),
@@ -44,7 +44,7 @@ class ArgShouldBeVariable extends ValidationRule {
 					// Look for inputs; ie scalars, enums or more complex Input Object Types
 					// where clause has object values 'ObjectValue' === $node->value->kind
 
-					if ( 'Variable' !== $node->value->kind ) {
+					if ( 'ObjectValue' !== $node->value->kind && 'Variable' !== $node->value->kind ) {
 						$context->reportError(new Error(
 							self::shouldBeVariableMessage( $node->name->value ),
 							$node
