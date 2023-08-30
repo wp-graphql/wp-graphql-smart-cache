@@ -17,15 +17,18 @@ jobs:
         run: |
           composer install --no-dev --optimize-autoloader
       - name: Create Artifact
+        # Create a zip file similar to 10up/action-wordpress-plugin-deploy action
         run: |
-          mkdir plugin-build
-          composer archive -vvv --format=zip --file="plugin-build/wp-graphql-smart-cache"
+          mkdir wpgraphql-smart-cache
+          rsync -rc --exclude-from=.distignore . wpgraphql-smart-cache/ --delete --delete-excluded 
+          zip -r wpgraphql-smart-cache.zip wpgraphql-smart-cache
+          rm -rf wpgraphql-smart-cache
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
-          name: wp-graphql-smart-cache
-          path: plugin-build/wp-graphql-smart-cache.zip
+          name: wpgraphql-smart-cache
+          path: wpgraphql-smart-cache.zip
       - name: Upload release asset
         uses: softprops/action-gh-release@v1
         with:
-          files: plugin-build/wp-graphql-smart-cache.zip
+          files: wpgraphql-smart-cache.zip
