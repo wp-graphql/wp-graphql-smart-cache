@@ -54,6 +54,12 @@
     ],
     "phpstan": [
       "phpstan analyze --ansi --memory-limit=1G"
+    ],
+    "zip": [
+      "mkdir -p plugin-build/wpgraphql-smart-cache",
+      "rsync -rc --exclude-from=.distignore --exclude=plugin-build . plugin-build/wpgraphql-smart-cache/ --delete --delete-excluded -v",
+      "cd plugin-build ; zip -r wpgraphql-smart-cache.zip wpgraphql-smart-cache",
+      "rm -rf plugin-build/wpgraphql-smart-cache/"
     ]
   },
   "config": {
