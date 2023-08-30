@@ -20,7 +20,7 @@ jobs:
         # Create a zip file similar to 10up/action-wordpress-plugin-deploy action
         run: |
           mkdir wpgraphql-smart-cache
-          rsync -rc --exclude-from=.distignore . wpgraphql-smart-cache/ --delete --delete-excluded 
+          rsync -rc --exclude-from=.distignore --exclude=wpgraphql-smart-cache . wpgraphql-smart-cache/ --delete --delete-excluded -v
           zip -r wpgraphql-smart-cache.zip wpgraphql-smart-cache
           rm -rf wpgraphql-smart-cache
       - name: Upload artifact
