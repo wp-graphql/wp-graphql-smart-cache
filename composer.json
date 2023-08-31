@@ -54,25 +54,14 @@
     ],
     "phpstan": [
       "phpstan analyze --ansi --memory-limit=1G"
+    ],
+    "zip": [
+      "mkdir -p plugin-build/wpgraphql-smart-cache",
+      "rsync -rc --exclude-from=.distignore --exclude=plugin-build . plugin-build/wpgraphql-smart-cache/ --delete --delete-excluded -v",
+      "cd plugin-build ; zip -r wpgraphql-smart-cache.zip wpgraphql-smart-cache",
+      "rm -rf plugin-build/wpgraphql-smart-cache/"
     ]
   },
-	"archive": {
-		"exclude": [
-			"*.yml",
-			"*.zip",
-			".env*",
-			"!.wordpress-org/",
-			"!build",
-			"docker/",
-			"docs/",
-			"node_modules/",
-			"packages",
-			"plugin-build/",
-			"tests/",
-			"!vendor/",
-			"wp-content/"
-		]
-	},
   "config": {
         "allow-plugins": {
           "dealerdirect/phpcodesniffer-composer-installer": true,
