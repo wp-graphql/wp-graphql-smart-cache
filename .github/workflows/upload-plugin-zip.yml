@@ -24,8 +24,8 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: wpgraphql-smart-cache
-          path: wpgraphql-smart-cache.zip
+          path: plugin-build/wpgraphql-smart-cache.zip
       - name: Upload release asset
         uses: softprops/action-gh-release@v1
         with:
-          files: wpgraphql-smart-cache.zip
+          files: plugin-build/wpgraphql-smart-cache.zip
