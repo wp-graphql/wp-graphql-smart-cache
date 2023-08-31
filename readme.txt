@@ -4,7 +4,7 @@ Tags: WPGraphQL, Cache, API, Invalidation, Persisted Queries, GraphQL, Performan
 Requires at least: 5.6
 Tested up to: 6.1
 Requires PHP: 7.4
-Stable tag: 1.1.4
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -65,6 +65,27 @@ Learn more about how [Appsero collects and uses this data](https://appsero.com/p
 
 == Upgrade Notice ==
 
+= 1.2.0 =
+
+**Code Removal**
+This release removes some code specific to WP Engine that's been moved to WP Engine's MU Plugins.
+
+Updating to WPGraphQL Smart Cache v1.2.0 or newer should be done at the same time as updating to [WPGraphQL v1.16.0](https://github.com/wp-graphql/wp-graphql/releases)
+otherwise some caches might not evict properly in response to data changes.
+
+**Garbage Collection of GraphQL Document**
+When using "Automated Persisted Queries", documents are stored in the "GraphQL Document" post type and as client queries change over time an excess of persisted queries can be stored.
+
+Garbage collection allows for documents to be purged after a certain amount of time.
+
+You can enable "Garbage Collection" under "GraphQL > Settings > Saved Queries" and checking the option to "Delete Old Queries".
+
+When enabling this feature, documents that are not associated with a "Group" will be purged after xx amount of days according to the settings.
+
+Before enabling this setting, we recommend going through your saved GraphQL Documents and assigning a "group" to any that you want to skip garbage collection.
+
+Groups are like bookmarks or collections for your GraphQL Documents. You can use them for whatever reason you like, but if a document is grouped, it will not be automatically garbage collected.
+
 = 0.2.0 =
 
 This release removes a lot of code that has since been released as part of WPGraphQL core.
@@ -72,6 +93,19 @@ This release removes a lot of code that has since been released as part of WPGra
 In order to use v0.2.0+ of WPGraphQL Smart Cache, you will need WPGraphQL v1.12.0 or newer.
 
 == Changelog ==
+
+= 1.2.0 =
+
+**New Features**
+
+- [#227](https://github.com/wp-graphql/wp-graphql-smart-cache/pull/227): feat: add garbage collection for graphql_documents (see upgrade notice)
+
+**Chores / Bugfixes**
+
+- [#244](https://github.com/wp-graphql/wp-graphql-smart-cache/pull/244): fix: handle errors when editing graphql documents in the admin
+- [#253](https://github.com/wp-graphql/wp-graphql-smart-cache/pull/244): ci: add varnish docker image. Update docs.
+- [#247](https://github.com/wp-graphql/wp-graphql-smart-cache/pull/247): fix: remove wpengine specific code (see upgrade notice).
+- [#257](https://github.com/wp-graphql/wp-graphql-smart-cache/pull/247):257: ci: use .distignore when building plugin for github release
 
 = 1.1.4 =
 
