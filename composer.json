@@ -55,6 +55,9 @@
     "phpstan": [
       "phpstan analyze --ansi --memory-limit=1G"
     ],
+    "build-plugin": [
+      "composer install --no-dev --optimize-autoloader && composer run-script zip && composer install"
+    ],
     "zip": [
       "mkdir -p plugin-build/wpgraphql-smart-cache",
       "rsync -rc --exclude-from=.distignore --exclude=plugin-build . plugin-build/wpgraphql-smart-cache/ --delete --delete-excluded -v",
