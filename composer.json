@@ -5,9 +5,7 @@
     "license": "GPL-3.0-or-later",
     "autoload": {
         "psr-4": {
-            "WPGraphQL\\PersistedQueries\\": "src/",
-            "WPGraphQL\\Cache\\": "src/Cache",
-            "WPGraphQL\\SmartCache\\": "src"
+            "WPGraphQL\\SmartCache\\": "src/"
         }
     },
     "autoload-dev": {
