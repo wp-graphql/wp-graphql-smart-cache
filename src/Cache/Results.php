@@ -234,6 +234,15 @@ class Results extends Query {
 			return;
 		}
 
+		// Check if all nodes are NULL and modify caching behavior
+		if ( $this->are_all_nodes_null( $filtered_response ) ) {
+			header( 'Cache-Control: no-cache' );
+			header( 'Pragma: no-cache' );
+			update_option( 'are_all_nodes_null_flag', true );
+			return;
+		}
+
+
 		$root_operation = $request->get_query_analyzer()->get_root_operation();
 
 		// For mutation, do not cache
@@ -255,6 +264,22 @@ class Results extends Query {
 			$this->save( $key, $filtered_response, $expiration );
 		}
 	}
+
+	/**
+	* Check if all nodes in the response are NULL
+	*/
+	private function are_all_nodes_null( $response ) {
+		if ( isset( $response->data ) && is_array( $response->data ) ) {
+			foreach ( $response->data as $node ) {
+				if ( ! empty( $node ) ) {
+						return false;
+				}
+			}
+			return true;
+		}
+		return false;
+	}
+
 
 	/**
 	 * When an item changed and this callback is triggered to delete results we have cached for that list of nodes
