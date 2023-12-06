@@ -218,6 +218,16 @@ class MaxAge {
 	 * @return array
 	 */
 	public function http_headers_cb( $headers ) {
+
+		$are_all_nodes_null = get_option( 'are_all_nodes_null_flag', false );
+
+		if ( $are_all_nodes_null ) {
+			$headers['Cache-Control'] = 'no-cache';
+			// Reset the flag
+			update_option( 'are_all_nodes_null_flag', false );
+			return $headers;
+		}
+		
 		$age = null;
 
 		// Look up this specific request query. If found and has an individual max-age setting, use it.
