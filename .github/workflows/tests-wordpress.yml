@@ -25,6 +25,8 @@ jobs:
           # so we include WP 5.9 manually instead of in the matrix
           - php: '8.1'
             wordpress: '5.9'
+          - php: '8.2'
+            wordpress: '6.4.0'
           - php: '8.0'
             wordpress: '6.2'
           - php: '8.0'
