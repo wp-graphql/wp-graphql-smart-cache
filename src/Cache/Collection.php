@@ -98,7 +98,7 @@ class Collection extends Query {
 
 		// Save/add the node ids for this query.  When one of these change in the future, we can purge the query
 		foreach ( $runtime_nodes as $node_id ) {
-			$this->store_content( $node_id, $request_key );
+			$this->store_content( (string) $node_id, $request_key );
 		}
 
 		// For each connection resolver, store the list types associated with this graphql query request
