@@ -82,9 +82,7 @@ class Settings {
 		$path = function_exists( 'get_graphql_setting' ) ? \get_graphql_setting( 'graphql_endpoint', 'graphql', 'graphql_general_settings' ) : 'graphql';
 		return '/' . $path;
 	}
-
-	public $fields;
-
+	
 	/**
 	 * @return void
 	 */
