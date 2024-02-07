@@ -4,7 +4,7 @@ Tags: WPGraphQL, Cache, API, Invalidation, Persisted Queries, GraphQL, Performan
 Requires at least: 5.6
 Tested up to: 6.4.2
 Requires PHP: 7.4
-Stable tag: 1.2.1
+Stable tag: 1.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -65,6 +65,10 @@ Learn more about how [Appsero collects and uses this data](https://appsero.com/p
 
 == Upgrade Notice ==
 
+= 1.3.0 =
+
+This fixes a regression to WPGraphQL v1.20.0 where the Query Analyzer became optional and defaulted to "off". WPGraphQL Smart Cache force-enables the Query Analyzer to support Cache tagging and tag-based cache invalidation.
+
 = 1.2.0 =
 
 **Code Removal**
@@ -93,6 +97,12 @@ This release removes a lot of code that has since been released as part of WPGra
 In order to use v0.2.0+ of WPGraphQL Smart Cache, you will need WPGraphQL v1.12.0 or newer.
 
 == Changelog ==
+
+= 1.3.0 =
+
+**New Features**
+
+- [#270](https://github.com/wp-graphql/wp-graphql-smart-cache/pull/270): feat: force enable query analyzer. This fixes a regression to WPGraphQL v1.20.0 where the Query Analyzer became optional and defaulted to "off". WPGraphQL Smart Cache force-enables the Query Analyzer to support Cache tagging and tag-based cache invalidation.
 
 = 1.2.1 =
 
