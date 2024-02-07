@@ -36,4 +36,19 @@ class AdminSettingsCacheTest extends \Codeception\TestCase\WPTestCase {
 		add_option( 'graphql_cache_section', [ 'cache_toggle' => 'on' ] );
 		$this->assertTrue( Settings::caching_enabled() );
 	}
+
+	public function testQueryAnalyzerSettingIsForcedOn() {
+
+		// disable debug mode
+		add_filter( 'graphql_debug_enabled', '__return_false' );
+
+		// assert that debug mode is off
+		$this->assertFalse( \WPGraphQL::debug() );
+
+		// update the setting to disable query analyzer
+		update_option( 'graphql_general_settings', [ 'query_analyzer_enabled', 'off' ] );
+
+		// assert that the query analyzer is still enabled, even though the setting is turned off
+		$this->assertTrue( \WPGraphQL\Utils\QueryAnalyzer::is_enabled() );
+	}
 }
