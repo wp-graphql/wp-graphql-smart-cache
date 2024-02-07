@@ -342,10 +342,12 @@ class Settings {
 	 *
 	 * @return mixed|string
 	 */
-	public function filter_graphql_query_analyzer_enabled_value( $value, $default_value, string $option_name, array $section_fields, string $section_name ) {
+	public function filter_graphql_query_analyzer_enabled_value( $value, $default_value, string $option_name, $section_fields, $section_name ) {
 		if ( 'query_analyzer_enabled' !== $option_name ) {
 			return $value;
 		}
+
+		// graphql_query_analyzer needs to be on for WPGraphQL Smart Cache to properly tag and invalidate caches
 		return 'on';
 	}
 }
