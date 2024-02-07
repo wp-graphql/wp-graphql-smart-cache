@@ -83,10 +83,16 @@ class Settings {
 		return '/' . $path;
 	}
 
+	public $fields;
+
 	/**
 	 * @return void
 	 */
 	public function init() {
+
+		// Filter the graphql_query_analyzer setting to be on if WPGraphQL Smart Cache is active
+		add_filter( 'graphql_setting_field_config', [ $this, 'filter_graphql_query_analyzer_enabled_field' ], 10, 3 );
+		add_filter( 'graphql_get_setting_section_field_value', [ $this, 'filter_graphql_query_analyzer_enabled_value' ], 10, 5 );
 		// Add to the wp-graphql admin settings page
 		add_action(
 			'graphql_register_settings',
@@ -300,4 +306,46 @@ class Settings {
 		);
 	}
 
+	/**
+	 * Filter the config for the query_analyzer_enabled setting
+	 *
+	 * @param array<string,mixed>  $field_config The field config for the setting
+	 * @param string               $field_name   The name of the field (unfilterable in the config)
+	 * @param string               $section      The slug of the section the field is registered to
+	 *
+	 * @return mixed
+	 */
+	public function filter_graphql_query_analyzer_enabled_field( $field_config, $field_name, $section ) {
+		if ( 'query_analyzer_enabled' !== $field_name || 'graphql_general_settings' !== $section ) {
+			return $field_config;
+		}
+
+		$field_config['value']    = 'on';
+		$field_config['disabled'] = true;
+		$field_config['default']  = 'on';
+
+		if ( ! \WPGraphQL::debug() ) {
+			$field_config['desc'] = $field_config['desc'] . ' (<strong>' . __( 'Force enabled by WPGraphQL Smart Cache to properly support cache tagging and invalidation.', 'wp-graphql-smart-cache' ) . '</strong>)';
+		}
+
+		return $field_config;
+	}
+
+	/**
+	 * Filter the value of the query_analyzer_enabled setting
+	 *
+	 * @param mixed               $value          The value of the field
+	 * @param mixed               $default_value  The default value if there is no value set
+	 * @param string              $option_name    The name of the option
+	 * @param array<string,mixed> $section_fields The setting values within the section
+	 * @param string              $section_name   The name of the section the setting belongs to
+	 *
+	 * @return mixed|string
+	 */
+	public function filter_graphql_query_analyzer_enabled_value( $value, $default_value, string $option_name, array $section_fields, string $section_name ) {
+		if ( 'query_analyzer_enabled' !== $option_name ) {
+			return $value;
+		}
+		return 'on';
+	}
 }
