@@ -82,7 +82,7 @@ class Settings {
 		$path = function_exists( 'get_graphql_setting' ) ? \get_graphql_setting( 'graphql_endpoint', 'graphql', 'graphql_general_settings' ) : 'graphql';
 		return '/' . $path;
 	}
-	
+
 	/**
 	 * @return void
 	 */
@@ -91,6 +91,7 @@ class Settings {
 		// Filter the graphql_query_analyzer setting to be on if WPGraphQL Smart Cache is active
 		add_filter( 'graphql_setting_field_config', [ $this, 'filter_graphql_query_analyzer_enabled_field' ], 10, 3 );
 		add_filter( 'graphql_get_setting_section_field_value', [ $this, 'filter_graphql_query_analyzer_enabled_value' ], 10, 5 );
+
 		// Add to the wp-graphql admin settings page
 		add_action(
 			'graphql_register_settings',
