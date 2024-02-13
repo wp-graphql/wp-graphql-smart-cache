@@ -896,7 +896,7 @@ class Invalidation {
 	 * @return void
 	 * @throws Exception
 	 */
-	public function on_menu_item_added_to_menu_cb( int $object_id, int $tt_id, string $taxonomy  ): void {
+	public function on_menu_item_added_to_menu_cb( int $object_id, int $tt_id, string $taxonomy ): void {
 
 		if ( 'nav_menu' !== $taxonomy ) {
 			return;
@@ -905,7 +905,7 @@ class Invalidation {
 		$menu_term = get_term_by( 'term_taxonomy_id', absint( $tt_id ), $taxonomy );
 
 		// if the menu isn't public do nothing
-		if ( ! $menu_term || ! $this->is_menu_public( absint( $menu_term->term_id ) ) ) {
+		if ( ! isset( $menu_term->term_id ) || ! $this->is_menu_public( absint( $menu_term->term_id ) ) ) {
 			return;
 		}
 
@@ -923,12 +923,12 @@ class Invalidation {
 	 * @return void
 	 * @throws Exception
 	 */
-	public function on_menu_item_updated_cb( int $menu_id, int $menu_item_db_id, array $args ): void  {
+	public function on_menu_item_updated_cb( int $menu_id, int $menu_item_db_id, array $args ): void {
 
 		$menu_term = get_term_by( 'term_id', absint( $menu_id ), 'nav_menu' );
 
 		// if the menu isn't public do nothing
-		if ( ! $menu_term || ! $this->is_menu_public( absint( $menu_term->term_id ) ) ) {
+		if ( ! isset( $menu_term->term_id ) || ! $this->is_menu_public( absint( $menu_term->term_id ) ) ) {
 			return;
 		}
 
@@ -944,7 +944,7 @@ class Invalidation {
 	 *
 	 * @return void
 	 */
-	public function on_menu_item_deleted_cb( int $post_id, WP_Post $post  ): void {
+	public function on_menu_item_deleted_cb( int $post_id, WP_Post $post ): void {
 
 		if ( 'nav_menu_item' !== $post->post_type ) {
 			return;

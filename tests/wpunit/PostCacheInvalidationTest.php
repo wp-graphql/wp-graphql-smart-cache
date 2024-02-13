@@ -391,7 +391,7 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLSmartCache\TestCase\W
 
 		// make assertions about the evicted caches
 		$this->assertNotEmpty( $evicted_caches );
-		
+
 		$this->assertEqualSets([
 			'userWithPostsConnection',
 			'singleCategory',
