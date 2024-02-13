@@ -49,7 +49,7 @@ class MenuCacheInvalidationTest extends WPGraphQLSmartCacheTestCaseWithSeedDataA
 		$this->assertEmpty( $this->getEvictedCaches() );
 
 		// assign the menu to a location. This should evict caches for queries for menus
-		set_theme_mod( 'nav_menu_locations', [ $location_name => (int) $this->menu->term_id ] );
+		set_theme_mod( 'nav_menu_locations', [ $location_name => (int) $this->public_menu->term_id ] );
 
 		$evicted_caches = $this->getEvictedCaches();
 
@@ -70,8 +70,8 @@ class MenuCacheInvalidationTest extends WPGraphQLSmartCacheTestCaseWithSeedDataA
 
 		$this->assertEmpty( $this->getEvictedCaches() );
 
-		wp_update_nav_menu_object( $this->menu->term_id, [
-			'menu-name' => $this->menu->name,
+		wp_update_nav_menu_object( $this->public_menu->term_id, [
+			'menu-name' => $this->public_menu->name,
 			'description' => 'updated description...',
 		] );
 
@@ -122,7 +122,7 @@ class MenuCacheInvalidationTest extends WPGraphQLSmartCacheTestCaseWithSeedDataA
 
 		$this->assertEmpty( $this->getEvictedCaches() );
 
-		wp_delete_nav_menu( $this->menu->term_id );
+		wp_delete_nav_menu( $this->public_menu->term_id );
 
 		$evicted = $this->getEvictedCaches();
 
@@ -134,7 +134,18 @@ class MenuCacheInvalidationTest extends WPGraphQLSmartCacheTestCaseWithSeedDataA
 			'singleMenu',
 
 			// deleting a menu that was in the listMenu results should evict the query
-			'listMenu'
+			'listMenu',
+
+			// deleting a menu that had this menu item in it should purge queries
+			// for this menu item as it will also delete this menu item
+			'singleChildMenuItem',
+
+			// deleting a menu that had this menu item in it should purge queries
+			// for this menu item as it will also delete this menu item
+			'singleMenuItem',
+
+			// Deleting a public menu should invalidate a query for a list of menuItems
+			'listMenuItem'
 		], $evicted );
 
 
@@ -159,7 +170,7 @@ class MenuCacheInvalidationTest extends WPGraphQLSmartCacheTestCaseWithSeedDataA
 		$this->assertEmpty( $this->getEvictedCaches() );
 
 		// update term meta on a public menu _should_ evict cache
-		update_term_meta( $this->menu->term_id, 'meta_key', uniqid( null, true ) );
+		update_term_meta( $this->public_menu->term_id, 'meta_key', uniqid( null, true ) );
 
 		$evicted = $this->getEvictedCaches();
 
@@ -179,7 +190,7 @@ class MenuCacheInvalidationTest extends WPGraphQLSmartCacheTestCaseWithSeedDataA
 	public function testDeleteTermMetaOnMenuAssignedToALocationEvictsCache() {
 
 		// setup some term meta to start with
-		update_term_meta( $this->menu->term_id, 'meta_key', uniqid( null, true ) );
+		update_term_meta( $this->public_menu->term_id, 'meta_key', uniqid( null, true ) );
 
 		// reset caches as the update above would have evicted some
 		$this->_populateCaches();
@@ -188,7 +199,7 @@ class MenuCacheInvalidationTest extends WPGraphQLSmartCacheTestCaseWithSeedDataA
 		$this->assertEmpty( $this->getEvictedCaches() );
 
 		// delete term meta on a public menu _should_ evict cache
-		delete_term_meta( $this->menu->term_id, 'meta_key' );
+		delete_term_meta( $this->public_menu->term_id, 'meta_key' );
 
 		$evicted = $this->getEvictedCaches();
 
