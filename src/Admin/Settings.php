@@ -199,13 +199,13 @@ class Settings {
 				register_graphql_settings_field(
 					'graphql_cache_section',
 					[
-						'name'    => 'network_cache_notice',
-						'type'    => 'custom',
-						'callback' => static function( array $args ) {
+						'name'     => 'network_cache_notice',
+						'type'     => 'custom',
+						'callback' => static function ( array $args ) {
 							echo '
 							<h2>' . esc_html( __( 'Network Cache Settings', 'wp-graphql-smart-cache' ) ) . '</h2>
-							<p>' . esc_html( __( 'Below are settings that will modify behavior of the headers used by network cache clients such as varnish.', 'wp-graphql-smart-cache' ) ). '</p>
-							<p>' . esc_html( __( 'Our recommendation is to use HTTP GET requests for queries and take advantage of the network cache (varnish, etc) and only enable and use Object Cache if GET requests are, for some reason, not an option.', 'wp-graphql-smart-cache' ) ). '</p>
+							<p>' . esc_html( __( 'Below are settings that will modify behavior of the headers used by network cache clients such as varnish.', 'wp-graphql-smart-cache' ) ) . '</p>
+							<p>' . esc_html( __( 'Our recommendation is to use HTTP GET requests for queries and take advantage of the network cache (varnish, etc) and only enable and use Object Cache if GET requests are, for some reason, not an option.', 'wp-graphql-smart-cache' ) ) . '</p>
 
 							';
 						},
@@ -236,14 +236,14 @@ class Settings {
 				register_graphql_settings_field(
 					'graphql_cache_section',
 					[
-						'name'    => 'object_cache_notice',
-						'type'    => 'custom',
-						'callback' => static function( array $args ) {
+						'name'     => 'object_cache_notice',
+						'type'     => 'custom',
+						'callback' => static function ( array $args ) {
 							echo '
 							<hr>
 							<h2>' . esc_html( __( 'Object Cache Settings', 'wp-graphql-smart-cache' ) ) . '</h2>
-							<p>' . esc_html( __( 'Below are settings that will impact object cache behavior.', 'wp-graphql-smart-cache' ) ). '</p>
-							<p><strong>' . esc_html( __( 'NOTE', 'wp-graphql-smart-cache' ) ) . ':</strong> ' . esc_html( __( 'GraphQL Object Cache is only recommended if network cache cannot be used. When possible, we recommend using HTTP GET requests and network caching layers such as varnish.', 'wp-graphql-smart-cache' ) ). '</p>
+							<p>' . esc_html( __( 'Below are settings that will impact object cache behavior.', 'wp-graphql-smart-cache' ) ) . '</p>
+							<p><strong>' . esc_html( __( 'NOTE', 'wp-graphql-smart-cache' ) ) . ':</strong> ' . esc_html( __( 'GraphQL Object Cache is only recommended if network cache cannot be used. When possible, we recommend using HTTP GET requests and network caching layers such as varnish.', 'wp-graphql-smart-cache' ) ) . '</p>
 
 							';
 						},
@@ -281,13 +281,13 @@ class Settings {
 				register_graphql_settings_field(
 					'graphql_cache_section',
 					[
-						'name'    => 'debugging_notice',
-						'type'    => 'custom',
-						'callback' => static function( array $args ) {
+						'name'     => 'debugging_notice',
+						'type'     => 'custom',
+						'callback' => static function ( array $args ) {
 							echo '
 							<hr>
 							<h2>' . esc_html( __( 'Debugging', 'wp-graphql-smart-cache' ) ) . '</h2>
-							<p>' . esc_html( __( 'Below are settings you can use to help debug', 'wp-graphql-smart-cache' ) ). '</p>
+							<p>' . esc_html( __( 'Below are settings you can use to help debug', 'wp-graphql-smart-cache' ) ) . '</p>
 
 							';
 						},
