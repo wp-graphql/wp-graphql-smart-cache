@@ -108,6 +108,9 @@ class Invalidation {
 		add_action( 'deleted_term_meta', [ $this, 'on_updated_menu_meta_cb' ], 10, 4 );
 
 		// @todo: evict caches when meta on menu items are changed. This happens outside *_post_meta hooks as nav_menu_item is a "different" type of post type
+		add_action( 'added_term_relationship', [ $this, 'on_menu_item_added_to_menu_cb' ], 10, 3 );
+		add_action( 'wp_update_nav_menu_item', [ $this, 'on_menu_item_updated_cb' ], 10, 3 );
+		add_action( 'deleted_post', [ $this, 'on_menu_item_deleted_cb' ], 10, 2 );
 
 		add_action( 'updated_post_meta', [ $this, 'on_menu_item_change_cb' ], 10, 4 );
 		add_action( 'added_post_meta', [ $this, 'on_menu_item_change_cb' ], 10, 4 );
@@ -732,11 +735,6 @@ class Invalidation {
 			return;
 		}
 
-		// if the post type is not tracked, ignore it
-		if ( ! in_array( $post->post_type, \WPGraphQL::get_allowed_post_types(), true ) ) {
-			return;
-		}
-
 		$post_type_object = get_post_type_object( $post->post_type );
 
 		if ( ! $post_type_object instanceof \WP_Post_Type ) {
@@ -773,7 +771,7 @@ class Invalidation {
 	 * @return bool
 	 * @throws Exception
 	 */
-	public function is_menu_public( $menu_id ) {
+	public function is_menu_public( int $menu_id ): bool {
 		$nav_menu = get_term( $menu_id, 'nav_menu' );
 		if ( ! $nav_menu instanceof WP_Term ) {
 			return false;
@@ -825,8 +823,8 @@ class Invalidation {
 	 * @return void
 	 * @throws Exception
 	 */
-	public function on_update_nav_menu_cb( $menu_id ) {
-		if ( ! $this->is_menu_public( $menu_id ) ) {
+	public function on_update_nav_menu_cb( int $menu_id ): void {
+		if ( ! $this->is_menu_public( absint( $menu_id ) ) ) {
 			return;
 		}
 
@@ -845,8 +843,8 @@ class Invalidation {
 	 * @return void
 	 * @throws Exception
 	 */
-	public function on_create_nav_menu_cb( $menu_id, array $menu_data ) {
-		if ( ! $this->is_menu_public( $menu_id ) ) {
+	public function on_create_nav_menu_cb( int $menu_id, array $menu_data ) {
+		if ( ! $this->is_menu_public( absint( $menu_id ) ) ) {
 			return;
 		}
 
@@ -877,7 +875,7 @@ class Invalidation {
 		}
 
 		// if the menu isn't public do nothing
-		if ( ! $this->is_menu_public( $term->term_id ) ) {
+		if ( ! $this->is_menu_public( absint( $term->term_id ) ) ) {
 			return;
 		}
 
@@ -887,6 +885,79 @@ class Invalidation {
 
 		$this->purge_nodes( 'term', $term->term_id, 'menu_meta_updated' );
 	}
+
+	/**
+	 * Listen for when a term relationship has changed between nav_menu_item and nav_menu
+	 *
+	 * @param int    $object_id The ID of the object the taxonomy is associated with
+	 * @param int    $tt_id     The Term Taxonomy ID of the term
+	 * @param string $taxonomy  The name of the taxonomy the term belongs to
+	 *
+	 * @return void
+	 * @throws Exception
+	 */
+	public function on_menu_item_added_to_menu_cb( int $object_id, int $tt_id, string $taxonomy ): void {
+
+		if ( 'nav_menu' !== $taxonomy ) {
+			return;
+		}
+
+		$menu_term = get_term_by( 'term_taxonomy_id', absint( $tt_id ), $taxonomy );
+
+		// if the menu isn't public do nothing
+		if ( ! isset( $menu_term->term_id ) || ! $this->is_menu_public( absint( $menu_term->term_id ) ) ) {
+			return;
+		}
+
+		$this->purge( 'list:menuitem', 'nav_menu_item_added' );
+
+	}
+
+	/**
+	 * Listen for when a menu item is updated
+	 *
+	 * @param int   $menu_id         ID of the updated menu.
+	 * @param int   $menu_item_db_id ID of the updated menu item.
+	 * @param array $args            An array of arguments used to update a menu item.
+	 *
+	 * @return void
+	 * @throws Exception
+	 */
+	public function on_menu_item_updated_cb( int $menu_id, int $menu_item_db_id, array $args ): void {
+
+		$menu_term = get_term_by( 'term_id', absint( $menu_id ), 'nav_menu' );
+
+		// if the menu isn't public do nothing
+		if ( ! isset( $menu_term->term_id ) || ! $this->is_menu_public( absint( $menu_term->term_id ) ) ) {
+			return;
+		}
+
+		$this->purge_nodes( 'post', $menu_item_db_id, 'update_menu_item' );
+
+	}
+
+	/**
+	 * Listen for menu items being deleted and purge relevant caches
+	 *
+	 * @param int     $post_id The ID of the post being deleted
+	 * @param WP_Post $post The Post object that is being deleted
+	 *
+	 * @return void
+	 */
+	public function on_menu_item_deleted_cb( int $post_id, WP_Post $post ): void {
+
+		if ( 'nav_menu_item' !== $post->post_type ) {
+			return;
+		}
+
+		if ( 'publish' !== $post->post_status ) {
+			return;
+		}
+
+		$this->purge_nodes( 'post', $post->ID, 'nav_menu_item_deleted' );
+
+	}
+
 
 	/**
 	 * Listens for changes to meta for menu items

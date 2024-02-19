@@ -364,6 +364,8 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLSmartCache\TestCase\W
 			'singleNodeByUri',
 			'singleApprovedCommentByGlobalId',
 			'listComment',
+			'listMenuItem', // the single menu item is linked to the published post, so this query should be evicted because when the post is deleted it deletes the associated menu item
+			'singleMenuItem' // the single menu item is linked to the published post, so this query should be evicted because when the post is deleted it deletes the associated menu item
 		], $evicted_caches );
 	}
 
@@ -402,6 +404,8 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLSmartCache\TestCase\W
 			'singlePost',
 			'singleApprovedCommentByGlobalId',
 			'listComment',
+			'listMenuItem', // the single menu item is linked to the published post, so this query should be evicted because when the post is deleted it deletes the associated menu item
+			'singleMenuItem' // the single menu item is linked to the published post, so this query should be evicted because when the post is deleted it deletes the associated menu item
 		], $evicted_caches );
 
 	}
@@ -576,7 +580,9 @@ class PostCacheInvalidationTest extends \TestCase\WPGraphQLSmartCache\TestCase\W
 		$this->assertEqualSets([
 			'listPage',
 			'singlePage',
-			'listContentNode'
+			'listContentNode',
+			'listMenuItem', // the menu item links to the published page
+			'singleChildMenuItem', // the menu item links to the published page
 		], $evicted_caches );
 
 	}

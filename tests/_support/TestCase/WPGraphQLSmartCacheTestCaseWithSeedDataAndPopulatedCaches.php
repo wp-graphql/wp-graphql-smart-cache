@@ -167,7 +167,17 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 	/**
 	 * @var WP_Term
 	 */
-	public $menu;
+	public $public_menu;
+
+	/**
+	 * @var WP_Term
+	 */
+	public $private_menu;
+
+	/**
+	 * @var WP_Nav_Menu_Item
+	 */
+	public $private_menu_item;
 
 	/**
 	 * @var WP_Nav_Menu_Item
@@ -424,8 +434,13 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			'post_author' => $this->admin->ID,
 		]);
 
-		$this->menu = self::factory()->term->create_and_get([
+		$this->public_menu = self::factory()->term->create_and_get([
 			'name' => 'test menu',
+			'taxonomy' => 'nav_menu'
+		]);
+
+		$this->private_menu = self::factory()->term->create_and_get([
+			'name' => 'private menu',
 			'taxonomy' => 'nav_menu'
 		]);
 
@@ -434,10 +449,48 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 			'post_status' => 'publish'
 		]);
 
+		// set the parent menu item
+		wp_update_nav_menu_item( $this->public_menu->term_id, $this->menu_item_1->ID, [
+			'menu-item-title' => 'Test Item',
+			'menu-item-object'    => 'post',
+			'menu-item-object-id' => $this->published_post->ID,
+			'menu-item-status'    => 'publish',
+			'menu-item-type'      => 'post_type',
+		]);
+
 		$this->child_menu_item = self::factory()->post->create_and_get([
 			'post_type' => 'nav_menu_item',
 			'post_status' => 'publish'
 		]);
+
+		// set a child menu item
+		wp_update_nav_menu_item( $this->public_menu->term_id, $this->child_menu_item->ID, [
+			'menu-item-title' => 'Child Item',
+			'menu-item-object'    => 'page',
+			'menu-item-object-id' => $this->published_page->ID,
+			'menu-item-status'    => 'publish',
+			'menu-item-type'      => 'post_type',
+			'menu-item-parent-id'    => $this->menu_item_1->ID
+		]);
+
+		$this->private_menu_item = self::factory()->post->create_and_get([
+			'post_type' => 'nav_menu_item',
+			'post_status' => 'publish'
+		]);
+
+		wp_update_nav_menu_item( $this->private_menu->term_id, $this->private_menu_item->ID, [
+			'menu-item-title' => 'Private Menu Item',
+			'menu-item-object'    => 'page',
+			'menu-item-object-id' => $this->published_page->ID,
+			'menu-item-status'    => 'publish',
+			'menu-item-type'      => 'post_type',
+		]);
+
+		// register a menu location
+		register_nav_menu( 'default-location', 'Test Menu Location' );
+
+		// add the menu to a default location
+		set_theme_mod( 'nav_menu_locations', [ 'default-location' => (int) $this->public_menu->term_id ] );
 
 		$this->approved_comment = self::factory()->comment->create_and_get([
 			'comment_approved' => 1,
@@ -447,31 +500,6 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 		$this->unapproved_comment = self::factory()->comment->create_and_get([
 			'comment_approved' => 0,
 		]);
-
-		// set the parent menu item
-		wp_update_nav_menu_item( $this->menu->term_id, $this->menu_item_1->ID, [
-			'menu-item-title' => 'Test Item',
-			'menu-item-object'    => 'post',
-			'menu-item-object-id' => $this->published_post->ID,
-			'menu-item-status'    => 'publish',
-			'menu-item-type'      => 'post_type',
-		]);
-
-		// set a child menu item
-		wp_update_nav_menu_item( $this->menu->term_id, $this->child_menu_item->ID, [
-			'menu-item-title' => 'Child Item',
-			'menu-item-object'    => 'page',
-			'menu-item-object-id' => $this->published_page->ID,
-			'menu-item-status'    => 'publish',
-			'menu-item-type'      => 'post_type',
-			'menu-item-parent-id'    => $this->menu_item_1->ID
-		]);
-
-		// register a menu location
-		register_nav_menu( 'default-location', 'Test Menu Location' );
-
-		// add the menu to a default location
-		set_theme_mod( 'nav_menu_locations', [ 'default-location' => (int) $this->menu->term_id ] );
 
 //		$this->assertInstanceOf( \WP_User::class, $this->admin );
 //		$this->assertInstanceOf( \WP_Post::class, $this->published_post );
@@ -1098,7 +1126,7 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 					}
 				',
 				'variables' => [
-					'id' => (int) $this->menu->term_id
+					'id' => (int) $this->public_menu->term_id
 				]
 			],
 			'listMenu' => [
@@ -1113,6 +1141,20 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 					  }
 					}
 				'
+			],
+			'singlePrivateMenu' => [
+				'name' => 'singlePrivateMenu',
+				'query' => '
+					query GetMenu($id:ID!) {
+					  menu(id:$id idType: DATABASE_ID) {
+					    __typename
+					    databaseId
+					  }
+					}
+				',
+				'variables' => [
+					'id' => (int) $this->private_menu->term_id
+				]
 			],
 			'listMenuItem' => [
 				'name' => 'listMenuItem',
@@ -1156,6 +1198,21 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 				',
 				'variables' => [
 					'id' => $this->child_menu_item->ID
+				]
+			],
+			'singlePrivateMenuItem' => [
+				'name' => 'singlePrivateMenuItem',
+				'query' => '
+					query GetMenuItem($id:ID!) {
+					  menuItem(id:$id idType: DATABASE_ID) {
+					    __typename
+					    databaseId
+					    parentDatabaseId
+					  }
+					}
+				',
+				'variables' => [
+					'id' => $this->private_menu_item->ID,
 				]
 			],
 			'singleMediaItem' => [
@@ -1312,17 +1369,17 @@ class WPGraphQLSmartCacheTestCaseWithSeedDataAndPopulatedCaches extends WPGraphQ
 	 * @return array
 	 */
 	public function getEvictedCaches() {
-		$empty = [];
+		$evicted = [];
 		if ( ! empty( $this->query_results ) ) {
 			foreach ( $this->query_results as $name => $result ) {
 				$cache = $this->collection->get( $result['cacheKey'] );
 				if ( empty( $cache ) ) {
-					$empty[] = $name;
+					$evicted[] = $name;
 				}
 			}
 		}
 
-		return $empty;
+		return $evicted;
 	}
 
 	/**
