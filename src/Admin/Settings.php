@@ -193,18 +193,22 @@ class Settings {
 					'graphql_cache_section',
 					[
 						'title' => __( 'Cache', 'wp-graphql-smart-cache' ),
-						'desc'  => __( 'Caching and other settings related to improved performance of GraphQL queries.', 'wp-graphql-smart-cache' ),
 					]
 				);
 
 				register_graphql_settings_field(
 					'graphql_cache_section',
 					[
-						'name'    => 'log_purge_events',
-						'label'   => __( 'Log Purge Events', 'wp-graphql-smart-cache' ),
-						'desc'    => __( 'Enabling this option will log purge events to the error log. This can be helpful when debugging what events are leading to specific purge events.', 'wp-graphql-smart-cache' ),
-						'type'    => 'checkbox',
-						'default' => 'off',
+						'name'     => 'network_cache_notice',
+						'type'     => 'custom',
+						'callback' => static function ( array $args ) {
+							echo '
+							<h2>' . esc_html( __( 'Network Cache Settings', 'wp-graphql-smart-cache' ) ) . '</h2>
+							<p>' . esc_html( __( 'Below are settings that will modify behavior of the headers used by network cache clients such as varnish.', 'wp-graphql-smart-cache' ) ) . '</p>
+							<p>' . esc_html( __( 'Our recommendation is to use HTTP GET requests for queries and take advantage of the network cache (varnish, etc) and only enable and use Object Cache if GET requests are, for some reason, not an option.', 'wp-graphql-smart-cache' ) ) . '</p>
+
+							';
+						},
 					]
 				);
 
@@ -213,7 +217,7 @@ class Settings {
 					[
 						'name'              => 'global_max_age',
 						'label'             => __( 'Cache-Control max-age', 'wp-graphql-smart-cache' ),
-						'desc'              => __( 'If set, a Cache-Control header with max-age directive will be set for all GraphQL responses. Value should be an integer, greater or equal to zero, or blank to disable. A value of 0 indicates that requests should not be cached (use with caution).', 'wp-graphql-smart-cache' ),
+						'desc'              => __( 'Value, in seconds. (i.e. 600 = 10 minutes) If set, a Cache-Control header with max-age directive will be added to the responses GraphQL queries made by via non-authenticated HTTP GET request. Value should be an integer, greater or equal to zero. A value of 0 indicates that requests should not be cached (use with caution).', 'wp-graphql-smart-cache' ),
 						'type'              => 'number',
 						'sanitize_callback' => function ( $value ) {
 							if ( ! is_numeric( $value ) ) {
@@ -225,6 +229,23 @@ class Settings {
 							}
 
 							return (int) $value;
+						},
+					]
+				);
+
+				register_graphql_settings_field(
+					'graphql_cache_section',
+					[
+						'name'     => 'object_cache_notice',
+						'type'     => 'custom',
+						'callback' => static function ( array $args ) {
+							echo '
+							<hr>
+							<h2>' . esc_html( __( 'Object Cache Settings', 'wp-graphql-smart-cache' ) ) . '</h2>
+							<p>' . esc_html( __( 'Below are settings that will impact object cache behavior.', 'wp-graphql-smart-cache' ) ) . '</p>
+							<p><strong>' . esc_html( __( 'NOTE', 'wp-graphql-smart-cache' ) ) . ':</strong> ' . esc_html( __( 'GraphQL Object Cache is only recommended if network cache cannot be used. When possible, we recommend using HTTP GET requests and network caching layers such as varnish.', 'wp-graphql-smart-cache' ) ) . '</p>
+
+							';
 						},
 					]
 				);
@@ -260,9 +281,36 @@ class Settings {
 				register_graphql_settings_field(
 					'graphql_cache_section',
 					[
+						'name'     => 'debugging_notice',
+						'type'     => 'custom',
+						'callback' => static function ( array $args ) {
+							echo '
+							<hr>
+							<h2>' . esc_html( __( 'Debugging', 'wp-graphql-smart-cache' ) ) . '</h2>
+							<p>' . esc_html( __( 'Below are settings you can use to help debug', 'wp-graphql-smart-cache' ) ) . '</p>
+
+							';
+						},
+					]
+				);
+
+				register_graphql_settings_field(
+					'graphql_cache_section',
+					[
+						'name'    => 'log_purge_events',
+						'label'   => __( 'Log Purge Events', 'wp-graphql-smart-cache' ),
+						'desc'    => __( 'Enabling this option will log purge events to the error log. This can be helpful when debugging what events are leading to specific purge events.', 'wp-graphql-smart-cache' ),
+						'type'    => 'checkbox',
+						'default' => 'off',
+					]
+				);
+
+				register_graphql_settings_field(
+					'graphql_cache_section',
+					[
 						'name'              => 'purge_all',
 						'label'             => __( 'Purge Now!', 'wp-graphql-smart-cache' ),
-						'desc'              => __( 'Purge GraphQL Cache. Select this box and click the save button to purge all responses stored in the GraphQL Cache.', 'wp-graphql-smart-cache' ),
+						'desc'              => __( 'Purge GraphQL Cache. Select this box and click the save button to purge all responses stored in the GraphQL Cache. This should purge network caches and object caches (if enabled) for GraphQL Queries.', 'wp-graphql-smart-cache' ),
 						'type'              => 'checkbox',
 						'default'           => 'off',
 						'sanitize_callback' => function ( $value ) {
