@@ -2,7 +2,7 @@
 Contributors: WPGraphQL, markkelnar, jasonbahl
 Tags: WPGraphQL, Cache, API, Invalidation, Persisted Queries, GraphQL, Performance, Speed
 Requires at least: 5.6
-Tested up to: 6.4.2
+Tested up to: 6.5
 Requires PHP: 7.4
 Stable tag: 1.3.1
 License: GPLv2 or later
