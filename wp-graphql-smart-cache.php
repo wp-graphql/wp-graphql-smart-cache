@@ -11,7 +11,7 @@
  * Requires PHP: 7.4
  * Text Domain: wp-graphql-smart-cache
  * Domain Path: /languages
- * Version: 1.3.1
+ * Version: 1.3.2
  * License: GPL-3
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  *
