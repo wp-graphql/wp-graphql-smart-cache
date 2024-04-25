@@ -31,8 +31,6 @@ jobs:
             wordpress: '6.4.0'
           - php: '8.0'
             wordpress: '6.2'
-          - php: '7.4'
-            wordpress: '5.9'
     steps:
       - name: Checkout
         uses: actions/checkout@v2
