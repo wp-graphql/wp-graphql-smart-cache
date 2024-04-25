@@ -4,7 +4,7 @@ Tags: WPGraphQL, Cache, API, Invalidation, Persisted Queries, GraphQL, Performan
 Requires at least: 5.6
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 1.3.1
+Stable tag: 1.3.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -98,7 +98,13 @@ In order to use v0.2.0+ of WPGraphQL Smart Cache, you will need WPGraphQL v1.12.
 
 == Changelog ==
 
-= 1.3.0 =
+= 1.3.2 =
+
+**Chores / Bugfixes**
+
+- [#278](https://github.com/wp-graphql/wp-graphql-smart-cache/pull/278): ci: Update tests to run against WordPress 6.5
+
+= 1.3.1 =
 
 **Chores / Bugfixes**
 
