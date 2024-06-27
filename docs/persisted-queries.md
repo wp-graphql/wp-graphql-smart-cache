@@ -137,6 +137,10 @@ This can be handy if you have queries that might not be invalidating properly ba
 
 For example, currently queries for "Settings" are not invalidating when settings change. For these queries, they will invalidate (expire) when the max age has been hit.
 
+> [!NOTE]
+> Some hosts may not support this setting.
+> Please refer to your host's documentation for more information.
+
 ## 👉 Up Next:
 
 - [Network Cache](./network-cache.md)
