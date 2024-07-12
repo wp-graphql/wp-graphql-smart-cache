@@ -47,8 +47,14 @@ class Invalidation {
 		// Listen for purge all, purge now request
 		add_action( 'wpgraphql_cache_purge_all', [ $this, 'on_purge_all_cb' ], 10, 0 );
 
-		## Log Purge Events
+		// Log Purge Events
 		add_action( 'graphql_purge', [ $this, 'log_purge_events' ], 10, 3 );
+
+		// Send Webhooks
+		add_action( 'graphql_purge', [ $this, 'send_webhooks' ], 10, 3 );
+		add_filter( 'wpgraphql_smart_cache_webhook_payload', [ $this, 'filter_payload_for_faust' ], 10, 2 );
+
+
 
 		## POST ACTIONS
 
@@ -280,6 +286,111 @@ class Invalidation {
 
 		// @phpcs:ignore
 		error_log( $message, 0 );
+	}
+
+	public function filter_payload_for_faust( array $payload, array $config ) {
+
+		if ( function_exists( '\WPE\FaustWP\Settings\get_secret_key' ) ) {
+			// \WPE\FaustWP\Settings\faustwp_update_setting( 'secret_key', '12fd5ee6-1492-4e8d-beb3-584bad776bf8' );
+			$payload['faustSecret'] = \WPE\FaustWP\Settings\get_secret_key();
+		}
+
+		return $payload;
+	}
+
+	/**
+	 * Log purge events, if enabled
+	 *
+	 * @param string $key The key to purge from teh cache
+	 * @param string $event The Event that triggered the purge
+	 * @param string $hostname   The url endpoint associated with the cache key. These match the Url and Key headers provided when the results were cached.
+	 */
+	public function send_webhooks( $key, $event, $hostname ) {
+
+		$webhook_configs = [
+			[
+				'url'   => 'http://localhost:3000/api/revalidate/',
+				'method' => 'GET',
+				'headers' => [],
+			]
+		];
+
+		foreach ( $webhook_configs as $webhook_config ) {
+
+			$default_payload = [
+				'key'      => $key,
+				'event'    => $event,
+				'hostname' => $hostname,
+			];
+
+			$node_id     = ! empty( $key ) ? Relay::fromGlobalId( $key ) : $key;
+			$node_type   = $node_id['type'] ?? null;
+			$database_id = $node_id['id'] ?? null;
+
+			if ( ! empty ( $node_type ) ) {
+				switch ( $node_type ) {
+					case 'post':
+						$post_id   = absint( $database_id );
+						$permalink = get_permalink( $post_id );
+						break;
+					case 'term':
+						$term_id   = absint( $database_id );
+						$permalink = get_term_link( $term_id );
+						break;
+					case 'user':
+						$user_id   = absint( $database_id );
+						$user      = get_user_by( 'id', $user_id );
+						$permalink = '/author/' . $user->user_nicename . '/';
+						break;
+					default:
+						break;
+				}
+
+				if ( ! empty( $permalink ) ) {
+					$default_payload['path'] = parse_url( $permalink, PHP_URL_PATH );
+				}
+			}
+
+			/**
+			 * Filter the webhook payload before sending the request
+			 * This allows for modification of the payload before sending the request
+			 * This can be used to add additional data to the payload or modify the payload
+			 *
+			 * @param array<string,mixed> $payload        The payload to be sent in the webhook request
+			 * @param array<string,mixed> $webhook_config The webhook configuration
+			 */
+			$filtered_payload = apply_filters( 'wpgraphql_smart_cache_webhook_payload', $default_payload, $webhook_config );
+
+			switch ( $webhook_config['method'] ) {
+				case 'GET':
+					$webhook_config['url'] = add_query_arg( $filtered_payload, $webhook_config['url'] );
+					break;
+				case 'POST':
+				default:
+					$webhook_config['headers']['Content-Type'] = 'application/json';
+					$webhook_config['body'] = wp_json_encode( $filtered_payload );
+					break;
+			}
+
+			// Send the webhook request
+			$res = wp_remote_request( $webhook_config['url'], [
+				'method'   => $webhook_config['method'],
+				'headers'  => $webhook_config['headers'] ?? [],
+				'body'     => $webhook_config['body'] ?? null,
+				'blocking' => false,
+			] );
+
+//			wp_send_json([
+//				'res' => $res,
+//				'webhook_config' => $webhook_config,
+//			]);
+
+			if ( is_wp_error( $res ) ) {
+				// @phpcs:ignore
+				error_log( __( 'Error sending webhook: ', 'wp-graphql-smart-cache' ) . $res->get_error_message() );
+			}
+		}
+
 	}
 
 	/**
