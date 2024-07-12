@@ -300,7 +300,6 @@ class Invalidation {
 	public function temp_filter_payload_for_faust( array $payload, array $config ): array {
 
 		if ( function_exists( '\WPE\FaustWP\Settings\get_secret_key' ) ) {
-			// \WPE\FaustWP\Settings\faustwp_update_setting( 'secret_key', '12fd5ee6-1492-4e8d-beb3-584bad776bf8' );
 			$payload['faustSecret'] = \WPE\FaustWP\Settings\get_secret_key();
 		}
 
