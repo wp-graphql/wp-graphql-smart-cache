@@ -52,8 +52,7 @@ class Invalidation {
 
 		// Send Webhooks
 		add_action( 'graphql_purge', [ $this, 'send_webhooks' ], 10, 3 );
-		add_filter( 'wpgraphql_smart_cache_webhook_payload', [ $this, 'filter_payload_for_faust' ], 10, 2 );
-
+		add_filter( 'wpgraphql_smart_cache_webhook_payload', [ $this, 'temp_filter_payload_for_faust' ], 10, 2 );
 
 
 		## POST ACTIONS
@@ -288,7 +287,17 @@ class Invalidation {
 		error_log( $message, 0 );
 	}
 
-	public function filter_payload_for_faust( array $payload, array $config ) {
+	/**
+	 * Filter the payload to add the Faust Secret key for revalidation of Faust pages
+	 *
+	 * NOTE: This would likely live in the faustwp plugin, but I'm including it here for POC purposes
+	 *
+	 * @param array<mixed,string> $payload The payload to be sent to Faust
+	 * @param array<mixed,string> $config The config array
+	 *
+	 * @return array<mixed,string>
+	 */
+	public function temp_filter_payload_for_faust( array $payload, array $config ): array {
 
 		if ( function_exists( '\WPE\FaustWP\Settings\get_secret_key' ) ) {
 			// \WPE\FaustWP\Settings\faustwp_update_setting( 'secret_key', '12fd5ee6-1492-4e8d-beb3-584bad776bf8' );
@@ -305,11 +314,17 @@ class Invalidation {
 	 * @param string $event The Event that triggered the purge
 	 * @param string $hostname   The url endpoint associated with the cache key. These match the Url and Key headers provided when the results were cached.
 	 */
-	public function send_webhooks( $key, $event, $hostname ) {
+	public function send_webhooks( string $key, string $event, string $hostname ): void {
+
+		if ( ! function_exists( '\WPE\FaustWP\Settings\faustwp_get_setting') ) {
+			return;
+		}
+
+		$path = \WPE\FaustWP\Settings\faustwp_get_setting( 'frontend_uri' );
 
 		$webhook_configs = [
 			[
-				'url'   => 'http://localhost:3000/api/revalidate/',
+				'url'   => untrailingslashit( $path ) . '/api/revalidate/',
 				'method' => 'GET',
 				'headers' => [],
 			]
@@ -321,35 +336,8 @@ class Invalidation {
 				'key'      => $key,
 				'event'    => $event,
 				'hostname' => $hostname,
+				'path'     => $this->get_path_from_key( $key ),
 			];
-
-			$node_id     = ! empty( $key ) ? Relay::fromGlobalId( $key ) : $key;
-			$node_type   = $node_id['type'] ?? null;
-			$database_id = $node_id['id'] ?? null;
-
-			if ( ! empty ( $node_type ) ) {
-				switch ( $node_type ) {
-					case 'post':
-						$post_id   = absint( $database_id );
-						$permalink = get_permalink( $post_id );
-						break;
-					case 'term':
-						$term_id   = absint( $database_id );
-						$permalink = get_term_link( $term_id );
-						break;
-					case 'user':
-						$user_id   = absint( $database_id );
-						$user      = get_user_by( 'id', $user_id );
-						$permalink = '/author/' . $user->user_nicename . '/';
-						break;
-					default:
-						break;
-				}
-
-				if ( ! empty( $permalink ) ) {
-					$default_payload['path'] = parse_url( $permalink, PHP_URL_PATH );
-				}
-			}
 
 			/**
 			 * Filter the webhook payload before sending the request
@@ -364,6 +352,7 @@ class Invalidation {
 			switch ( $webhook_config['method'] ) {
 				case 'GET':
 					$webhook_config['url'] = add_query_arg( $filtered_payload, $webhook_config['url'] );
+					$webhook_config['body'] = null;
 					break;
 				case 'POST':
 				default:
@@ -375,15 +364,10 @@ class Invalidation {
 			// Send the webhook request
 			$res = wp_remote_request( $webhook_config['url'], [
 				'method'   => $webhook_config['method'],
-				'headers'  => $webhook_config['headers'] ?? [],
-				'body'     => $webhook_config['body'] ?? null,
+				'headers'  => $webhook_config['headers'],
+				'body'     => $webhook_config['body'],
 				'blocking' => false,
 			] );
-
-//			wp_send_json([
-//				'res' => $res,
-//				'webhook_config' => $webhook_config,
-//			]);
 
 			if ( is_wp_error( $res ) ) {
 				// @phpcs:ignore
@@ -391,6 +375,47 @@ class Invalidation {
 			}
 		}
 
+	}
+
+	/**
+	 * Get the path from the key
+	 *
+	 * @param string $key The key to get the path from
+	 *
+	 * @return string
+	 */
+	public function get_path_from_key( string $key ): string {
+		$path = '';
+		$node_id     = ! empty( $key ) ? Relay::fromGlobalId( $key ) : $key;
+		$node_type   = $node_id['type'] ?? null;
+		$database_id = $node_id['id'] ?? null;
+
+		if ( ! empty ( $node_type ) ) {
+			switch ( $node_type ) {
+				case 'post':
+					$post_id   = absint( $database_id );
+					$permalink = get_permalink( $post_id );
+					break;
+				case 'term':
+					$term_id   = absint( $database_id );
+					$permalink = get_term_link( $term_id );
+					break;
+				case 'user':
+					$user_id   = absint( $database_id );
+					$user      = get_user_by( 'id', $user_id );
+					$permalink = $user instanceof WP_User ? '/author/' . $user->user_nicename . '/' : null;
+					break;
+				default:
+					break;
+			}
+
+			// ensure the permalink is a string and not a WP_Error or anything else
+			if ( ! empty( $permalink ) && is_string( $permalink ) ) {
+				$path = parse_url( $permalink, PHP_URL_PATH );
+			}
+		}
+
+		return ! empty( $path ) ? $path : '';
 	}
 
 	/**
