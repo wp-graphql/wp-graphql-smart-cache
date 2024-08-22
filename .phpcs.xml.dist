@@ -65,7 +65,7 @@
 
 	<!-- Load WordPress VIP Go standards - for use with projects on the (newer) VIP Go platform. -->
 	<rule ref="WordPress-VIP-Go" />
-
+	
 	<rule ref="Squiz.Functions.MultiLineFunctionDeclaration.SpaceAfterFunction"/>
 
 	<rule ref="WordPress-Core">
@@ -109,4 +109,14 @@
 	<!-- Enforce short array syntax -->
 	<rule ref="Generic.Arrays.DisallowLongArraySyntax"/>
 
+	<!-- These formatting rules are suppressed in VIP-GO and restored here.-->
+	<rule ref="Squiz.WhiteSpace.SuperfluousWhitespace">
+		<severity>5</severity>
+	</rule>
+	<rule ref="Squiz.WhiteSpace.SuperfluousWhitespace.EmptyLines">
+		<severity>5</severity>
+	</rule>
+	<rule ref="Squiz.WhiteSpace.SuperfluousWhitespace.EndLine">
+		<severity>5</severity>
+	</rule>
 </ruleset>
