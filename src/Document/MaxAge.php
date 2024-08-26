@@ -65,7 +65,7 @@ class MaxAge {
 				$config['resolve'] = function ( \WPGraphQL\Model\Post $post, $args, $context, $info ) {
 					$term = get_the_terms( $post->ID, self::TAXONOMY_NAME );
 
-					return isset( $term[0]->name ) ? $term[0]->name : null;
+					return is_array( $term ) && $term[0] instanceof \WP_Term ? $term[0]->name : null;
 				};
 				register_graphql_field( $register_type_name, 'max_age_header', $config );
 			}
