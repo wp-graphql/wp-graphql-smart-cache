@@ -40,7 +40,7 @@ jobs:
           PHP_VERSION: ${{ matrix.php }}
           WP_VERSION: ${{ matrix.wordpress }}
         run: |
-          docker-compose build \
+          docker compose build \
             --build-arg WP_VERSION=${{ matrix.wordpress }} \
             --build-arg PHP_VERSION=${{ matrix.php }} \
             --build-arg DOCKER_REGISTRY=ghcr.io/wp-graphql/
@@ -66,7 +66,7 @@ jobs:
         run: composer update
 
       - name: Run acceptance, functional tests
-        run: docker-compose run -e DEBUG=1 -e WPGRAPHQL_VERSION=${{matrix.wpgraphql_version}} testing
+        run: docker compose run -e DEBUG=1 -e WPGRAPHQL_VERSION=${{matrix.wpgraphql_version}} testing
         env:
           WP_VERSION: ${{ matrix.wordpress }}
           PHP_VERSION: ${{ matrix.php }}
