@@ -206,12 +206,12 @@ class Document {
 	public function graphql_query_contains_query_id_cb( $parsed_body_params, $request_context ) {
 
 		// Normalize keys to handle both `queryId` and `queryid`.
-		$query_id_key = isset($parsed_body_params['queryId']) ? 'queryId' : (isset($parsed_body_params['queryid']) ? 'queryid' : null);
+		$query_id_key = isset( $parsed_body_params['queryId'] ) ? 'queryId' : ( isset( $parsed_body_params['queryid'] ) ? 'queryid' : null );
 
 		// If both query and queryId/queryid are set
 		if ( ! empty( $parsed_body_params['query'] ) && ! empty( $query_id_key ) ) {
 			// Save the query
-			$this->save( $parsed_body_params[$query_id_key], $parsed_body_params['query'] );
+			$this->save( $parsed_body_params[ $query_id_key ], $parsed_body_params['query'] );
 
 			// Remove it from processed body params so graphql-php operation proceeds without conflict.
 			unset( $parsed_body_params['query'] );
@@ -219,11 +219,11 @@ class Document {
 
 		// If the query is empty, but queryId/queryid is set
 		if ( empty( $parsed_body_params['query'] ) && ! empty( $query_id_key ) ) {
-			$query_string = $this->get( $parsed_body_params[$query_id_key] );
+			$query_string = $this->get( $parsed_body_params[ $query_id_key ] );
 			if ( ! empty( $query_string ) ) {
 				$parsed_body_params['query']           = $query_string;
-				$parsed_body_params['originalQueryId'] = $parsed_body_params[$query_id_key];
-				unset( $parsed_body_params[$query_id_key] );
+				$parsed_body_params['originalQueryId'] = $parsed_body_params[ $query_id_key ];
+				unset( $parsed_body_params[ $query_id_key ] );
 			}
 		}
 
