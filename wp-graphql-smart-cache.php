@@ -7,11 +7,11 @@
  * Author: WPGraphQL
  * Author URI: http://www.wpgraphql.com
  * Requires at least: 5.6
- * Tested up to: 6.5
+ * Tested up to: 6.6.1
  * Requires PHP: 7.4
  * Text Domain: wp-graphql-smart-cache
  * Domain Path: /languages
- * Version: 1.3.2
+ * Version: 1.3.3
  * License: GPL-3
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  *
@@ -46,7 +46,7 @@ if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
 }
 
 if ( ! defined( 'WPGRAPHQL_SMART_CACHE_VERSION' ) ) {
-	define( 'WPGRAPHQL_SMART_CACHE_VERSION', '1.3.1' );
+	define( 'WPGRAPHQL_SMART_CACHE_VERSION', '1.3.3' );
 }
 
 if ( ! defined( 'WPGRAPHQL_SMART_CACHE_WPGRAPHQL_REQUIRED_MIN_VERSION' ) ) {
