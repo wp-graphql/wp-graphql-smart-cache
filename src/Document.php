@@ -195,34 +195,35 @@ class Document {
 
 	/**
 	 * Process request looking for when queryid and query are present.
-	 * Save the query and remove it from the request
+	 * Save the query and remove it from the request.
 	 *
 	 * @param  array $parsed_body_params Request parameters.
-	 * @param  array $request_context An array containing the both body and query params
+	 * @param  array $request_context An array containing both body and query params.
 	 *
 	 * @return array Updated $parsed_body_params Request parameters.
 	 * @throws RequestError
 	 */
 	public function graphql_query_contains_query_id_cb( $parsed_body_params, $request_context ) {
 
-		// if both query and queryId are set
-		// we should attempt to save the query document (per APQ)
-		if ( ! empty( $parsed_body_params['query'] ) && ! empty( $parsed_body_params['queryId'] ) ) {
-			// save the query
-			// The query string already coming from 'graphql_request_data' already has the query string unslashed.
-			$this->save( $parsed_body_params['queryId'], $parsed_body_params['query'] );
+		// Normalize keys to handle both `queryId` and `queryid`.
+		$query_id_key = isset( $parsed_body_params['queryId'] ) ? 'queryId' : ( isset( $parsed_body_params['queryid'] ) ? 'queryid' : null );
 
-			// remove it from process body params so graphql-php operation proceeds without conflict.
+		// If both query and queryId/queryid are set
+		if ( ! empty( $parsed_body_params['query'] ) && ! empty( $query_id_key ) ) {
+			// Save the query
+			$this->save( $parsed_body_params[ $query_id_key ], $parsed_body_params['query'] );
+
+			// Remove it from processed body params so graphql-php operation proceeds without conflict.
 			unset( $parsed_body_params['query'] );
 		}
 
-		// if the query is empty, but the queryId is set
-		if ( empty( $parsed_body_params['query'] ) && ! empty( $parsed_body_params['queryId'] ) ) {
-			$query_string = $this->get( $parsed_body_params['queryId'] );
+		// If the query is empty, but queryId/queryid is set
+		if ( empty( $parsed_body_params['query'] ) && ! empty( $query_id_key ) ) {
+			$query_string = $this->get( $parsed_body_params[ $query_id_key ] );
 			if ( ! empty( $query_string ) ) {
 				$parsed_body_params['query']           = $query_string;
-				$parsed_body_params['originalQueryId'] = $parsed_body_params['queryId'];
-				unset( $parsed_body_params['queryId'] );
+				$parsed_body_params['originalQueryId'] = $parsed_body_params[ $query_id_key ];
+				unset( $parsed_body_params[ $query_id_key ] );
 			}
 		}
 
@@ -230,22 +231,26 @@ class Document {
 	}
 
 	/**
-	 * During invoking 'graphql()', not as an http request, if queryId is present, look it up and return the query string
+	 * During invoking 'graphql()', not as an HTTP request, if queryId is present, look it up and return the query string.
 	 *
 	 * @param string $query  The graphql query string.
-	 * @param mixed|array|\GraphQL\Server\OperationParams $params  The graphql request params, containing queryId
+	 * @param mixed|array|\GraphQL\Server\OperationParams $params  The graphql request params, potentially containing queryId.
 	 *
 	 * @return string|null
 	 */
 	public function graphql_execute_query_params_cb( $query, $params ) {
 		$query_id = null;
 		if ( empty( $query ) ) {
-			//phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
+			// Check both camelCase and lowercase query ID
 			if ( isset( $params->queryId ) ) {
 				//phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
 				$query_id = $params->queryId;
-			} elseif ( is_array( $params ) && isset( $params['queryId'] ) ) {
-				$query_id = $params['queryId'];
+			} elseif ( is_array( $params ) ) {
+				if ( isset( $params['queryid'] ) ) {
+					$query_id = $params['queryid'];
+				} elseif ( isset( $params['queryId'] ) ) {
+					$query_id = $params['queryId'];
+				}
 			}
 
 			if ( ! empty( $query_id ) ) {
