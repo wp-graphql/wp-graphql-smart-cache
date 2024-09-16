@@ -47,8 +47,13 @@ class Invalidation {
 		// Listen for purge all, purge now request
 		add_action( 'wpgraphql_cache_purge_all', [ $this, 'on_purge_all_cb' ], 10, 0 );
 
-		## Log Purge Events
+		// Log Purge Events
 		add_action( 'graphql_purge', [ $this, 'log_purge_events' ], 10, 3 );
+
+		// Send Webhooks
+		add_action( 'graphql_purge', [ $this, 'send_webhooks' ], 10, 3 );
+		add_filter( 'wpgraphql_smart_cache_webhook_payload', [ $this, 'temp_filter_payload_for_faust' ], 10, 2 );
+
 
 		## POST ACTIONS
 
@@ -280,6 +285,136 @@ class Invalidation {
 
 		// @phpcs:ignore
 		error_log( $message, 0 );
+	}
+
+	/**
+	 * Filter the payload to add the Faust Secret key for revalidation of Faust pages
+	 *
+	 * NOTE: This would likely live in the faustwp plugin, but I'm including it here for POC purposes
+	 *
+	 * @param array<mixed,string> $payload The payload to be sent to Faust
+	 * @param array<mixed,string> $config The config array
+	 *
+	 * @return array<mixed,string>
+	 */
+	public function temp_filter_payload_for_faust( array $payload, array $config ): array {
+
+		if ( function_exists( '\WPE\FaustWP\Settings\get_secret_key' ) ) {
+			$payload['faustSecret'] = \WPE\FaustWP\Settings\get_secret_key();
+		}
+
+		return $payload;
+	}
+
+	/**
+	 * Log purge events, if enabled
+	 *
+	 * @param string $key The key to purge from teh cache
+	 * @param string $event The Event that triggered the purge
+	 * @param string $hostname   The url endpoint associated with the cache key. These match the Url and Key headers provided when the results were cached.
+	 */
+	public function send_webhooks( string $key, string $event, string $hostname ): void {
+
+		if ( ! function_exists( '\WPE\FaustWP\Settings\faustwp_get_setting') ) {
+			return;
+		}
+
+		$path = \WPE\FaustWP\Settings\faustwp_get_setting( 'frontend_uri' );
+
+		$webhook_configs = [
+			[
+				'url'   => untrailingslashit( $path ) . '/api/revalidate/',
+				'method' => 'GET',
+				'headers' => [],
+			]
+		];
+
+		foreach ( $webhook_configs as $webhook_config ) {
+
+			$default_payload = [
+				'key'      => $key,
+				'event'    => $event,
+				'hostname' => $hostname,
+				'path'     => $this->get_path_from_key( $key ),
+			];
+
+			/**
+			 * Filter the webhook payload before sending the request
+			 * This allows for modification of the payload before sending the request
+			 * This can be used to add additional data to the payload or modify the payload
+			 *
+			 * @param array<string,mixed> $payload        The payload to be sent in the webhook request
+			 * @param array<string,mixed> $webhook_config The webhook configuration
+			 */
+			$filtered_payload = apply_filters( 'wpgraphql_smart_cache_webhook_payload', $default_payload, $webhook_config );
+
+			switch ( $webhook_config['method'] ) {
+				case 'GET':
+					$webhook_config['url'] = add_query_arg( $filtered_payload, $webhook_config['url'] );
+					$webhook_config['body'] = null;
+					break;
+				case 'POST':
+				default:
+					$webhook_config['headers']['Content-Type'] = 'application/json';
+					$webhook_config['body'] = wp_json_encode( $filtered_payload );
+					break;
+			}
+
+			// Send the webhook request
+			$res = wp_remote_request( $webhook_config['url'], [
+				'method'   => $webhook_config['method'],
+				'headers'  => $webhook_config['headers'],
+				'body'     => $webhook_config['body'],
+				'blocking' => false,
+			] );
+
+			if ( is_wp_error( $res ) ) {
+				// @phpcs:ignore
+				error_log( __( 'Error sending webhook: ', 'wp-graphql-smart-cache' ) . $res->get_error_message() );
+			}
+		}
+
+	}
+
+	/**
+	 * Get the path from the key
+	 *
+	 * @param string $key The key to get the path from
+	 *
+	 * @return string
+	 */
+	public function get_path_from_key( string $key ): string {
+		$path = '';
+		$node_id     = ! empty( $key ) ? Relay::fromGlobalId( $key ) : $key;
+		$node_type   = $node_id['type'] ?? null;
+		$database_id = $node_id['id'] ?? null;
+
+		if ( ! empty ( $node_type ) ) {
+			switch ( $node_type ) {
+				case 'post':
+					$post_id   = absint( $database_id );
+					$permalink = get_permalink( $post_id );
+					break;
+				case 'term':
+					$term_id   = absint( $database_id );
+					$permalink = get_term_link( $term_id );
+					break;
+				case 'user':
+					$user_id   = absint( $database_id );
+					$user      = get_user_by( 'id', $user_id );
+					$permalink = $user instanceof WP_User ? '/author/' . $user->user_nicename . '/' : null;
+					break;
+				default:
+					break;
+			}
+
+			// ensure the permalink is a string and not a WP_Error or anything else
+			if ( ! empty( $permalink ) && is_string( $permalink ) ) {
+				$path = parse_url( $permalink, PHP_URL_PATH );
+			}
+		}
+
+		return ! empty( $path ) ? $path : '';
 	}
 
 	/**
