@@ -99,7 +99,7 @@ function can_load_plugin() {
 add_action(
 	'graphql_server_config',
 	function ( \GraphQL\Server\ServerConfig $config ) {
-		$config->setPersistentQueryLoader(
+		$config->setPersistedQueryLoader(
 			[ Loader::class, 'by_query_id' ]
 		);
 	},

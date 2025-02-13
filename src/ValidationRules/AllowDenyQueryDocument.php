@@ -6,7 +6,7 @@ use GraphQL\Error\Error;
 use GraphQL\Language\AST\NodeKind;
 use GraphQL\Language\AST\DocumentNode;
 use GraphQL\Validator\Rules\ValidationRule;
-use GraphQL\Validator\ValidationContext;
+use GraphQL\Validator\QueryValidationContext;
 
 use WPGraphQL\SmartCache\Document;
 use WPGraphQL\SmartCache\Document\Grant;
@@ -39,9 +39,9 @@ class AllowDenyQueryDocument extends ValidationRule {
 	 *
 	 * @see \GraphQL\Language\Visitor
 	 *
-	 * @return mixed[]
+	 * @return array
 	 */
-	public function getVisitor( ValidationContext $context ) {
+	public function getVisitor( QueryValidationContext $context ): array {
 		return [
 			NodeKind::DOCUMENT => function ( DocumentNode $node ) use ( $context ) {
 				// We are here because the global graphql setting is not public. Meaning allow or deny
