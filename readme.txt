@@ -1,6 +1,6 @@
 === WPGraphQL Smart Cache ===
-Contributors: WPGraphQL, markkelnar, jasonbahl
-Tags: WPGraphQL, Cache, API, Invalidation, Persisted Queries, GraphQL, Performance, Speed
+Contributors: jasonbahl, markkelnar
+Tags: WPGraphQL, Cache, API, Persisted Queries, Performance
 Requires at least: 5.6
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -9,6 +9,8 @@ Requires WPGraphQL: 2.0.0
 WPGraphQL Tested Up To: 2.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
+
+WPGraphQL Smart Cache is a free, open-source WordPress plugin that provides fast and accurate API responses through intelligent caching and cache invalidation of WPGraphQL queries.
 
 === Description ===
 
@@ -110,7 +112,7 @@ In order to use v0.2.0+ of WPGraphQL Smart Cache, you will need WPGraphQL v1.12.
 
 - This release includes breaking changes to be compatible with WPGraphQL 2.0.0. When upgrading WPGraphQL to v2.0.0, you must also upgrade WPGraphQL Smart Cache to v2.0.0. WPGraphQL Smart Cache v2.0.0 is not compatible with WPGraphQL v1.x.x.
 
-
+**Chores / Bugfixes**
 
 = 1.3.3 =
 
