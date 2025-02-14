@@ -237,7 +237,8 @@ As we've mentioned, WPGraphQL Network Cache does require specific implementation
 
 Below is a list of hosting companies we know support for WPGraphQL Smart Cache.
 
-- [WP Engine](https://wpengine.com/atlas)
+- [WP Engine](https://developers.wpengine.com/docs/atlas/additional-guides/query-optimization/#use-wpgraphql-smart-cache-and-persisted-queries)
+- [Pantheon](https://docs.pantheon.io/guides/decoupled/wp-backend-starters/caching)
 
 Below is a [hosting guide](#hosting-guide) to help hosts add support for WPGraphQL Caching and Cache Invalidation.
 
