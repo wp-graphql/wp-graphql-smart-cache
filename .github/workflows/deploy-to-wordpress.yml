@@ -32,3 +32,4 @@ jobs:
           SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
           SLUG: wpgraphql-smart-cache
           ASSETS_DIR: .wordpress-org
+          DEBUG: true
