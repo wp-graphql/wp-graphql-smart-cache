@@ -10,7 +10,7 @@ WPGraphQL Tested Up To: 2.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-WPGraphQL Smart Cache is a free, open-source WordPress plugin that provides fast and accurate API responses through intelligent caching and cache invalidation of WPGraphQL queries.
+WPGraphQL Smart Cache is a WordPress plugin that provides fast, accurate API responses by intelligently caching and invalidating WPGraphQL queries.
 
 === Description ===
 
