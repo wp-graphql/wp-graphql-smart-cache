@@ -6,12 +6,14 @@
  * Description: Smart Caching and Cache Invalidation for WPGraphQL
  * Author: WPGraphQL
  * Author URI: http://www.wpgraphql.com
- * Requires at least: 5.6
- * Tested up to: 6.6.1
+ * Requires at least: 6.0
+ * Tested up to: 6.7
  * Requires PHP: 7.4
+ * Requires WPGraphQL: 2.0.0
+ * WPGraphQL Tested Up To: 2.0.0
  * Text Domain: wp-graphql-smart-cache
  * Domain Path: /languages
- * Version: 1.3.3
+ * Version: 2.0.0
  * License: GPL-3
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  *
@@ -46,7 +48,7 @@ if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
 }
 
 if ( ! defined( 'WPGRAPHQL_SMART_CACHE_VERSION' ) ) {
-	define( 'WPGRAPHQL_SMART_CACHE_VERSION', '1.3.3' );
+	define( 'WPGRAPHQL_SMART_CACHE_VERSION', '2.0.0' );
 }
 
 if ( ! defined( 'WPGRAPHQL_SMART_CACHE_WPGRAPHQL_REQUIRED_MIN_VERSION' ) ) {
@@ -99,8 +101,10 @@ function can_load_plugin() {
 add_action(
 	'graphql_server_config',
 	function ( \GraphQL\Server\ServerConfig $config ) {
-		$config->setPersistentQueryLoader(
-			[ Loader::class, 'by_query_id' ]
+		$config->setPersistedQueryLoader(
+			function ( string $queryId, \GraphQL\Server\OperationParams $params ) {
+				return Loader::by_query_id( $queryId, (array) $params );
+			}
 		);
 	},
 	10,

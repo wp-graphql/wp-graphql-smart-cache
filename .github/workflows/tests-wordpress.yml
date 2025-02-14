@@ -21,10 +21,8 @@ jobs:
         wordpress: [ '6.3', '6.2', '6.1' ]
         wpgraphql_version: [ 'latest' ]
         include:
-          # WordPress isn't pushing php 8.2 and WP 5.9 to Docker
-          # so we include WP 5.9 manually instead of in the matrix
-          - php: '8.1'
-            wordpress: '5.9'
+          - php: '8.2'
+            wordpress: '6.7'
           - php: '8.2'
             wordpress: '6.5'
           - php: '8.2'
