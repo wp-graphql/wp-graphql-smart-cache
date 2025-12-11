@@ -22,11 +22,6 @@ class Results extends Query {
 	protected $is_cached = [];
 
 	/**
-	 * @var \WPGraphQL\Request
-	 */
-	protected $request;
-
-	/**
 	 * Stores whether the object cache is enabled.
 	 *
 	 * This is cached after first determination to ensure consistent behavior
@@ -235,8 +230,8 @@ class Results extends Query {
 		// This is more reliable than is_user_logged_in() because:
 		// 1. AppContext->viewer is set once at Request creation and doesn't change
 		// 2. WPGraphQL core may call wp_set_current_user(0) mid-request in has_authentication_errors(),
-		//    or even within individual resolvers, etc which would cause is_user_logged_in() 
-	    //  to return false even for authenticated requests
+		// or even within individual resolvers, etc which would cause is_user_logged_in() 
+		// to return false even for authenticated requests
 		// 3. Using AppContext is more "GraphQL-native" and consistent with how WPGraphQL handles auth
 		if ( $this->request && isset( $this->request->app_context->viewer ) && $this->request->app_context->viewer->exists() ) {
 			$enabled = false;
