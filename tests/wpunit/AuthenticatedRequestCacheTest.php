@@ -5,12 +5,13 @@ namespace WPGraphQL\SmartCache;
 use WPGraphQL\SmartCache\Cache\Results;
 
 /**
- * Test that authenticated user data does not leak into the cache.
+ * Test that authenticated requests are handled correctly by the object cache.
  *
- * ## The Vulnerability
+ * ## Background
  *
- * This tests a security vulnerability where authenticated user data could leak to public users
- * through the object cache. The issue stems from the order of operations in WPGraphQL core:
+ * This tests the caching behavior for authenticated vs unauthenticated requests.
+ * The object cache should only store results from unauthenticated requests to ensure
+ * that authenticated user data is not inadvertently served to public users.
  *
  * ## Request Execution Order in WPGraphQL\Request
  *
@@ -25,7 +26,7 @@ use WPGraphQL\SmartCache\Cache\Results;
  * 6. after_execute_actions() runs (lines 420-427)
  * 7. 'graphql_return_response' action fires - THIS IS WHERE SMART CACHE SAVES TO CACHE
  *
- * ## The Problem
+ * ## The Challenge
  *
  * At step 7, if we check is_user_logged_in(), it returns FALSE because wp_set_current_user(0)
  * was called in step 5. But the query results from step 3 contain authenticated data!
@@ -41,27 +42,14 @@ use WPGraphQL\SmartCache\Cache\Results;
  * The comment in WPGraphQL core at line 408-409 says "prevent execution" but
  * has_authentication_errors() runs in after_execute() - AFTER the query has already executed!
  *
- * GitHub Issue #38 (wp-graphql-jwt-authentication, July 2019, still open as of 2024)
+ * GitHub Issue #38 (wp-graphql-jwt-authentication, July 2019)
  * discusses this exact problem - authentication errors should halt execution BEFORE
  * the query runs, not after. The issue suggests using the rest_authentication_errors
- * hook pattern to abort processing early.
+ * hook pattern to abort processing early. While the issue is closed it seems it might not be fully addressed.
  *
  * @see https://github.com/wp-graphql/wp-graphql-jwt-authentication/issues/38
  *
- * ## Real-World Attack Scenario
- *
- * 1. Authenticated admin makes GET request:
- *    /graphql/?query={posts(where:{status:DRAFT}){nodes{title status}}}
- *
- * 2. Admin sees draft posts in response (correct - they have permission)
- *
- * 3. Public user in incognito window makes the SAME GET request
- *
- * 4. WITHOUT THE FIX: Public user sees the cached draft posts (SECURITY VULNERABILITY!)
- *
- * 5. WITH THE FIX: Public user gets fresh query results with no draft posts
- *
- * ## The Fix
+ * ## The Solution
  *
  * Instead of checking is_user_logged_in() (which changes mid-request), we check
  * AppContext->viewer which is set once at Request creation and never changes.
@@ -78,7 +66,7 @@ use WPGraphQL\SmartCache\Cache\Results;
  * @see vendor/wp-graphql/wp-graphql/src/Request.php lines 408-427 (execution order)
  * @see vendor/wp-graphql/wp-graphql/src/WPGraphQL.php line 950 (AppContext->viewer set)
  */
-class AuthenticatedCacheLeakTest extends \Codeception\TestCase\WPTestCase {
+class AuthenticatedRequestCacheTest extends \Codeception\TestCase\WPTestCase {
 
 	/**
 	 * @var \WP_User
@@ -135,7 +123,7 @@ class AuthenticatedCacheLeakTest extends \Codeception\TestCase\WPTestCase {
 	 * Test that is_object_cache_enabled returns false when AppContext viewer exists (authenticated),
 	 * even if wp_set_current_user(0) was called later.
 	 *
-	 * This is the core of the security fix - using AppContext->viewer instead of
+	 * This is the core of the fix - using AppContext->viewer instead of
 	 * is_user_logged_in() which can change mid-request.
 	 */
 	public function testCacheIsDisabledWhenAppContextViewerExists() {
@@ -178,9 +166,9 @@ class AuthenticatedCacheLeakTest extends \Codeception\TestCase\WPTestCase {
 	}
 
 	/**
-	 * Test the EXACT real-world vulnerability scenario with draft posts.
+	 * Test the real-world scenario with draft posts.
 	 *
-	 * This test replicates the exact attack scenario:
+	 * This test replicates the scenario:
 	 *
 	 * 1. Admin user is logged in (authenticated via WordPress session/cookie)
 	 * 2. Admin makes request: /graphql/?query={posts(where:{status:DRAFT}){nodes{title status}}}
@@ -235,7 +223,7 @@ class AuthenticatedCacheLeakTest extends \Codeception\TestCase\WPTestCase {
 
 		// =====================================================================
 		// STEP 4-5: Verify the response was NOT cached
-		// (This is where the fix prevents the vulnerability)
+		// (This is where the fix prevents the issue)
 		// =====================================================================
 		$this->assertEmpty(
 			$admin_response['extensions']['graphqlSmartCache']['graphqlObjectCache'] ?? [],
@@ -255,18 +243,17 @@ class AuthenticatedCacheLeakTest extends \Codeception\TestCase\WPTestCase {
 		$this->assertArrayHasKey( 'data', $public_response );
 		$public_posts = $public_response['data']['posts']['nodes'] ?? [];
 
-		// Public user should NOT see the draft post - this is the critical security check
+		// Public user should NOT see the draft post - this is the critical check
 		foreach ( $public_posts as $post ) {
 			$this->assertNotEquals(
 				'Secret Draft Post',
 				$post['title'],
-				'SECURITY VULNERABILITY: Public user can see draft post that was visible to admin! ' .
-				'This indicates authenticated data leaked into the cache.'
+				'Public user should not see draft post that was visible to admin.'
 			);
 			$this->assertNotEquals(
 				'draft',
 				strtolower( $post['status'] ),
-				'SECURITY VULNERABILITY: Public user can see draft content!'
+				'Public user should not see draft content.'
 			);
 		}
 
@@ -330,7 +317,6 @@ class AuthenticatedCacheLeakTest extends \Codeception\TestCase\WPTestCase {
 		);
 
 		// And the public response should NOT contain the draft post
-		// (this would be a security leak if it did)
 		$public_posts = $public_response['data']['posts']['nodes'] ?? [];
 		foreach ( $public_posts as $post ) {
 			$this->assertNotEquals(
@@ -492,4 +478,3 @@ class AuthenticatedCacheLeakTest extends \Codeception\TestCase\WPTestCase {
 	}
 
 }
-
