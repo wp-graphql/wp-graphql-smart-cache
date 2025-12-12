@@ -73,6 +73,9 @@ class Collection extends Query {
 			return;
 		}
 
+		// Set the request so build_key() can access AppContext->viewer for the user ID
+		$this->request = $request;
+
 		$request_key = $this->build_key( $query_id, $query, $variables, $operation );
 
 		if ( false === $request_key ) {
