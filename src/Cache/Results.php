@@ -22,9 +22,14 @@ class Results extends Query {
 	protected $is_cached = [];
 
 	/**
-	 * @var \WPGraphQL\Request
+	 * Stores whether the object cache is enabled.
+	 *
+	 * This is cached after first determination to ensure consistent behavior
+	 * throughout the request lifecycle, even if WordPress auth state changes.
+	 *
+	 * @var bool|null
 	 */
-	protected $request;
+	protected $is_object_cache_enabled = null;
 
 	/**
 	 * @return void
@@ -36,7 +41,33 @@ class Results extends Query {
 		add_action( 'wpgraphql_cache_purge_all', [ $this, 'purge_all_cb' ], 10, 0 );
 		add_filter( 'graphql_request_results', [ $this, 'add_cache_key_to_response_extensions' ], 10, 7 );
 
+		// Set Cache-Control: no-store for authenticated requests to prevent network/CDN caching
+		add_filter( 'graphql_response_headers_to_send', [ $this, 'add_no_cache_headers_for_authenticated_requests' ], PHP_INT_MAX );
+
 		parent::init();
+	}
+
+	/**
+	 * Add Cache-Control: no-store header for authenticated requests.
+	 *
+	 * This prevents network caches (Varnish, CDN, etc.) from caching responses
+	 * that were made by authenticated users, which could contain sensitive data.
+	 *
+	 * Uses AppContext->viewer which is set at Request creation and doesn't change
+	 * even if wp_set_current_user(0) is called later.
+	 *
+	 * @param array $headers The headers to be sent with the response.
+	 *
+	 * @return array The modified headers.
+	 */
+	public function add_no_cache_headers_for_authenticated_requests( $headers ) {
+		// Use the viewer from AppContext, which is set at Request creation
+		// and doesn't change even if wp_set_current_user(0) is called later
+		if ( $this->request && $this->request->app_context->viewer->exists() ) {
+			$headers['Cache-Control'] = 'no-store';
+		}
+
+		return $headers;
 	}
 
 	/**
@@ -111,6 +142,10 @@ class Results extends Query {
 	public function get_query_results_from_cache_cb( $result, Request $request ) {
 		$this->request = $request;
 
+		// Reset the cached is_object_cache_enabled value for each new request
+		// This ensures we re-evaluate based on the current request's auth state
+		$this->is_object_cache_enabled = null;
+
 		// if caching is not enabled or the request is authenticated, bail early
 		// right now we're not supporting GraphQL cache for authenticated requests.
 		// Possibly in the future.
@@ -177,6 +212,12 @@ class Results extends Query {
 	 */
 	protected function is_object_cache_enabled() {
 
+		// Return cached value if already determined for this request.
+		// This ensures consistent behavior even if WordPress auth state changes mid-request.
+		if ( null !== $this->is_object_cache_enabled ) {
+			return (bool) $this->is_object_cache_enabled;
+		}
+
 		// default to disabled
 		$enabled = false;
 
@@ -185,13 +226,21 @@ class Results extends Query {
 			$enabled = true;
 		}
 
-		// however, if the user is logged in, we should bypass the cache
-		if ( is_user_logged_in() ) {
+		// Check if the user is authenticated using AppContext->viewer.
+		// This is more reliable than is_user_logged_in() because:
+		// 1. AppContext->viewer is set once at Request creation and doesn't change
+		// 2. WPGraphQL core may call wp_set_current_user(0) mid-request in has_authentication_errors(),
+		// or even within individual resolvers, etc which would cause is_user_logged_in()
+		// to return false even for authenticated requests
+		// 3. Using AppContext is more "GraphQL-native" and consistent with how WPGraphQL handles auth
+		if ( $this->request && $this->request->app_context->viewer->exists() ) {
 			$enabled = false;
 		}
 
 		// @phpcs:ignore
-		return (bool) apply_filters( 'graphql_cache_is_object_cache_enabled', $enabled, $this->request );
+		$this->is_object_cache_enabled = (bool) apply_filters( 'graphql_cache_is_object_cache_enabled', $enabled, $this->request );
+
+		return $this->is_object_cache_enabled;
 	}
 
 	/**

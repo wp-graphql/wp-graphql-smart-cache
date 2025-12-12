@@ -10,6 +10,7 @@ modules:
     enabled:
         - Asserts
         - WPBrowser
+        - WPDb
         - REST:
             depends: PhpBrowser
             part: Json
@@ -24,3 +25,10 @@ modules:
             adminUsername: '%TEST_SITE_ADMIN_USERNAME%'
             adminPassword: '%TEST_SITE_ADMIN_PASSWORD%'
             adminPath: '/wp-admin'
+        WPDb:
+            dsn: 'mysql:host=%TEST_SITE_DB_HOST%;dbname=%TEST_SITE_DB_NAME%'
+            user: '%TEST_SITE_DB_USER%'
+            password: '%TEST_SITE_DB_PASSWORD%'
+            url: '%WP_URL%'
+            tablePrefix: '%TEST_SITE_TABLE_PREFIX%'
+            urlReplacement: false

@@ -23,6 +23,13 @@ class Query {
 	public static $storage = null;
 
 	/**
+	 * The current GraphQL request.
+	 *
+	 * @var \WPGraphQL\Request|null
+	 */
+	protected $request;
+
+	/**
 	 * @return void
 	 */
 	public function init() {
@@ -60,14 +67,23 @@ class Query {
 			return false;
 		}
 
-		// WP_User
-		$user = wp_get_current_user();
+		// Get user ID from AppContext->viewer which is set at Request creation
+		// and doesn't change even if wp_set_current_user(0) is called later.
+		// We intentionally do NOT fall back to wp_get_current_user() because that
+		// function's return value can change mid-request (e.g., when WPGraphQL calls
+		// wp_set_current_user(0) in has_authentication_errors()). Using 0 as fallback
+		// treats the request as unauthenticated, which is the safe default.
+		if ( $this->request ) {
+			$user_id = $this->request->app_context->viewer->ID;
+		} else {
+			$user_id = 0;
+		}
 
 		$parts = [
 			'query'     => $query,
 			'variables' => $variables ?: null,
 			'operation' => $operation ?: null,
-			'user'      => $user->ID,
+			'user'      => $user_id,
 		];
 
 		$parts_string = wp_json_encode( $parts );
