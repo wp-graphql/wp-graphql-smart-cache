@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e4509b5e06fcb4c745a6a025e60de93a",
+    "content-hash": "bda963e63dc7a9859951e905c5e45612",
     "packages": [
         {
             "name": "appsero/client",
@@ -217,31 +217,26 @@
         },
         {
             "name": "behat/gherkin",
-            "version": "v4.16.1",
+            "version": "v4.8.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Behat/Gherkin.git",
-                "reference": "e26037937dfd48528746764dd870bc5d0836665f"
+                "reference": "2391482cd003dfdc36b679b27e9f5326bd656acd"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Behat/Gherkin/zipball/e26037937dfd48528746764dd870bc5d0836665f",
-                "reference": "e26037937dfd48528746764dd870bc5d0836665f",
+                "url": "https://api.github.com/repos/Behat/Gherkin/zipball/2391482cd003dfdc36b679b27e9f5326bd656acd",
+                "reference": "2391482cd003dfdc36b679b27e9f5326bd656acd",
                 "shasum": ""
             },
             "require": {
-                "composer-runtime-api": "^2.2",
-                "php": ">=8.1 <8.6"
+                "php": "~7.2|~8.0"
             },
             "require-dev": {
-                "cucumber/gherkin-monorepo": "dev-gherkin-v37.0.0",
-                "friendsofphp/php-cs-fixer": "^3.77",
-                "mikey179/vfsstream": "^1.6",
-                "phpstan/extension-installer": "^1",
-                "phpstan/phpstan": "^2",
-                "phpstan/phpstan-phpunit": "^2",
-                "phpunit/phpunit": "^10.5",
-                "symfony/yaml": "^5.4 || ^6.4 || ^7.0"
+                "cucumber/cucumber": "dev-gherkin-16.0.0",
+                "phpunit/phpunit": "~8|~9",
+                "symfony/phpunit-bridge": "~3|~4|~5",
+                "symfony/yaml": "~3|~4|~5"
             },
             "suggest": {
                 "symfony/yaml": "If you want to parse features, represented in YAML files"
@@ -249,12 +244,12 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "4.x-dev"
+                    "dev-master": "4.4-dev"
                 }
             },
             "autoload": {
-                "psr-4": {
-                    "Behat\\Gherkin\\": "src/"
+                "psr-0": {
+                    "Behat\\Gherkin": "src/"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -265,11 +260,11 @@
                 {
                     "name": "Konstantin Kudryashov",
                     "email": "ever.zet@gmail.com",
-                    "homepage": "https://everzet.com"
+                    "homepage": "http://everzet.com"
                 }
             ],
             "description": "Gherkin DSL parser for PHP",
-            "homepage": "https://behat.org/",
+            "homepage": "http://behat.org/",
             "keywords": [
                 "BDD",
                 "Behat",
@@ -280,23 +275,9 @@
             ],
             "support": {
                 "issues": "https://github.com/Behat/Gherkin/issues",
-                "source": "https://github.com/Behat/Gherkin/tree/v4.16.1"
+                "source": "https://github.com/Behat/Gherkin/tree/v4.8.0"
             },
-            "funding": [
-                {
-                    "url": "https://github.com/acoulton",
-                    "type": "github"
-                },
-                {
-                    "url": "https://github.com/carlos-granados",
-                    "type": "github"
-                },
-                {
-                    "url": "https://github.com/stof",
-                    "type": "github"
-                }
-            ],
-            "time": "2025-12-08T16:12:58+00:00"
+            "time": "2021-02-04T12:44:21+00:00"
         },
         {
             "name": "bordoni/phpass",
@@ -11385,5 +11366,5 @@
     "prefer-lowest": false,
     "platform": {},
     "platform-dev": {},
-    "plugin-api-version": "2.9.0"
+    "plugin-api-version": "2.6.0"
 }

@@ -17,6 +17,7 @@
       }
     },
     "require-dev": {
+        "behat/gherkin": "<4.9",
         "wp-graphql/wp-graphql-testcase": "*",
         "squizlabs/php_codesniffer": "^3.6",
         "phpcompatibility/phpcompatibility-wp": "*",
