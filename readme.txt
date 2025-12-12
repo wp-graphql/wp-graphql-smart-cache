@@ -2,9 +2,9 @@
 Contributors: jasonbahl, markkelnar
 Tags: WPGraphQL, Cache, API, Persisted Queries, Performance
 Requires at least: 5.6
-Tested up to: 6.5
+Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 2.0.0
+Stable tag: 2.0.1
 Requires WPGraphQL: 2.0.0
 WPGraphQL Tested Up To: 2.0.0
 License: GPLv2 or later
@@ -69,6 +69,10 @@ Learn more about how [Appsero collects and uses this data](https://appsero.com/p
 
 == Upgrade Notice ==
 
+= 2.0.1 =
+
+This release fixes an issue where authenticated user data (such as draft posts) could be incorrectly cached and served to public users when using the Object Cache feature. Users with Object Cache enabled should update immediately.
+
 = 2.0.0 =
 
 This release includes breaking changes to be compatible with WPGraphQL 2.0.0. When upgrading WPGraphQL to v2.0.0, you must also upgrade WPGraphQL Smart Cache to v2.0.0. WPGraphQL Smart Cache v2.0.0 is not compatible with WPGraphQL v1.x.x.
@@ -105,6 +109,17 @@ This release removes a lot of code that has since been released as part of WPGra
 In order to use v0.2.0+ of WPGraphQL Smart Cache, you will need WPGraphQL v1.12.0 or newer.
 
 == Changelog ==
+
+= 2.0.1 =
+
+**Bugfixes**
+
+- [#306](https://github.com/wp-graphql/wp-graphql-smart-cache/pull/306): fix: prevent authenticated request data from being cached and served to public users. This fixes an issue where the object cache could incorrectly cache responses from authenticated users (containing draft posts, private content, etc.) due to WPGraphQL core calling `wp_set_current_user(0)` mid-request. The fix uses `AppContext->viewer` for reliable authentication state detection instead of `is_user_logged_in()`.
+
+**Chores**
+
+- ci: update deprecated GitHub Actions to v4
+- ci: fix Gherkin test compatibility by pinning behat/gherkin < 4.9
 
 = 2.0.0 =
 
