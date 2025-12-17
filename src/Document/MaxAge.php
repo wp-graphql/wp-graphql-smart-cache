@@ -14,6 +14,11 @@ use GraphQL\Server\RequestError;
 
 class MaxAge {
 	const TAXONOMY_NAME = 'graphql_document_http_maxage';
+	/**
+	 * WordPress treats the string/integer 0 as empty when saving terms.
+	 * Use a sentinel term name to represent zero and map it back/forth.
+	 */
+	const ZERO_SENTINEL = 'zero';
 
 	/**
 	 * The in-progress query(s)
@@ -155,7 +160,11 @@ class MaxAge {
 		if ( ! $item || ! property_exists( $item[0], 'name' ) ) {
 			return null;
 		}
-		return $item[0]->name;
+		$term_name = $item[0]->name;
+		if ( self::ZERO_SENTINEL === $term_name ) {
+			return '0';
+		}
+		return $term_name;
 	}
 
 	/**
@@ -165,7 +174,6 @@ class MaxAge {
 	 * @return bool
 	 */
 	public function valid( $value ) {
-		// TODO: terms won't save 0, as considers that empty and removes the term. Consider 'zero' or 'stale' or greater than zero.
 		return ( is_numeric( $value ) && $value >= 0 );
 	}
 
@@ -182,7 +190,10 @@ class MaxAge {
 			throw new RequestError( sprintf( __( 'Invalid max age header value "%s". Must be greater than or equal to zero', 'wp-graphql-smart-cache' ), $value ) );
 		}
 
-		return wp_set_post_terms( $post_id, $value, self::TAXONOMY_NAME );
+		// Map 0 to sentinel to ensure it persists in taxonomy terms
+		$to_save = ( intval( $value ) === 0 ) ? self::ZERO_SENTINEL : strval( intval( $value ) );
+
+		return wp_set_post_terms( $post_id, $to_save, self::TAXONOMY_NAME );
 	}
 
 	/**
@@ -227,8 +238,9 @@ class MaxAge {
 			if ( $post ) {
 				// If this saved query has a specified max-age, use it. Make sure to keep the smallest value.
 				$value = $this->get( $post->ID );
-				if ( $value ) {
-					$age = ( null === $age ) ? $value : min( $age, $value );
+				if ( $this->valid( $value ) ) {
+					$value = intval( $value );
+					$age   = ( null === $age ) ? $value : min( intval( $age ), $value );
 				}
 			}
 		}
@@ -241,10 +253,11 @@ class MaxAge {
 		// Cache-Control max-age directive should be a positive integer, no decimals.
 		// A value of zero indicates that caching should be disabled.
 		if ( $this->valid( $age ) ) {
+			$age = intval( $age );
 			if ( 0 === $age ) {
 				$headers['Cache-Control'] = 'no-store';
 			} else {
-				$headers['Cache-Control'] = sprintf( 'max-age=%1$s, s-maxage=%1$s, must-revalidate', intval( $age ) );
+				$headers['Cache-Control'] = sprintf( 'max-age=%1$s, s-maxage=%1$s, must-revalidate', $age );
 			}
 		}
 
