@@ -1,3 +1,5 @@
+> **This repository is no longer where WPGraphQL Smart Cache is developed.** The plugin now lives in the [WPGraphQL monorepo](https://github.com/wp-graphql/wp-graphql) under `plugins/wp-graphql-smart-cache`. Please [open issues there](https://github.com/wp-graphql/wp-graphql/issues/new/choose) and pick "WPGraphQL Smart Cache" from the plugin dropdown. Open issues from this repository are being moved over, and this repository will be archived once that is complete. See [#313](https://github.com/wp-graphql/wp-graphql-smart-cache/issues/313).
+
 <img src="./docs/images/logo-wp-graphql-smart-cache.jpg" width="150px" />
 
 # WPGraphQL Smart Cache
